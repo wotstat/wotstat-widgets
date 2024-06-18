@@ -1,0 +1,19 @@
+.DS_Store
+.idea
+
+#mod
+release/
+venv/
+*.pyc
+
+#js
+node_modules/
+
+crypto.py
+*.wotmod
+
+# wot source
+wot-src/
+modssettingsapi/
+BigWorldPlaceholder/
+cefapp

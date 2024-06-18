@@ -1,0 +1,17 @@
+{
+    "python.autoComplete.extraPaths": [
+        "wot-src/sources/res/scripts/client",
+        "wot-src/sources/res/scripts/common",
+        "wot-src/sources/res/scripts/client_common",
+        "modssettingsapi/sources/scripts/client",
+        "BigWorldPlaceholder",
+    ],
+    "python.analysis.extraPaths": [
+        "wot-src/sources/res/scripts/client",
+        "wot-src/sources/res/scripts/common",
+        "wot-src/sources/res/scripts/client_common",
+        "BigWorldPlaceholder",
+    ],
+    "python.analysis.userFileIndexingLimit": 20000,
+    "as3mxml.sdk.framework": "/Users/soprachev/.nvm/versions/node/v20.9.0/lib/node_modules/@apache-royale/royale-js-swf/royale-asjs",
+}
