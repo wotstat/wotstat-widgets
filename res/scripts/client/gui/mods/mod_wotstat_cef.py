@@ -1,1 +1,3 @@
-from .wotstat_cef import *
+from .wotstat_cef.WotstatWidget import WotstatWidget
+
+wotstatWidget = WotstatWidget()

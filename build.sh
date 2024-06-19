@@ -16,18 +16,18 @@ mkdir ./build
 cp -r ./res ./build
 
 # Set version
-# configPath="./build/res/scripts/client/gui/mods/wotstat_positions/common/Config.py"
-# perl -i -pe "s/{{VERSION}}/$v/g" "$configPath"
+configPath="./build/res/scripts/client/gui/mods/wotstat_cef/common/Config.py"
+perl -i -pe "s/{{VERSION}}/$v/g" "$configPath"
 
 # Set debug mode
-# utilsPath="./build/res/scripts/client/gui/mods/wotstat_positions/__init__.py"
-# if [ "$d" = true ]; then
-#     echo "Building DEBUG version."
-#     perl -i -pe "s/'{{DEBUG_MODE}}'/True/g" "$utilsPath"
-# else
-#     echo "Building RELEASE version."
-#     perl -i -pe "s/'{{DEBUG_MODE}}'/False/g" "$utilsPath"
-# fi
+utilsPath="./build/res/scripts/client/gui/mods/wotstat_cef/__init__.py"
+if [ "$d" = true ]; then
+    echo "Building DEBUG version."
+    perl -i -pe "s/'{{DEBUG_MODE}}'/True/g" "$utilsPath"
+else
+    echo "Building RELEASE version."
+    perl -i -pe "s/'{{DEBUG_MODE}}'/False/g" "$utilsPath"
+fi
 
 python2 -m compileall ./build
 
