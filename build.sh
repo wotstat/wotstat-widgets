@@ -55,8 +55,11 @@ zip -dvr -0 -X $folder res -i "*.swf"
 zip -vr -0 -X $folder meta.xml
 
 
-cp -r ../cefapp res/scripts/client/gui/mods/cefapp
-zip -dvr -0 -X $folder res/scripts/client/gui/mods/cefapp
+cp -r ../wotstat.widget.cef wotstat.widget.cef
+zip -r res/wotstat.widget.cef.zip wotstat.widget.cef
+rm -rf wotstat.widget.cef
+
+zip -dvr -0 -X $folder res/wotstat.widget.cef.zip
 
 cd ../
 cp ./build/$folder $folder

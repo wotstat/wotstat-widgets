@@ -19,24 +19,24 @@ package wotstat.cef {
     private var bitmap:Bitmap;
     private var loader:Loader;
 
-    public function ImageSocket(host:String, port:int) {
+    private var width:int;
+    private var height:int;
+
+    public function ImageSocket(host:String, port:int, width:int, height:int) {
       socket = new Socket();
       buffer = new ByteArray();
       loader = new Loader();
       buffer.endian = Endian.BIG_ENDIAN;
       headerRead = false;
 
+      this.width = width;
+      this.height = height;
+
       socket.addEventListener(Event.CONNECT, onConnect);
       socket.addEventListener(Event.CLOSE, onClose);
       socket.addEventListener(IOErrorEvent.IO_ERROR, onError);
       socket.addEventListener(ProgressEvent.SOCKET_DATA, onSocketData);
       loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onImageLoadComplete);
-      // loader.addEventListener(Event.COMPLETE, function(e:Event):void {
-      // var loaderInfo:LoaderInfo = e.target as LoaderInfo;
-      // var bitmapData:BitmapData = new BitmapData(loaderInfo.width, loaderInfo.height);
-      // bitmapData.draw(loaderInfo.loader);
-      // bitmap.bitmapData = bitmapData;
-      // });
 
       trace("[IS] Connecting to server: " + host + ":" + port);
       socket.connect(host, port);
@@ -77,52 +77,13 @@ package wotstat.cef {
 
         if (headerRead && socket.bytesAvailable >= imageLength) {
           trace("[IS] Reading image data");
-          // Read the image data
           socket.readBytes(buffer, 0, imageLength);
-          processImageData(buffer);
+          loader.loadBytes(buffer);
           buffer.clear();
           headerRead = false;
         }
       }
     }
-
-    private const width:int = 800;
-    private const height:int = 600;
-    private var bitmapData:BitmapData = new BitmapData(width, height);
-
-    private function processImageData(data:ByteArray):void {
-      trace("Processing image data: " + data.length + " bytes");
-      loader.loadBytes(data);
-      // Assuming the data is in a format that can be used to create a BitmapData
-      // var bitmapData:BitmapData = new BitmapData(640, 480); // Adjust size as needed
-      // bitmapData.setPixels(bitmapData.rect, data);
-
-
-      // // Update the existing bitmap's data
-      // if (bitmap.bitmapData) {
-      // bitmap.bitmapData.dispose();
-      // }
-      // bitmap.bitmapData = bitmapData;
-
-      // data.position = 0;
-      // for (var i:int = 0; i < width; i++) {
-      // for (var j:int = 0; j < height; j++) {
-      // bitmap.bitmapData.setPixel32(i, j, data.readUnsignedInt());
-      // }
-      // }
-
-      // bitmap.bitmapData.unlock();
-
-      // Create a Bitmap to display the BitmapData
-
-      // bitmap.bitmapData = bitmapData;
-      trace("Image dimensions: " + bitmap.width + "x" + bitmap.height);
-    }
-
-    // private function displayImage(bitmapData:BitmapData):void {
-    // trace("Displaying image");
-    // bitmap.bitmapData = bitmapData;
-    // }
 
     private function onImageLoadComplete(event:Event):void {
       trace("Image loaded");
