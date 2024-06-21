@@ -1,6 +1,3 @@
-import subprocess
-import threading
-
 from gui.Scaleform.framework import g_entitiesFactories, ScopeTemplates, ViewSettings
 from gui.Scaleform.framework.entities.View import View
 from gui.Scaleform.framework.application import AppEntry
@@ -13,49 +10,18 @@ from helpers import dependency
 from skeletons.gui.impl import IGuiLoader
 
 from ..common.Logger import Logger
-from .constants import CEF_EXE_PATH
+from .CefServer import server
 from .EventsManager import manager
 
 CEF_MAIN_VIEW = "WOTSTAT_CEF_MAIN_VIEW"
 
-class Commands:
-  OPEN_NEW_BROWSER = 'OPEN_NEW_BROWSER'
-
-
 logger = Logger.instance()
-
-
-def readOutput(process):
-  while True:
-    output = process.stdout.readline()
-    if output == b'' and process.poll() is not None:
-      continue
-    if output:
-      print(output.decode().strip())
 
 class MainView(View):
 
   def __init__(self, *args, **kwargs):
     super(MainView, self).__init__(*args, **kwargs)
 
-    startupinfo = subprocess.STARTUPINFO()
-    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    startupinfo.wShowWindow = subprocess.SW_HIDE
-
-    self.process = subprocess.Popen(CEF_EXE_PATH,
-      startupinfo=startupinfo,
-      stdin=subprocess.PIPE,
-      stdout=subprocess.PIPE,
-      stderr=subprocess.PIPE)
-    
-    outputThread = threading.Thread(target=readOutput, args=(self.process,))
-    outputThread.start()
-
-  def sendTextInput(self, inputData):
-    logger.info("Send input data: %s" % inputData)
-    self.process.stdin.write(inputData)
-    self.process.stdin.flush()
-  
   def _populate(self):
     super(MainView, self)._populate()
     logger.info("MainView populated")
@@ -64,7 +30,6 @@ class MainView(View):
   def _dispose(self):
     manager.createWidget -= self.__createWidget
     logger.info("MainView disposed")
-    self.process.terminate()
     super(MainView, self)._dispose()
 
   def py_log(self, msg, level):
@@ -72,7 +37,7 @@ class MainView(View):
 
   def __createWidget(self, url, port, width, height):
     logger.info("Create widget: %s:%s" % (url, port))
-    self.sendTextInput(Commands.OPEN_NEW_BROWSER + ' ' + url + ' ' + str(port) + ' ' + str(width) + ' ' + str(height) + '\n')
+    server.openNewBrowser(url, port, width, height)
     self.flashObject.as_createWidget(url, port, width, height)
 
 

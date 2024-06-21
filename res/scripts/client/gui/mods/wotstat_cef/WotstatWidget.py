@@ -6,8 +6,9 @@ import BigWorld
 from .common.ServerLoggerBackend import ServerLoggerBackend
 from .common.Logger import Logger, SimpleLoggerBackend
 from .common.Config import Config
-from .common.utils import copyDir, copyFile
+from .common.utils import copyFile
 from .main.MainView import setup as mainViewSetup
+from .main.CefServer import server
 
 from .main.constants import CEF_PATH
 
@@ -43,7 +44,13 @@ class WotstatWidget(object):
     ])
 
     copyCef()
+    server.enable()
     mainViewSetup()
 
     logger.info("WotStatWidget started")
+
+
+  def fini(self):
+    logger.info("Stopping WotStatWidget")
+    server.dispose()
 
