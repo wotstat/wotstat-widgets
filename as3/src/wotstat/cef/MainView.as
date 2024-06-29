@@ -1,7 +1,4 @@
 package wotstat.cef {
-  import flash.display.Sprite;
-  import flash.text.TextField;
-  import flash.events.Event;
   import net.wg.infrastructure.base.AbstractView;
   import net.wg.infrastructure.interfaces.IView;
   import net.wg.infrastructure.events.LoaderEvent;
@@ -12,13 +9,14 @@ package wotstat.cef {
   import net.wg.data.constants.generated.LAYER_NAMES;
   import net.wg.gui.components.containers.MainViewContainer;
   import flash.display.DisplayObject;
+  import flash.display.Sprite;
 
   public class MainView extends AbstractView {
 
 
     public var py_log:Function;
     private var hangarView:Hangar = null;
-    private var activeWidgets:Vector.<ImageSocket> = new Vector.<ImageSocket>();
+    private var activeWidgets:Vector.<DraggableWidget> = new Vector.<DraggableWidget>();
 
     public function MainView() {
       super();
@@ -61,8 +59,11 @@ package wotstat.cef {
       if (view.as_config.alias == Aliases.LOBBY_HANGAR) {
         hangarView = view as Hangar;
         _log("Hangar view found", "INFO");
-      }
 
+        for each (var widget:DraggableWidget in activeWidgets) {
+          hangarView.addChild(DisplayObject(widget));
+        }
+      }
     }
 
     private function _log(msg:String, level:String = "INFO"):void {
@@ -77,13 +78,9 @@ package wotstat.cef {
     public function as_createWidget(url:String, port:int, width:int, height:int):void {
       _log("as_createWidget: " + url, "INFO");
 
-      var imageSocket:ImageSocket = new ImageSocket('127.0.0.1', port, width, height);
-      activeWidgets.push(imageSocket);
-
-      var target:DisplayObject = DisplayObject(imageSocket);
-      target.x = 200;
-      target.y = 200;
-      hangarView.addChild(target);
+      var widget:DraggableWidget = new DraggableWidget('127.0.0.1', port, width, height);
+      activeWidgets.push(widget);
+      hangarView.addChild(DisplayObject(widget));
     }
   }
 }

@@ -56,8 +56,8 @@ class CefServer(object):
   def enable(self):
     self.enabled = True
     startupInfo = subprocess.STARTUPINFO()
-    startupInfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    startupInfo.wShowWindow = subprocess.SW_HIDE
+    # startupInfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    # startupInfo.wShowWindow = subprocess.SW_HIDE
 
     self.process = subprocess.Popen(CEF_EXE_PATH,
       startupinfo=startupInfo,

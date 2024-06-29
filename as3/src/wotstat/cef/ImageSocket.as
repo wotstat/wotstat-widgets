@@ -18,6 +18,7 @@ package wotstat.cef {
     private var headerRead:Boolean;
     private var bitmap:Bitmap;
     private var loader:Loader;
+    private var isLoading:Boolean;
 
     private var width:int;
     private var height:int;
@@ -28,6 +29,7 @@ package wotstat.cef {
       loader = new Loader();
       buffer.endian = Endian.BIG_ENDIAN;
       headerRead = false;
+      isLoading = false;
 
       this.width = width;
       this.height = height;
@@ -59,16 +61,12 @@ package wotstat.cef {
     }
 
     private function onSocketData(event:ProgressEvent):void {
-      trace("[IS] Received data: " + socket.bytesAvailable + " bytes");
-
       if (socket.bytesAvailable > 0) {
-        trace("[IS] Reading data available: " + socket.bytesAvailable + " bytes");
         if (!headerRead) {
           // Read the header (assuming the first 4 bytes indicate the length of the image data)
           if (socket.bytesAvailable >= 4) {
             imageLength = socket.readInt();
             headerRead = true;
-            trace("[IS] Image length: " + imageLength);
           }
           else {
             return;
@@ -76,9 +74,14 @@ package wotstat.cef {
         }
 
         if (headerRead && socket.bytesAvailable >= imageLength) {
-          trace("[IS] Reading image data");
           socket.readBytes(buffer, 0, imageLength);
-          loader.loadBytes(buffer);
+          trace("[IS] Image loaded " + imageLength + " bytes; Available: " + socket.bytesAvailable);
+
+          if (!isLoading) {
+            isLoading = true;
+            loader.loadBytes(buffer);
+          }
+
           buffer.clear();
           headerRead = false;
         }
@@ -86,15 +89,22 @@ package wotstat.cef {
     }
 
     private function onImageLoadComplete(event:Event):void {
-      trace("Image loaded");
       var loaderInfo:LoaderInfo = LoaderInfo(event.target);
       var newBitmap:Bitmap = Bitmap(loaderInfo.content);
 
       if (bitmap.bitmapData) {
         bitmap.bitmapData.dispose();
       }
+
       bitmap.bitmapData = newBitmap.bitmapData;
-      trace("Image dimensions: " + newBitmap.width + "x" + newBitmap.height);
+      loader.unload();
+      isLoading = false;
+
+      bitmap.width = width / 2;
+      bitmap.height = height / 2;
+
+      // this.hitTestPoint()
     }
+
   }
 }
