@@ -31,14 +31,18 @@ class CefServer(object):
       if not line:
         continue
 
-      if line.startswith('[DEBUG]'):
-        logger.debug(line)
-      elif line.startswith('[INFO]'):
+      if line.startswith('[LOG]'):
+        line = line[5:]
+        if line.startswith('[DEBUG]'):
+          logger.debug(line[7:])
+        elif line.startswith('[INFO]'):
+          logger.info(line[6:])
+        elif line.startswith('[WARN]'):
+          logger.warn(line[6:])
+        elif line.startswith('[ERROR]'):
+          logger.error(line[7:])
+      elif line.startswith('[CONSOLE]'):
         logger.info(line)
-      elif line.startswith('[WARN]'):
-        logger.warn(line)
-      elif line.startswith('[ERROR]'):
-        logger.error(line)
       else:
         logger.error('Unknown format: %s' % line)
 

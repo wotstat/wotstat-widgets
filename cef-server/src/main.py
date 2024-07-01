@@ -18,7 +18,13 @@ killNow = False
 logLock = threading.Lock()
 def log(msg, level='INFO'):
   with logLock:
-    sys.stdout.write("[%s] %s\n" % (level, msg))
+    sys.stdout.write("[LOG][%s]%s\n" % (level, msg))
+    sys.stdout.flush()
+
+def consoleLog(url, level, msg):
+  with logLock:
+    namedLevel = ['0', 'DEBUG', 'INFO', 'WARNING', 'ERROR'][level] if level in range(5) else level
+    sys.stdout.write("[CONSOLE][%s][%s]: %s\n" % (url, namedLevel, msg))
     sys.stdout.flush()
 
 log("CEF VERSION %s\n" % cef.__version__)
@@ -107,6 +113,13 @@ class RenderHandler(object):
     pngBytes = bufferToPng(frameBuffer, width, height)
     self.frameServer.sendFrame(pngBytes)
 
+class DisplayHandler(object):
+  def __init__(self, url):
+    self.url = url
+
+  def OnConsoleMessage(self, browser, level, message, **_):
+    consoleLog(self.url, level, message)
+
 def createBrowser(url, port, width, height):
   browserSettings = {
     "windowless_frame_rate": 30,
@@ -123,8 +136,8 @@ def createBrowser(url, port, width, height):
   frameServerThread = threading.Thread(target=frameServer.startServer)
   frameServerThread.start()
 
-  renderHandler = RenderHandler(frameServer, (width, height))
-  browser.SetClientHandler(renderHandler)
+  browser.SetClientHandler(RenderHandler(frameServer, (width, height)))
+  browser.SetClientHandler(DisplayHandler(url))
   browser.WasResized()
   # browser.ShowDevTools()
 
