@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test</title>
+
+  <style>
+    body {
+      font-size: 10vw;
+      background-color: rgba(0, 0, 0, 0);
+      margin: 0px auto;
+      overflow: hidden;
+    }
+
+    .card {
+      width: 100%;
+      background-color: #464646b9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 0.8em;
+      font-size: 1em;
+      font-weight: bold;
+      font-family: Arial, Helvetica, sans-serif;
+      color: white;
+    }
+
+    .value {
+      font-size: 1.5em;
+      color: #31ff54;
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+
+  <script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+      const value = document.querySelector('.value');
+      let counter = 0;
+
+      setInterval(() => {
+        counter++;
+        value.textContent = counter;
+      }, 1000);
+    })
+  </script>
+</head>
+
+<body>
+  <div class="card">
+    <p>Counter: <span class="value">0</span></p>
+  </div>
+</body>
+
+</html>

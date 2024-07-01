@@ -1,1 +1,0 @@
-mxmlc -load-config+=build-config.xml src/wotstat/cef/MainView.as
