@@ -1,9 +1,7 @@
 package wotstat.cef {
 
   import flash.display.Sprite;
-  import flash.display.DisplayObject;
   import flash.events.MouseEvent;
-  import net.wg.data.constants.Cursors;
   import flash.geom.Rectangle;
 
   public class DraggableWidget extends Sprite {
@@ -16,14 +14,14 @@ package wotstat.cef {
     public function DraggableWidget(host:String, port:int, width:int, height:int) {
       super();
 
-      imageSocket = new ImageSocket(host, port, width, height);
+      imageSocket = new ImageSocket(host, port);
       addChild(imageSocket);
       dragArea = new Sprite();
 
       dragArea.graphics.lineStyle(1, 0xff00ff, 1);
       dragArea.graphics.drawRect(0, 0, width / 2, height / 2);
 
-      addChild(dragArea);
+      // addChild(dragArea);
 
       this.x = (App.appWidth - imageSocket.width) / 2;
       this.y = (App.appHeight - imageSocket.height) / 2;
@@ -36,7 +34,7 @@ package wotstat.cef {
       startDrag(false, new Rectangle(
             0,
             HANGAR_TOP_OFFSET,
-            App.appWidth - imageSocket.width - 1,
+            App.appWidth - imageSocket.width,
             App.appHeight - imageSocket.height - HANGAR_TOP_OFFSET - HANGAR_BOTTOM_OFFSET
           ));
 

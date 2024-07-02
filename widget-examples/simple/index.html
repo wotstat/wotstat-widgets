@@ -13,6 +13,8 @@
       const counter = document.querySelector('.counter');
       let count = 0;
 
+      const subtitle = document.querySelector('.subtitle');
+
       const canvas = document.querySelector('.confetti');
       canvas.confetti = canvas.confetti || confetti.create(canvas, { resize: true });
 
@@ -28,6 +30,11 @@
           origin: { y: 1 },
           ticks: 100,
         });
+      }, 5000);
+
+      setInterval(() => {
+        console.log('toggle subtitle ', subtitle.style.display);
+        subtitle.style.display = subtitle.style.display.trim() == '' ? 'none' : ''
       }, 5000);
     });
 
@@ -60,6 +67,12 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .subtitle {
+      font-size: 1em;
+      text-align: center;
+      font-weight: 800;
+    }
+
     .confetti {
       position: absolute;
       top: 0;
@@ -73,8 +86,9 @@
 <body>
   <div class="card">
     <p class="counter">0</p>
+    <p class="subtitle" style="display: none;">subtitle</p>
 
-    <canvas class="confetti"></canvas>
+    <canvas class="confetti" ></canvas>
   </div>
 </body>
 </html>

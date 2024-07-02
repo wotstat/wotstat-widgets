@@ -1,6 +1,5 @@
 package wotstat.cef {
   import flash.display.Bitmap;
-  import flash.display.BitmapData;
   import flash.display.Sprite;
   import flash.events.Event;
   import flash.events.IOErrorEvent;
@@ -14,25 +13,23 @@ package wotstat.cef {
   public class ImageSocket extends Sprite {
     private var socket:Socket;
     private var buffer:ByteArray;
-    private var imageLength:int;
-    private var headerRead:Boolean;
     private var bitmap:Bitmap;
     private var loader:Loader;
+
+    private var frameLength:int;
+    private var frameWidth:int;
+    private var frameHeight:int;
+
+    private var headerRead:Boolean;
     private var isLoading:Boolean;
 
-    private var width:int;
-    private var height:int;
-
-    public function ImageSocket(host:String, port:int, width:int, height:int) {
+    public function ImageSocket(host:String, port:int) {
       socket = new Socket();
       buffer = new ByteArray();
       loader = new Loader();
       buffer.endian = Endian.BIG_ENDIAN;
       headerRead = false;
       isLoading = false;
-
-      this.width = width;
-      this.height = height;
 
       socket.addEventListener(Event.CONNECT, onConnect);
       socket.addEventListener(Event.CLOSE, onClose);
@@ -45,6 +42,8 @@ package wotstat.cef {
       trace("[IS] Connected to server: " + socket.connected);
 
       bitmap = new Bitmap();
+      bitmap.scaleX = 1 / App.appScale;
+      bitmap.scaleY = 1 / App.appScale;
       addChild(bitmap);
     }
 
@@ -63,9 +62,11 @@ package wotstat.cef {
     private function onSocketData(event:ProgressEvent):void {
       if (socket.bytesAvailable > 0) {
         if (!headerRead) {
-          // Read the header (assuming the first 4 bytes indicate the length of the image data)
-          if (socket.bytesAvailable >= 4) {
-            imageLength = socket.readInt();
+
+          if (socket.bytesAvailable >= 4 * 3) {
+            frameWidth = socket.readInt();
+            frameHeight = socket.readInt();
+            frameLength = socket.readInt();
             headerRead = true;
           }
           else {
@@ -73,9 +74,9 @@ package wotstat.cef {
           }
         }
 
-        if (headerRead && socket.bytesAvailable >= imageLength) {
-          socket.readBytes(buffer, 0, imageLength);
-          trace("[IS] Image loaded " + imageLength + " bytes; Available: " + socket.bytesAvailable);
+        if (headerRead && socket.bytesAvailable >= frameLength) {
+          socket.readBytes(buffer, 0, frameLength);
+          trace("[IS] Image loaded " + frameLength + " bytes; Available: " + socket.bytesAvailable);
 
           if (!isLoading) {
             isLoading = true;
@@ -100,10 +101,13 @@ package wotstat.cef {
       loader.unload();
       isLoading = false;
 
-      bitmap.width = width / 2;
-      bitmap.height = height / 2;
+      var k:Number = 1 / App.appScale;
+      if (bitmap.scaleX != k) {
+        bitmap.scaleX = k;
+        bitmap.scaleY = k;
+      }
 
-      // this.hitTestPoint()
+      trace("[IS] Image loaded " + bitmap.width + "x" + bitmap.height + "; " + App.appScale);
     }
 
   }

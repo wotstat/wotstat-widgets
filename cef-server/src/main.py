@@ -1,3 +1,4 @@
+from functools import partial
 import time
 import sys
 import socket
@@ -7,6 +8,7 @@ import io
 import zlib
 import queue
 import signal
+import os
 
 from cefpython3 import cefpython as cef
 
@@ -28,6 +30,9 @@ def consoleLog(url, level, msg):
     sys.stdout.flush()
 
 log("CEF VERSION %s\n" % cef.__version__)
+
+with open(os.path.join(sys._MEIPASS, 'inject.js'), 'r') as f:
+  injectJs = f.read()
 
 def bufferToPng(buffer, width, height):
     def write_chunk(png_file, chunk_type, data):
@@ -81,9 +86,12 @@ class FrameServer:
     log("Connection from %s" % str(addr))
     self.connected = True
 
-  def sendFrame(self, frame_bytes):
-    messageLength = struct.pack('!I', len(frame_bytes))
-    self.last_frame = messageLength + frame_bytes
+  def sendFrame(self, width, height, frame_bytes):
+    widthBytes = struct.pack('!I', width)
+    heightBytes = struct.pack('!I', height)
+    frameLength = struct.pack('!I', len(frame_bytes))
+
+    self.last_frame = widthBytes + heightBytes + frameLength + frame_bytes
     if self.connected and self.client_socket:
       try:
         self.client_socket.sendall(self.last_frame)
@@ -97,28 +105,60 @@ class FrameServer:
     self.socket.close()
     log("Server closed on %s:%s" % (str(self.host), str(self.port)))
 
-class RenderHandler(object):
-  def __init__(self, frameServer, size=(800, 600)):
-    # type: (FrameServer, Tuple[int, int]) -> None
-    self.frameServer = frameServer
-    self.size = size
-    log("RenderHandler initialized with size: %s" % str(size))
+class ClientHandler(object):
+  def __init__(self, widget):
+    # type: (WidgetHandler) -> None
+    self.widget = widget
 
+  # LoadHandler
+  def OnLoadStart(self, browser, **_):
+    browser.ExecuteJavascript(injectJs)
+
+  # DisplayHandler
+  def OnConsoleMessage(self, browser, level, message, **_):
+    consoleLog(self.widget.url, level, message)
+
+  # RenderHandler
   def GetViewRect(self, rect_out, *args, **kwargs):
-    rect_out.extend([0, 0, self.size[0], self.size[1]])
+    rect_out.extend([0, 0, self.widget.size[0], self.widget.size[1]])
     return True
-
+  
   def OnPaint(self, browser, element_type, paint_buffer, width, height, **_):
     frameBuffer = paint_buffer.GetString(mode="rgba", origin="top-left")
-    pngBytes = bufferToPng(frameBuffer, width, height)
-    self.frameServer.sendFrame(pngBytes)
+    if width == self.widget.size[0] or height != self.widget.size[1]:
+      pngBytes = bufferToPng(frameBuffer, width, height)
+      self.widget.frameServer.sendFrame(width, height, pngBytes)
+    else:
+      log("Invalid frame size: %s, %s" % (width, height), 'ERROR')
 
-class DisplayHandler(object):
-  def __init__(self, url):
+class WidgetHandler(object):
+  def __init__(self, url, browser, port):
     self.url = url
+    self.size = (500, 100)
+    self.browser = browser
 
-  def OnConsoleMessage(self, browser, level, message, **_):
-    consoleLog(self.url, level, message)
+    bindings = cef.JavascriptBindings()
+    bindings.SetFunction("onBodyResize", self.onBodyResize)
+    browser.SetJavascriptBindings(bindings)
+
+    self.frameServer = FrameServer(port=port)
+    frameServerThread = threading.Thread(target=self.frameServer.startServer)
+    frameServerThread.start()
+
+    self.handler = ClientHandler(self)
+    browser.SetClientHandler(self.handler)
+
+    browser.WasResized()
+
+  def resize(self, width, height):
+    self.size = (width, height)
+    self.browser.WasResized()
+
+  # JS Bindings
+  def onBodyResize(self, height):
+    self.resize(self.size[0], height)
+    log("[%s] On resize: %s" % (self.url, height))
+
 
 def createBrowser(url, port, width, height):
   browserSettings = {
@@ -132,16 +172,24 @@ def createBrowser(url, port, width, height):
                                   settings=browserSettings,
                                   url=url)
   
-  frameServer = FrameServer(port=port)
-  frameServerThread = threading.Thread(target=frameServer.startServer)
-  frameServerThread.start()
 
-  browser.SetClientHandler(RenderHandler(frameServer, (width, height)))
-  browser.SetClientHandler(DisplayHandler(url))
-  browser.WasResized()
+  widget = WidgetHandler(url, browser, port)
+
+  # frameServer = FrameServer(port=port)
+  # frameServerThread = threading.Thread(target=frameServer.startServer)
+  # frameServerThread.start()
+
+  # renderHandler = RenderHandler(frameServer, (width, 50))
+
+
+  # Bindings(url, browser)
+  # browser.SetClientHandler(renderHandler)
+  # browser.SetClientHandler(DisplayHandler(url))
+  # browser.SetClientHandler(LoadHandler())
+  # browser.WasResized()
   # browser.ShowDevTools()
 
-  return browser, frameServer, frameServerThread
+  return browser, widget
 
 tasksQueue = queue.Queue()
 
