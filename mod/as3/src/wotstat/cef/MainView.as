@@ -75,10 +75,10 @@ package wotstat.cef {
       }
     }
 
-    public function as_createWidget(url:String, port:int, width:int, height:int):void {
+    public function as_createWidget(url:String, port:int):void {
       _log("as_createWidget: " + url, "INFO");
 
-      var widget:DraggableWidget = new DraggableWidget('127.0.0.1', port, width, height);
+      var widget:DraggableWidget = new DraggableWidget('127.0.0.1', port);
       activeWidgets.push(widget);
       hangarView.addChild(DisplayObject(widget));
     }

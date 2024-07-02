@@ -2,6 +2,6 @@
 
 from .wotstat_cef.main.EventsManager import manager
 
-def createWidget(url, port, width, height):
-  manager.createWidget(url, port, width, height)
+def createWidget(url, width=500):
+  manager.createWidget(url, width)
 

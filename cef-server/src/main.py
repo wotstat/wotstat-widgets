@@ -112,6 +112,7 @@ class ClientHandler(object):
 
   # LoadHandler
   def OnLoadStart(self, browser, **_):
+    log("[%s] Load started" % self.widget.url)
     browser.ExecuteJavascript(injectJs)
 
   # DisplayHandler
@@ -132,9 +133,9 @@ class ClientHandler(object):
       log("Invalid frame size: %s, %s" % (width, height), 'ERROR')
 
 class WidgetHandler(object):
-  def __init__(self, url, browser, port):
+  def __init__(self, url, browser, port, width):
     self.url = url
-    self.size = (500, 100)
+    self.size = (width, 100)
     self.browser = browser
 
     bindings = cef.JavascriptBindings()
@@ -160,7 +161,7 @@ class WidgetHandler(object):
     log("[%s] On resize: %s" % (self.url, height))
 
 
-def createBrowser(url, port, width, height):
+def createBrowser(url, port, width):
   browserSettings = {
     "windowless_frame_rate": 30,
   }
@@ -173,21 +174,7 @@ def createBrowser(url, port, width, height):
                                   url=url)
   
 
-  widget = WidgetHandler(url, browser, port)
-
-  # frameServer = FrameServer(port=port)
-  # frameServerThread = threading.Thread(target=frameServer.startServer)
-  # frameServerThread.start()
-
-  # renderHandler = RenderHandler(frameServer, (width, 50))
-
-
-  # Bindings(url, browser)
-  # browser.SetClientHandler(renderHandler)
-  # browser.SetClientHandler(DisplayHandler(url))
-  # browser.SetClientHandler(LoadHandler())
-  # browser.WasResized()
-  # browser.ShowDevTools()
+  widget = WidgetHandler(url, browser, port, width)
 
   return browser, widget
 
@@ -198,16 +185,15 @@ def onCommand(command):
 
   if command.startswith(Commands.OPEN_NEW_BROWSER):
     parts = command.split(' ')
-    if len(parts) != 5:
+    if len(parts) != 4:
       log(f"Invalid command: {command}")
       return
 
-    url, port, width, height = parts[1:]
+    url, port, width = parts[1:]
     port = int(port)
     width = int(width)
-    height = int(height)
     log(f"Opening browser with url: {url} on port: {port}")
-    createBrowser(url, port, width, height)
+    createBrowser(url, port, width)
     return 
 
   log(f"Unknown command: {command}")

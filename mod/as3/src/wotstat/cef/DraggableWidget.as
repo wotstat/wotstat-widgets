@@ -11,15 +11,15 @@ package wotstat.cef {
     private const HANGAR_TOP_OFFSET:int = 0;
     private const HANGAR_BOTTOM_OFFSET:int = 90;
 
-    public function DraggableWidget(host:String, port:int, width:int, height:int) {
+    public function DraggableWidget(host:String, port:int) {
       super();
 
       imageSocket = new ImageSocket(host, port);
       addChild(imageSocket);
-      dragArea = new Sprite();
+      // dragArea = new Sprite();
 
-      dragArea.graphics.lineStyle(1, 0xff00ff, 1);
-      dragArea.graphics.drawRect(0, 0, width / 2, height / 2);
+      // dragArea.graphics.lineStyle(1, 0xff00ff, 1);
+      // dragArea.graphics.drawRect(0, 0, width / 2, height / 2);
 
       // addChild(dragArea);
 

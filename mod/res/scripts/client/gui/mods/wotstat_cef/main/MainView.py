@@ -12,12 +12,16 @@ from skeletons.gui.impl import IGuiLoader
 from ..common.Logger import Logger
 from .CefServer import server
 from .EventsManager import manager
+from ..common.utils import isPortAvailable
 
 CEF_MAIN_VIEW = "WOTSTAT_CEF_MAIN_VIEW"
+START_PORT = 31200
 
 logger = Logger.instance()
 
 class MainView(View):
+
+  lastPort = START_PORT
 
   def __init__(self, *args, **kwargs):
     super(MainView, self).__init__(*args, **kwargs)
@@ -35,10 +39,17 @@ class MainView(View):
   def py_log(self, msg, level):
     logger.printLog(level, msg)
 
-  def __createWidget(self, url, port, width, height):
-    logger.info("Create widget: %s:%s" % (url, port))
-    server.openNewBrowser(url, port, width, height)
-    self.flashObject.as_createWidget(url, port, width, height)
+  def __createWidget(self, url, width):
+    
+    self.lastPort += 1
+    limit = 10
+    while not isPortAvailable(self.lastPort) and limit > 0:
+      self.lastPort += 1
+      limit -= 1
+
+    logger.info("Create widget: %s:%s" % (url, self.lastPort))
+    server.openNewBrowser(url, self.lastPort, width)
+    self.flashObject.as_createWidget(url, self.lastPort)
 
 
 def setup():

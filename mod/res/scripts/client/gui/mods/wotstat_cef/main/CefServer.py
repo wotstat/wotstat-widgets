@@ -78,8 +78,8 @@ class CefServer(object):
     self.process.terminate()
     logger.info("CEF server stopped")
 
-  def openNewBrowser(self, url, port, width, height):
-    self._sendCommand(Commands.OPEN_NEW_BROWSER, url, port, width, height)
+  def openNewBrowser(self, url, port, width):
+    self._sendCommand(Commands.OPEN_NEW_BROWSER, url, port, width)
 
 
 server = CefServer()

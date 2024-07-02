@@ -1,4 +1,5 @@
-document.addEventListener('DOMContentLoaded', () => {
+
+function setup() {
   const style = document.createElement('style');
   style.textContent = `
     body {
@@ -14,5 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
   )
 
   resizeObserver.observe(document.body);
+}
 
-});
+if (document.readyState === "complete") {
+  setup();
+} else {
+  document.addEventListener('DOMContentLoaded', setup);
+}

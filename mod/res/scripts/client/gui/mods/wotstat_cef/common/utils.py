@@ -1,5 +1,6 @@
 import ResMgr
 import os
+import socket
 
 def copyFile(source, target):
   targetDir = os.path.dirname(target)
@@ -18,3 +19,13 @@ def copyDir(source, target):
       copyDir(sourcePath, targetPath)
     else:
       copyFile(sourcePath, targetPath)
+
+def isPortAvailable(port, host='127.0.0.1'):
+  sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  try:
+    sock.bind((host, port))
+    return True
+  except socket.error:
+    return False
+  finally:
+    sock.close()

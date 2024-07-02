@@ -60,32 +60,44 @@ package wotstat.cef {
     }
 
     private function onSocketData(event:ProgressEvent):void {
-      if (socket.bytesAvailable > 0) {
-        if (!headerRead) {
+      var bytesAvailable:uint = socket.bytesAvailable;
+      var hasFrame:Boolean = false;
 
-          if (socket.bytesAvailable >= 4 * 3) {
-            frameWidth = socket.readInt();
-            frameHeight = socket.readInt();
-            frameLength = socket.readInt();
-            headerRead = true;
+      try {
+
+        while (bytesAvailable > 0) {
+          if (!headerRead) {
+
+            if (bytesAvailable >= 4 * 3) {
+              frameWidth = socket.readInt();
+              frameHeight = socket.readInt();
+              frameLength = socket.readInt();
+              headerRead = true;
+              bytesAvailable -= 4 * 3;
+            }
+            else {
+              return;
+            }
           }
-          else {
-            return;
+
+          if (headerRead && bytesAvailable >= frameLength) {
+            hasFrame = true;
+            headerRead = false;
+            bytesAvailable -= frameLength;
+
+            buffer.clear();
+            socket.readBytes(buffer, 0, frameLength);
+            trace("[IS] Image loaded " + frameLength + " bytes; Available: " + socket.bytesAvailable);
           }
         }
 
-        if (headerRead && socket.bytesAvailable >= frameLength) {
-          socket.readBytes(buffer, 0, frameLength);
-          trace("[IS] Image loaded " + frameLength + " bytes; Available: " + socket.bytesAvailable);
-
-          if (!isLoading) {
-            isLoading = true;
-            loader.loadBytes(buffer);
-          }
-
-          buffer.clear();
-          headerRead = false;
+        if (!isLoading && hasFrame) {
+          isLoading = true;
+          loader.loadBytes(buffer);
         }
+      }
+      catch (error:Error) {
+        trace("[IS] Error: " + error.getStackTrace());
       }
     }
 
