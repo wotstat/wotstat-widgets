@@ -15,6 +15,7 @@
 
     <library-path></library-path>
 
+
     <external-library-path>
       <path-element>libs/base_app-1.0-SNAPSHOT.swc</path-element>
       <path-element>libs/battle.swc</path-element>
@@ -27,6 +28,10 @@
       <path-element>libs/playerglobal.swc</path-element>
       <path-element>libs/flash.swc</path-element>
     </external-library-path>
+
+    <as3>true</as3>
+    <es>false</es>
+    <verbose-stacktraces>true</verbose-stacktraces>
   </compiler>
 
   <output>bin/wotstat.cef.swf</output>
