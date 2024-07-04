@@ -7,7 +7,7 @@ package wotstat.cef.buttons {
     public function Button(width:Number, corner:Number = 10, drawContent:Function = null) {
       downState = new ButtonDisplayState(0x6969694a, border, width, corner, drawContent);
       overState = new ButtonDisplayState(0xffffff1a, border, width, corner, drawContent);
-      upState = new ButtonDisplayState(0xffffff03, border, width, corner, drawContent);
+      upState = new ButtonDisplayState(0x6969690f, border, width, corner, drawContent);
       hitTestState = new ButtonDisplayState(0x00000000, border, width, corner);
       useHandCursor = true;
     }
@@ -22,9 +22,9 @@ package wotstat.cef.buttons {
 }
 
 
-import flash.display.Shape;
+import flash.display.Sprite;
 
-class ButtonDisplayState extends Shape {
+class ButtonDisplayState extends Sprite {
   private var background:uint;
   private var border:uint;
   private var size:Number;

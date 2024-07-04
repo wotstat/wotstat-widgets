@@ -84,6 +84,7 @@ fi
 
 mkdir -p ./build/res/gui/flash
 find ./mod/as3/bin -name "*.swf" -exec cp {} ./build/res/gui/flash/ \;
+cp -r ./mod/as3/assets ./build/res/gui/flash/wotstatCefAssets
 
 meta=$(<meta.xml)
 meta="${meta/\{\{VERSION\}\}/$v}"
@@ -92,6 +93,7 @@ cd ./build
 
 zip -dvr -0 -X $folder res -i "*.pyc"
 zip -dvr -0 -X $folder res -i "*.swf"
+zip -dvr -0 -X $folder res -i "*.png"
 zip -vr -0 -X $folder meta.xml
 
 cp ../cef-server/wotstat.widget.cef.zip res/wotstat.widget.cef.zip
