@@ -10,11 +10,15 @@ package wotstat.cef {
   import net.wg.gui.components.containers.MainViewContainer;
   import flash.display.DisplayObject;
   import flash.display.Sprite;
+  import scaleform.clik.events.ResizeEvent;
 
   public class MainView extends AbstractView {
 
 
     public var py_log:Function;
+    public var py_requestResize:Function;
+
+
     private var hangarView:Hangar = null;
     private var activeWidgets:Vector.<DraggableWidget> = new Vector.<DraggableWidget>();
 
@@ -79,8 +83,16 @@ package wotstat.cef {
       _log("as_createWidget: " + url, "INFO");
 
       var widget:DraggableWidget = new DraggableWidget('127.0.0.1', port);
+      widget.addEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
       activeWidgets.push(widget);
       hangarView.addChild(DisplayObject(widget));
+    }
+
+    private function onWidgetRequestResize(event:ResizeEvent):void {
+      if (this.py_requestResize != null) {
+        var widget:DraggableWidget = event.target as DraggableWidget;
+        this.py_requestResize(widget.port, event.scaleX);
+      }
     }
   }
 }

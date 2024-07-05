@@ -11,19 +11,28 @@ package wotstat.cef {
   import scaleform.clik.events.ResizeEvent;
 
   public class DraggableWidget extends Sprite {
+    public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";
+
     private const HANGAR_TOP_OFFSET:int = 0;
     private const HANGAR_BOTTOM_OFFSET:int = 90;
 
     private var imageSocket:ImageSocket;
     private var dragArea:Sprite;
     private var isDragging:Boolean = false;
+    private var targetWidth:Number = 100;
     private var contentWidth:Number = 0;
     private var contentHeight:Number = 0;
+    private var _port:int = 0;
 
     private const resizeControl:ResizeControl = new ResizeControl(40, 0, 0);
 
+    public function get port():int {
+      return _port;
+    }
+
     public function DraggableWidget(host:String, port:int) {
       super();
+      _port = port;
 
       imageSocket = new ImageSocket(host, port);
       addChild(imageSocket);
@@ -54,10 +63,11 @@ package wotstat.cef {
 
 
       imageSocket.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
-      imageSocket.addEventListener('FRAME_RESIZE', onImageSocketResize);
+      imageSocket.addEventListener(ImageSocket.FRAME_RESIZE, onImageSocketResize);
       // imageSocket.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
       App.instance.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
       resizeControl.addEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
+      resizeControl.addEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
     }
 
     private function onMouseDown(event:MouseEvent):void {
@@ -91,14 +101,25 @@ package wotstat.cef {
       trace("[DW] Image socket resized " + event.scaleX + "x" + event.scaleY);
       contentWidth = event.scaleX;
       contentHeight = event.scaleY;
+      updateImageScale();
       updateResizeControl();
     }
 
     private function onResizeControlChange(event:ResizeEvent):void {
-      trace("[DW] Resize control changed " + event.scaleX + "x" + event.scaleY);
-      imageSocket.scaleX = event.scaleX / contentWidth;
-      imageSocket.scaleY = imageSocket.scaleX;
+      // trace("[DW] Resize control changed " + event.scaleX + "x" + event.scaleY);
+      targetWidth = event.scaleX;
+      updateImageScale();
       updateResizeControl();
+    }
+
+    private function onReziseControlEnd(event:Event):void {
+      trace("[DW] Resize control end " + targetWidth + "x" + contentWidth);
+      dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, 0));
+    }
+
+    private function updateImageScale():void {
+      imageSocket.scaleX = targetWidth / contentWidth;
+      imageSocket.scaleY = imageSocket.scaleX;
     }
 
     private function updateResizeControl():void {

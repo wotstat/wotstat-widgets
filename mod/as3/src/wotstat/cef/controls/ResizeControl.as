@@ -10,6 +10,8 @@ package wotstat.cef.controls {
 
   public class ResizeControl extends EventDispatcher {
     public static const RESIZE_MOVE:String = "RESIZE_MOVE";
+    public static const RESIZE_END:String = "RESIZE_END";
+
     private const CONTROL_WIDTH:int = 5;
 
     private var _height:int = 0;
@@ -125,6 +127,7 @@ package wotstat.cef.controls {
       isDragging = false;
       _target.stopDrag();
       dispatchEvent(new ResizeEvent(RESIZE_MOVE, _target.x + CONTROL_WIDTH / 2, 0));
+      dispatchEvent(new Event(RESIZE_END));
       resetPosition();
     }
 

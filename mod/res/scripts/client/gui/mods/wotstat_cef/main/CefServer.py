@@ -9,6 +9,7 @@ logger = Logger.instance()
 
 class Commands:
   OPEN_NEW_BROWSER = 'OPEN_NEW_BROWSER'
+  RESIZE_BROWSER = 'RESIZE_BROWSER'
 
 
 class CefServer(object):
@@ -48,8 +49,6 @@ class CefServer(object):
 
   def _wrightInput(self, inputData):
     logger.debug("Send input data: %s" % str(inputData))
-    print(self.process)
-    print(self.process.stdin)
     self.process.stdin.write(str(inputData))
     self.process.stdin.flush()
 
@@ -80,6 +79,10 @@ class CefServer(object):
 
   def openNewBrowser(self, url, port, width):
     self._sendCommand(Commands.OPEN_NEW_BROWSER, url, port, width)
+
+  def resizeBrowser(self, port, width):
+    logger.debug("Resize browser: %s to width: %s" % (port, width))
+    self._sendCommand(Commands.RESIZE_BROWSER, port, width)
 
 
 server = CefServer()

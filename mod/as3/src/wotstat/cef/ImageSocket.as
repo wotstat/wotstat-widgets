@@ -12,6 +12,8 @@ package wotstat.cef {
   import scaleform.clik.events.ResizeEvent;
 
   public class ImageSocket extends Sprite {
+    public static const FRAME_RESIZE:String = "FRAME_RESIZE";
+
     private var socket:Socket;
     private var buffer:ByteArray;
     private var bitmap:Bitmap;
@@ -106,6 +108,8 @@ package wotstat.cef {
       }
     }
 
+
+    private var lastHeight:Number = 0;
     private function onImageLoadComplete(event:Event):void {
       var loaderInfo:LoaderInfo = LoaderInfo(event.target);
       var newBitmap:Bitmap = Bitmap(loaderInfo.content);
@@ -123,6 +127,11 @@ package wotstat.cef {
         bitmap.scaleX = k;
         bitmap.scaleY = k;
       }
+
+      // if (lastHeight != bitmap.height) {
+      // lastHeight = bitmap.height;
+      // dispatchEvent(new ResizeEvent(FRAME_RESIZE, bitmap.width, bitmap.height));
+      // }
 
       // trace("[IS] Image loaded " + bitmap.width + "x" + bitmap.height + "; " + App.appScale);
     }

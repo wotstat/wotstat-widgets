@@ -1,3 +1,4 @@
+import BigWorld
 from gui.Scaleform.framework import g_entitiesFactories, ScopeTemplates, ViewSettings
 from gui.Scaleform.framework.entities.View import View
 from gui.Scaleform.framework.application import AppEntry
@@ -38,6 +39,9 @@ class MainView(View):
 
   def py_log(self, msg, level):
     logger.printLog(level, msg)
+
+  def py_requestResize(self, port, width):
+    server.resizeBrowser(port, width)
 
   def __createWidget(self, url, width):
     

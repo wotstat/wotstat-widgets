@@ -6,7 +6,7 @@ as3Only=False
 serverOnly=False
 pythonOnly=False
 
-while getopts "v:asp" flag
+while getopts "v:aspd" flag
 do
   case "${flag}" in
     v) v=${OPTARG};;

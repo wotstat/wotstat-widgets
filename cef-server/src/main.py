@@ -15,6 +15,7 @@ from cefpython3 import cefpython as cef
 
 class Commands:
   OPEN_NEW_BROWSER = 'OPEN_NEW_BROWSER'
+  RESIZE_BROWSER = 'RESIZE_BROWSER'
 
 killNow = False
 logLock = threading.Lock()
@@ -33,6 +34,8 @@ log("CEF VERSION %s\n" % cef.__version__)
 
 with open(os.path.join(sys._MEIPASS, 'inject.js'), 'r') as f:
   injectJs = f.read()
+
+widgetsByPort = {}
 
 def bufferToPng(buffer, width, height):
     def write_chunk(png_file, chunk_type, data):
@@ -175,8 +178,16 @@ def createBrowser(url, port, width):
   
 
   widget = WidgetHandler(url, browser, port, width)
+  widgetsByPort[port] = widget
 
   return browser, widget
+
+def resizeBrowser(port, width):
+  widget = widgetsByPort.get(port, None) # type: WidgetHandler
+  if widget:
+    widget.resize(width, widget.size[1])
+  else:
+    log(f"Widget not found for port: {port}", 'ERROR')
 
 tasksQueue = queue.Queue()
 
@@ -191,10 +202,24 @@ def onCommand(command):
 
     url, port, width = parts[1:]
     port = int(port)
-    width = int(width)
+    width = int(float(width))
     log(f"Opening browser with url: {url} on port: {port}")
     createBrowser(url, port, width)
     return 
+  
+  if command.startswith(Commands.RESIZE_BROWSER):
+    parts = command.split(' ')
+    if len(parts) != 3:
+      log(f"Invalid command: {command}")
+      return
+
+    port, width = parts[1:]
+    port = int(port)
+    width = int(float(width))
+    log(f"Resizing browser on port: {port} to width: {width}")
+    resizeBrowser(port, width)
+    return 
+  
 
   log(f"Unknown command: {command}")
 
