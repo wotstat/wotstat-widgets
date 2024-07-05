@@ -1,31 +1,34 @@
-package wotstat.cef.buttons {
+package wotstat.cef.controls {
   import flash.display.Graphics;
   import flash.display.Bitmap;
   import net.wg.gui.components.controls.Image;
   import flash.events.Event;
   import flash.geom.Matrix;
 
-  public class Lock extends Button {
+  public class ImageButton extends Button {
     private const WIDTH:int = 18;
     private const X_OFFSET:int = 6;
     private var bitmap:Bitmap = null;
     private var image:Image = new Image();
+    private var imageScale:Number;
 
-    public function Lock() {
+    public function ImageButton(source:String, imageScale:Number = 15) {
+      this.imageScale = imageScale;
       super(WIDTH, 10, drawContent);
-      image.source = 'wotstatCefAssets/Lock.png';
 
       image.addEventListener(Event.CHANGE, function(e:Event):void {
           bitmap = new Bitmap(image.bitmapData);
           redraw();
         }
       );
+
+      image.source = source;
     }
 
     private function drawContent(graphics:Graphics, size:Number, radius:Number):void {
 
       if (bitmap) {
-        const width:Number = 0.5 * size;
+        const width:Number = imageScale * size;
         const offset:Number = (size - width) * 0.5;
         const scale:Number = width / bitmap.width;
         var matrix:Matrix = new Matrix();

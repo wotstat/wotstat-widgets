@@ -1,4 +1,4 @@
-package wotstat.cef.buttons {
+package wotstat.cef.controls {
   import flash.display.Graphics;
 
   public class Close extends Button {

@@ -9,6 +9,7 @@ package wotstat.cef {
   import flash.utils.Endian;
   import flash.display.Loader;
   import flash.display.LoaderInfo;
+  import scaleform.clik.events.ResizeEvent;
 
   public class ImageSocket extends Sprite {
     private var socket:Socket;
@@ -70,7 +71,11 @@ package wotstat.cef {
 
             if (bytesAvailable >= 4 * 3) {
               frameWidth = socket.readInt();
-              frameHeight = socket.readInt();
+              var h:int = socket.readInt();
+              if (h != frameHeight) {
+                frameHeight = h;
+                dispatchEvent(new ResizeEvent("FRAME_RESIZE", frameWidth / App.appScale, frameHeight / App.appScale));
+              }
               frameLength = socket.readInt();
               headerRead = true;
               bytesAvailable -= 4 * 3;
@@ -87,7 +92,7 @@ package wotstat.cef {
 
             buffer.clear();
             socket.readBytes(buffer, 0, frameLength);
-            trace("[IS] Image loaded " + frameLength + " bytes; Available: " + socket.bytesAvailable);
+            // trace("[IS] Image loaded " + frameLength + " bytes; Available: " + socket.bytesAvailable);
           }
         }
 
@@ -119,7 +124,7 @@ package wotstat.cef {
         bitmap.scaleY = k;
       }
 
-      trace("[IS] Image loaded " + bitmap.width + "x" + bitmap.height + "; " + App.appScale);
+      // trace("[IS] Image loaded " + bitmap.width + "x" + bitmap.height + "; " + App.appScale);
     }
 
   }
