@@ -130,8 +130,14 @@ class ClientHandler(object):
   def OnPaint(self, browser, element_type, paint_buffer, width, height, **_):
     frameBuffer = paint_buffer.GetString(mode="rgba", origin="top-left")
     if width == self.widget.size[0] or height != self.widget.size[1]:
-      pngBytes = bufferToPng(frameBuffer, width, height)
-      self.widget.frameServer.sendFrame(width, height, pngBytes)
+      # pngBytes = bufferToPng(frameBuffer, width, height)
+      # png_file = io.BytesIO()      
+      # png_file.write(0xffffffff.to_bytes(4, 'big'))
+      # png_file.write(0x00ff00ff.to_bytes(4, 'big'))
+      # png_file.write(0xff0000ff.to_bytes(4, 'big'))
+      # png_file.write(0x00000fff.to_bytes(4, 'big'))
+      self.widget.frameServer.sendFrame(width, height, frameBuffer)
+
     else:
       log("Invalid frame size: %s, %s" % (width, height), 'ERROR')
 
@@ -185,7 +191,8 @@ def createBrowser(url, port, width):
 def resizeBrowser(port, width):
   widget = widgetsByPort.get(port, None) # type: WidgetHandler
   if widget:
-    widget.resize(width, widget.size[1])
+    currentAspect = widget.size[0] / widget.size[1]
+    widget.resize(width, width / currentAspect)
   else:
     log(f"Widget not found for port: {port}", 'ERROR')
 
