@@ -24,7 +24,7 @@ package wotstat.cef {
 
     private var imageSocket:ImageSocket;
     private var isDragging:Boolean = false;
-    private var targetWidth:Number = 100;
+    private var targetWidth:Number = 0;
     private var contentWidth:Number = 0;
     private var contentHeight:Number = 0;
     private var controlPanel:ControlsPanel;
@@ -45,7 +45,7 @@ package wotstat.cef {
       return _port;
     }
 
-    public function DraggableWidget(host:String, port:int) {
+    public function DraggableWidget(host:String, port:int, width:int) {
       super();
       _port = port;
 
@@ -65,11 +65,10 @@ package wotstat.cef {
       controlPanel.y = -controlPanel.height - 3;
       hitArea = controlPanel;
 
-      this.x = (App.appWidth - imageSocket.width) / 2;
-      this.y = (App.appHeight - imageSocket.height - 100) / 2;
+      targetWidth = width / App.appScale;
 
-      resizeControl.contentWidth = imageSocket.width;
-      resizeControl.contentHeight = imageSocket.height;
+      this.x = (App.appWidth - targetWidth) / 2;
+      this.y = (App.appHeight - imageSocket.height - 100) / 2;
 
       addChild(resizeControl.target);
 

@@ -80,10 +80,10 @@ package wotstat.cef {
       }
     }
 
-    public function as_createWidget(url:String, port:int):void {
+    public function as_createWidget(url:String, port:int, width:int):void {
       _log("as_createWidget: " + url, "INFO");
 
-      var widget:DraggableWidget = new DraggableWidget('127.0.0.1', port);
+      var widget:DraggableWidget = new DraggableWidget('127.0.0.1', port, width);
       widget.addEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
       widget.addEventListener(DraggableWidget.REQUEST_RELOAD, onWidgetRequestReload);
       widget.addEventListener(DraggableWidget.REQUEST_CLOSE, onWidgetRequestClose);

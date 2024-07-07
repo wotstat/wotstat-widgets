@@ -58,8 +58,9 @@ class MainView(View):
       limit -= 1
 
     logger.info("Create widget: %s:%s" % (url, self.lastPort))
+    width = int(width)
     server.openNewBrowser(url, self.lastPort, width)
-    self.flashObject.as_createWidget(url, self.lastPort)
+    self.flashObject.as_createWidget(url, self.lastPort, width)
 
 
 def setup():

@@ -16,14 +16,11 @@ package wotstat.cef {
     private var socket:Socket;
     private var loader:Loader;
 
-
     private var isLoading:Boolean;
-    private var sprite:Sprite;
 
     public function ImageSocket(host:String, port:int) {
       socket = new Socket();
       loader = new Loader();
-      sprite = new Sprite();
       headerRead = false;
       isLoading = false;
 
@@ -37,7 +34,6 @@ package wotstat.cef {
       socket.connect(host, port);
       trace("[IS] Connected to server: " + socket.connected);
 
-      addChild(sprite);
       addChild(loader);
     }
 
@@ -148,18 +144,7 @@ package wotstat.cef {
 
     private var frameCount:int = 0;
     private function onFrame():void {
-      sprite.graphics.clear();
-      sprite.graphics.beginFill(0x000000, 0);
-      sprite.graphics.lineStyle(2, 0xff0000, 1);
-      sprite.graphics.drawRect(0, 0, frameWidth, frameHeight);
-      sprite.graphics.endFill();
-
       var k:Number = 1 / App.appScale;
-      if (sprite.scaleX != k) {
-        sprite.scaleX = k;
-        sprite.scaleY = k;
-      }
-
       if (loader.scaleX != k) {
         loader.scaleX = k;
         loader.scaleY = k;
