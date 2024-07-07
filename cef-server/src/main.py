@@ -141,7 +141,7 @@ class ClientHandler(object):
 class WidgetHandler(object):
   def __init__(self, url, browser, port, width):
     self.url = url
-    self.size = (width, 100)
+    self.size = (width, width)
     self.browser = browser
 
     bindings = cef.JavascriptBindings()

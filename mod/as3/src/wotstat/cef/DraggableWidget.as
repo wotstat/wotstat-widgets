@@ -36,7 +36,7 @@ package wotstat.cef {
     private var reloadBtn:Reload = new Reload(onReloadButtonClick);
     private var closeBtn:Close = new Close(onCloseButtonClick);
 
-    private const resizeControl:ResizeControl = new ResizeControl(40, 0, 0);
+    private const resizeControl:ResizeControl = new ResizeControl(0, 0);
 
     private var isContentHidden:Boolean = false;
     private var isLocked:Boolean = false;
@@ -70,7 +70,7 @@ package wotstat.cef {
       this.x = (App.appWidth - targetWidth) / 2;
       this.y = (App.appHeight - imageSocket.height - 100) / 2;
 
-      addChild(resizeControl.target);
+      addChild(resizeControl);
 
       imageSocket.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
       imageSocket.addEventListener(ImageSocket.FRAME_RESIZE, onImageSocketResize);
