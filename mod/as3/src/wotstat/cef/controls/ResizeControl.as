@@ -116,7 +116,7 @@ package wotstat.cef.controls {
       }
 
       isDragging = true;
-      _target.startDrag(true, new Rectangle(80, _target.y, 320, 0));
+      _target.startDrag(true, new Rectangle(80, _target.y, 520, 0));
     }
 
     private function onMouseUpHandler():void {

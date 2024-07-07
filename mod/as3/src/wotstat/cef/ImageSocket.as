@@ -6,18 +6,14 @@ package wotstat.cef {
   import flash.events.ProgressEvent;
   import flash.net.Socket;
   import flash.utils.ByteArray;
-  import flash.utils.Endian;
   import flash.display.Loader;
-  import flash.display.LoaderInfo;
   import scaleform.clik.events.ResizeEvent;
-  import flash.geom.Rectangle;
-  import flash.display.BitmapData;
+  import flash.display.PixelSnapping;
 
   public class ImageSocket extends Sprite {
     public static const FRAME_RESIZE:String = "FRAME_RESIZE";
 
     private var socket:Socket;
-    private var bitmap:Bitmap;
     private var loader:Loader;
 
 
@@ -35,15 +31,14 @@ package wotstat.cef {
       socket.addEventListener(Event.CLOSE, onClose);
       socket.addEventListener(IOErrorEvent.IO_ERROR, onError);
       socket.addEventListener(ProgressEvent.SOCKET_DATA, onSocketData);
-      // loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onImageLoadComplete);
+      loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onImageLoadComplete);
 
       trace("[IS] Connecting to server: " + host + ":" + port);
       socket.connect(host, port);
       trace("[IS] Connected to server: " + socket.connected);
 
-      bitmap = new Bitmap();
-      addChild(bitmap);
       addChild(sprite);
+      addChild(loader);
     }
 
     private function onConnect(event:Event):void {
@@ -98,7 +93,7 @@ package wotstat.cef {
 
           frameBuffer.clear();
           frameBuffer.writeBytes(tempBuffer);
-          frameBuffer.writeBytes(data, 0, nextFrameLength - tempBuffer.length);
+          frameBuffer.writeBytes(data, data.position, nextFrameLength - tempBuffer.length);
           data.position += nextFrameLength - tempBuffer.length;
 
           tempBuffer.clear();
@@ -107,7 +102,7 @@ package wotstat.cef {
           frameWidth = nextFrameWidth;
           frameHeight = nextFrameHeight;
           frameLength = nextFrameLength;
-          // trace("[IS] Image buffer read: " + frameBuffer.length + " bytes)");
+          // trace("[IS] Image buffer read: " + frameBuffer.length + " bytes)" + ": " + bufferString(frameBuffer));
         }
         else {
           if (tempBuffer.length + data.bytesAvailable < HEADER_SIZE) {
@@ -135,11 +130,12 @@ package wotstat.cef {
       }
 
       if (hasNewFrame) {
-        trace("[IS] NEW FRAME: " + frameWidth + "x" + frameHeight + " (" + frameLength + " bytes)");
+        // trace("[IS] NEW FRAME: " + frameWidth + "x" + frameHeight + " (" + frameLength + " bytes)");
         onFrame();
       }
     }
 
+    private var frameCount:int = 0;
     private function onFrame():void {
       sprite.graphics.clear();
       sprite.graphics.beginFill(0x000000, 0);
@@ -153,24 +149,20 @@ package wotstat.cef {
         sprite.scaleY = k;
       }
 
-      if (bitmap.scaleX != k) {
-        bitmap.scaleX = k;
-        bitmap.scaleY = k;
+      if (loader.scaleX != k) {
+        loader.scaleX = k;
+        loader.scaleY = k;
       }
 
-      if (bitmap.bitmapData) {
-        bitmap.bitmapData.dispose();
-        bitmap.bitmapData = null;
-      }
-
-      frameBuffer.position = 0;
-      bitmap.bitmapData = new BitmapData(frameWidth, frameHeight, true);
-      bitmap.bitmapData.lock();
-      bitmap.bitmapData.setPixels(bitmap.bitmapData.rect, frameBuffer);
-      bitmap.bitmapData.unlock();
-
-      trace("[IS] Dispatching resize event: " + frameWidth / App.appScale + "x" + frameHeight / App.appScale);
+      loader.unload();
+      loader.loadBytes(frameBuffer);
       dispatchEvent(new ResizeEvent(FRAME_RESIZE, frameWidth / App.appScale, frameHeight / App.appScale));
+    }
+
+    private function onImageLoadComplete(event:Event):void {
+      // trace("[IS] Image loaded: " + loader.width + "x" + loader.height);
+      (event.target.content as Bitmap).smoothing = false;
+      (event.target.content as Bitmap).pixelSnapping = PixelSnapping.ALWAYS;
     }
   }
 }

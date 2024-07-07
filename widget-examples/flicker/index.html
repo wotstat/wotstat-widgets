@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Widget</title>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const card = document.querySelector('.card');
+
+      async function loop() {
+        let i = 0;
+        while (true) {
+          i++;
+          await new Promise(resolve => setTimeout(resolve, 1/30*1000));
+
+          card.style.backgroundColor = ['#ff0000', '#00ff00', '#0000ff'][i % 4];
+          card.style.height = `${50 + Math.sin(i / 10) * 10}vw`;
+        }
+      }
+
+      loop();
+    });
+
+  </script>
+
+  <style>
+
+    body {
+      font-size: 10vw;
+      color: #ffffffe9;
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+    }
+
+    .card {
+      background-color: #1b1b1b;
+      border-radius: 10vw;
+      border-top-left-radius: 0;
+      border-top-right-radius: 20vw;
+      border-bottom-right-radius: 5vw;
+      height: 50vw;
+
+      position: relative;
+    }
+
+
+  </style>
+</head>
+<body>
+  <div class="card"></div>
+</body>
+</html>

@@ -88,6 +88,9 @@ package wotstat.cef {
       if (!isDragging)
         return;
 
+      x = Math.round(x);
+      y = Math.round(y);
+
       isDragging = false;
       stopDrag();
       trace("[DW] Mouse up + " + x + "x" + y);
@@ -98,7 +101,7 @@ package wotstat.cef {
     }
 
     private function onImageSocketResize(event:ResizeEvent):void {
-      trace("[DW] Image socket resized " + event.scaleX + "x" + event.scaleY);
+      // trace("[DW] Image socket resized " + event.scaleX + "x" + event.scaleY);
       contentWidth = event.scaleX;
       contentHeight = event.scaleY;
       updateImageScale();
@@ -113,7 +116,10 @@ package wotstat.cef {
     }
 
     private function onReziseControlEnd(event:Event):void {
-      trace("[DW] Resize control end " + targetWidth + "x" + contentWidth);
+      // trace("[DW] Resize control end " + targetWidth + "x" + contentWidth);
+      targetWidth = Math.round(targetWidth);
+      updateImageScale();
+      updateResizeControl();
       dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, 0));
     }
 
