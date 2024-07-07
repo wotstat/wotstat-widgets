@@ -13,6 +13,7 @@ package wotstat.cef {
   import wotstat.cef.controls.Reload;
   import wotstat.cef.controls.Close;
   import wotstat.cef.controls.Button;
+  import flash.geom.Point;
 
   public class DraggableWidget extends Sprite {
     public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";
@@ -23,14 +24,13 @@ package wotstat.cef {
     private const HANGAR_BOTTOM_OFFSET:int = 90;
 
     private var imageSocket:ImageSocket;
-    private var isDragging:Boolean = false;
     private var targetWidth:Number = 0;
     private var contentWidth:Number = 0;
     private var contentHeight:Number = 0;
     private var controlPanel:ControlsPanel;
     private var _port:int = 0;
 
-    private var hideShowBtn:HideShow = new HideShow(onHideShowButtonClick);
+    private var hideShowBtn:HideShow = new HideShow();
     private var lockBtn:Lock = new Lock(onLockButtonClick);
     private var resizeBtn:Resize = new Resize(onResizeButtonClick);
     private var reloadBtn:Reload = new Reload(onReloadButtonClick);
@@ -38,6 +38,8 @@ package wotstat.cef {
 
     private const resizeControl:ResizeControl = new ResizeControl(0, 0);
 
+    private var hideShowButtonDownPosition:Point = null;
+    private var isDragging:Boolean = false;
     private var isContentHidden:Boolean = false;
     private var isLocked:Boolean = false;
 
@@ -75,14 +77,18 @@ package wotstat.cef {
       imageSocket.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
       imageSocket.addEventListener(ImageSocket.FRAME_RESIZE, onImageSocketResize);
       App.instance.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
+      App.instance.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
       resizeControl.addEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
       resizeControl.addEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
+
+      hideShowBtn.addEventListener(MouseEvent.MOUSE_DOWN, onHideShowButtonMouseDown);
     }
 
     public function dispose():void {
       imageSocket.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
       imageSocket.removeEventListener(ImageSocket.FRAME_RESIZE, onImageSocketResize);
       App.instance.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
+      App.instance.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
       resizeControl.removeEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
       resizeControl.removeEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
 
@@ -98,7 +104,6 @@ package wotstat.cef {
         return;
 
       isDragging = true;
-      trace("[DW] Mouse down " + imageSocket.width + "x" + imageSocket.height + "; " + App.appWidth + "x" + App.appHeight);
       startDrag(false, new Rectangle(
             0,
             HANGAR_TOP_OFFSET,
@@ -107,7 +112,34 @@ package wotstat.cef {
           ));
     }
 
+    private function onMouseMove(event:MouseEvent):void {
+      if (hideShowButtonDownPosition != null) {
+        var dx:Number = event.stageX - hideShowButtonDownPosition.x;
+        var dy:Number = event.stageY - hideShowButtonDownPosition.y;
+
+        if (Math.sqrt(dx * dx + dy * dy) > 10 && isContentHidden && !isLocked) {
+          hideShowButtonDownPosition = null;
+          isDragging = true;
+          startDrag(false, new Rectangle(
+                0,
+                HANGAR_TOP_OFFSET + controlPanel.height + 3,
+                App.appWidth - imageSocket.width,
+                App.appHeight - imageSocket.height - HANGAR_TOP_OFFSET - HANGAR_BOTTOM_OFFSET
+              ));
+        }
+      }
+    }
+
     private function onMouseUp(event:MouseEvent):void {
+
+      if (hideShowButtonDownPosition != null) {
+        hideShowButtonDownPosition = null;
+
+        if (event.target == hideShowBtn) {
+          onHideShowButtonClick();
+        }
+      }
+
       if (!isDragging)
         return;
 
@@ -119,7 +151,11 @@ package wotstat.cef {
       trace("[DW] Mouse up + " + x + "x" + y);
     }
 
-    private function onHideShowButtonClick(event:MouseEvent):void {
+    private function onHideShowButtonMouseDown(event:MouseEvent):void {
+      hideShowButtonDownPosition = new Point(event.stageX, event.stageY);
+    }
+
+    private function onHideShowButtonClick():void {
       isContentHidden = !isContentHidden;
       hideShowBtn.isShow = !isContentHidden;
       imageSocket.visible = !isContentHidden;
