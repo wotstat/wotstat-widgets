@@ -41,6 +41,17 @@ package wotstat.cef {
       addChild(loader);
     }
 
+    public function dispose():void {
+      socket.removeEventListener(Event.CONNECT, onConnect);
+      socket.removeEventListener(Event.CLOSE, onClose);
+      socket.removeEventListener(IOErrorEvent.IO_ERROR, onError);
+      socket.removeEventListener(ProgressEvent.SOCKET_DATA, onSocketData);
+      loader.contentLoaderInfo.removeEventListener(Event.COMPLETE, onImageLoadComplete);
+
+      socket.close();
+      loader.unload();
+    }
+
     private function onConnect(event:Event):void {
       trace("[IS] Connected to server");
     }

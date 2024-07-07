@@ -11,6 +11,7 @@ class Commands:
   OPEN_NEW_BROWSER = 'OPEN_NEW_BROWSER'
   RESIZE_BROWSER = 'RESIZE_BROWSER'
   RELOAD_BROWSER = 'RELOAD_BROWSER'
+  CLOSE_BROWSER = 'CLOSE_BROWSER'
 
 
 class CefServer(object):
@@ -88,6 +89,10 @@ class CefServer(object):
   def reloadBrowser(self, port):
     logger.debug("Reload browser: %s" % port)
     self._sendCommand(Commands.RELOAD_BROWSER, port)
+
+  def closeBrowser(self, port):
+    logger.debug("Close browser: %s" % port)
+    self._sendCommand(Commands.CLOSE_BROWSER, port)
 
 
 server = CefServer()

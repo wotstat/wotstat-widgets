@@ -17,6 +17,7 @@ class Commands:
   OPEN_NEW_BROWSER = 'OPEN_NEW_BROWSER'
   RESIZE_BROWSER = 'RESIZE_BROWSER'
   RELOAD_BROWSER = 'RELOAD_BROWSER'
+  CLOSE_BROWSER = 'CLOSE_BROWSER'
 
 killNow = False
 logLock = threading.Lock()
@@ -163,6 +164,10 @@ class WidgetHandler(object):
   def reloadIgnoreCache(self):
     self.browser.ReloadIgnoreCache()
 
+  def close(self):
+    self.frameServer.close()
+    self.browser.CloseBrowser(True)
+
   # JS Bindings
   def onBodyResize(self, height):
     self.resize(self.size[0], height)
@@ -202,18 +207,33 @@ def reloadBrowser(port):
   else:
     log(f"Widget not found for port: {port}", 'ERROR')
 
+def closeBrowser(port):
+  widget = widgetsByPort.get(port, None) # type: WidgetHandler
+  if widget:
+    widget.close()
+    del widgetsByPort[port]
+    widgetsByPort[port] = None
+    log(f"Widget closed for port: {port}")
+  else:
+    log(f"Widget not found for port: {port}", 'ERROR')
+
 tasksQueue = queue.Queue()
+
+def getCommandParts(command, count=4):
+  parts = command.split(' ')
+  if len(parts) != count:
+    log(f"Invalid command: {command}")
+    return None
+  return parts[1:]
 
 def onCommand(command):
   # type: (str) -> None
 
   if command.startswith(Commands.OPEN_NEW_BROWSER):
-    parts = command.split(' ')
-    if len(parts) != 4:
-      log(f"Invalid command: {command}")
-      return
+    parts = getCommandParts(command, 4)
+    if not parts: return
 
-    url, port, width = parts[1:]
+    url, port, width = parts
     port = int(port)
     width = int(float(width))
     log(f"Opening browser with url: {url} on port: {port}")
@@ -221,12 +241,10 @@ def onCommand(command):
     return 
   
   if command.startswith(Commands.RESIZE_BROWSER):
-    parts = command.split(' ')
-    if len(parts) != 3:
-      log(f"Invalid command: {command}")
-      return
+    parts = getCommandParts(command, 3)
+    if not parts: return
 
-    port, width = parts[1:]
+    port, width = parts
     port = int(port)
     width = int(float(width))
     log(f"Resizing browser on port: {port} to width: {width}")
@@ -234,14 +252,21 @@ def onCommand(command):
     return
   
   if command.startswith(Commands.RELOAD_BROWSER):
-    parts = command.split(' ')
-    if len(parts) != 2:
-      log(f"Invalid command: {command}")
-      return
+    parts = getCommandParts(command, 2)
+    if not parts: return
 
-    port = int(parts[1])
+    port = int(parts[0])
     log(f"Reloading browser on port: {port}")
     reloadBrowser(port)
+    return
+  
+  if command.startswith(Commands.CLOSE_BROWSER):
+    parts = getCommandParts(command, 2)
+    if not parts: return
+
+    port = int(parts[0])
+    log(f"Closing browser on port: {port}")
+    closeBrowser(port)
     return
   
 

@@ -46,6 +46,9 @@ class MainView(View):
   def py_requestReload(self, port):
     server.reloadBrowser(port)
 
+  def py_requestClose(self, port):
+    server.closeBrowser(port)
+
   def __createWidget(self, url, width):
     
     self.lastPort += 1

@@ -17,6 +17,7 @@ package wotstat.cef {
   public class DraggableWidget extends Sprite {
     public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";
     public static const REQUEST_RELOAD:String = "REQUEST_RELOAD";
+    public static const REQUEST_CLOSE:String = "REQUEST_CLOSE";
 
     private const HANGAR_TOP_OFFSET:int = 0;
     private const HANGAR_BOTTOM_OFFSET:int = 90;
@@ -77,6 +78,20 @@ package wotstat.cef {
       App.instance.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
       resizeControl.addEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
       resizeControl.addEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
+    }
+
+    public function dispose():void {
+      imageSocket.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+      imageSocket.removeEventListener(ImageSocket.FRAME_RESIZE, onImageSocketResize);
+      App.instance.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
+      resizeControl.removeEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
+      resizeControl.removeEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
+
+      for each (var btn:Button in [hideShowBtn, lockBtn, resizeBtn, reloadBtn, closeBtn]) {
+        btn.dispose();
+      }
+
+      imageSocket.dispose();
     }
 
     private function onMouseDown(event:MouseEvent):void {
@@ -147,7 +162,7 @@ package wotstat.cef {
     }
 
     private function onCloseButtonClick(event:MouseEvent):void {
-      trace("[DW] Close button clicked");
+      dispatchEvent(new Event(REQUEST_CLOSE));
     }
 
     private function onImageSocketResize(event:ResizeEvent):void {

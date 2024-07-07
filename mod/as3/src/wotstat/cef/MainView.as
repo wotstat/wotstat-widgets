@@ -8,7 +8,6 @@ package wotstat.cef {
   import net.wg.infrastructure.interfaces.IManagedContent;
   import net.wg.data.constants.generated.LAYER_NAMES;
   import net.wg.gui.components.containers.MainViewContainer;
-  import flash.display.DisplayObject;
   import scaleform.clik.events.ResizeEvent;
   import flash.events.Event;
 
@@ -18,6 +17,7 @@ package wotstat.cef {
     public var py_log:Function;
     public var py_requestResize:Function;
     public var py_requestReload:Function;
+    public var py_requestClose:Function;
 
 
     private var hangarView:Hangar = null;
@@ -66,7 +66,7 @@ package wotstat.cef {
         _log("Hangar view found", "INFO");
 
         for each (var widget:DraggableWidget in activeWidgets) {
-          hangarView.addChild(DisplayObject(widget));
+          hangarView.addChild(widget);
         }
       }
     }
@@ -85,9 +85,11 @@ package wotstat.cef {
 
       var widget:DraggableWidget = new DraggableWidget('127.0.0.1', port);
       widget.addEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
-      widget.addEventListener(DraggableWidget.REQUEST_RELOAD, onWidgerRequestReload);
+      widget.addEventListener(DraggableWidget.REQUEST_RELOAD, onWidgetRequestReload);
+      widget.addEventListener(DraggableWidget.REQUEST_CLOSE, onWidgetRequestClose);
+
       activeWidgets.push(widget);
-      hangarView.addChild(DisplayObject(widget));
+      hangarView.addChild(widget);
     }
 
     private function onWidgetRequestResize(event:ResizeEvent):void {
@@ -97,10 +99,30 @@ package wotstat.cef {
       }
     }
 
-    private function onWidgerRequestReload(event:Event):void {
+    private function onWidgetRequestReload(event:Event):void {
       if (this.py_requestReload != null) {
         var widget:DraggableWidget = event.target as DraggableWidget;
         this.py_requestReload(widget.port);
+      }
+    }
+
+    private function onWidgetRequestClose(event:Event):void {
+
+      var widget:DraggableWidget = event.target as DraggableWidget;
+
+      var idx:int = activeWidgets.indexOf(widget);
+      if (idx >= 0) {
+        activeWidgets.splice(idx, 1);
+      }
+
+      hangarView.removeChild(widget);
+      widget.dispose();
+      widget.removeEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
+      widget.removeEventListener(DraggableWidget.REQUEST_RELOAD, onWidgetRequestReload);
+      widget.removeEventListener(DraggableWidget.REQUEST_CLOSE, onWidgetRequestClose);
+
+      if (this.py_requestClose != null) {
+        this.py_requestClose(widget.port);
       }
     }
   }

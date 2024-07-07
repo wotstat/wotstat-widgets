@@ -5,14 +5,22 @@ package wotstat.cef.controls {
   public class Button extends SimpleButton {
     private const border:uint = 0xffffff4d;
 
+    private var clickFunction:Function;
+
     public function Button(width:Number, corner:Number = 10, drawContent:Function = null, clickFunction:Function = null) {
       downState = new ButtonDisplayState(0x6969694a, border, width, corner, drawContent);
       overState = new ButtonDisplayState(0xffffff1a, border, width, corner, drawContent);
       upState = new ButtonDisplayState(0x6969690f, border, width, corner, drawContent);
       hitTestState = new ButtonDisplayState(0x00000000, border, width, corner);
       useHandCursor = true;
-      if (clickFunction != null)
+      if (clickFunction != null) {
+        this.clickFunction = clickFunction;
         addEventListener(MouseEvent.CLICK, clickFunction);
+      }
+    }
+
+    public function dispose():void {
+      removeEventListener(MouseEvent.CLICK, clickFunction);
     }
 
     public function redraw():void {
