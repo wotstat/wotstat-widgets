@@ -10,6 +10,7 @@ logger = Logger.instance()
 class Commands:
   OPEN_NEW_BROWSER = 'OPEN_NEW_BROWSER'
   RESIZE_BROWSER = 'RESIZE_BROWSER'
+  RELOAD_BROWSER = 'RELOAD_BROWSER'
 
 
 class CefServer(object):
@@ -83,6 +84,10 @@ class CefServer(object):
   def resizeBrowser(self, port, width):
     logger.debug("Resize browser: %s to width: %s" % (port, width))
     self._sendCommand(Commands.RESIZE_BROWSER, port, width)
+
+  def reloadBrowser(self, port):
+    logger.debug("Reload browser: %s" % port)
+    self._sendCommand(Commands.RELOAD_BROWSER, port)
 
 
 server = CefServer()

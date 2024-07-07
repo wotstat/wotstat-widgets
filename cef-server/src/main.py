@@ -16,6 +16,7 @@ from cefpython3 import cefpython as cef
 class Commands:
   OPEN_NEW_BROWSER = 'OPEN_NEW_BROWSER'
   RESIZE_BROWSER = 'RESIZE_BROWSER'
+  RELOAD_BROWSER = 'RELOAD_BROWSER'
 
 killNow = False
 logLock = threading.Lock()
@@ -27,7 +28,7 @@ def log(msg, level='INFO'):
 def consoleLog(url, level, msg):
   with logLock:
     namedLevel = ['0', 'DEBUG', 'INFO', 'WARNING', 'ERROR'][level] if level in range(5) else level
-    sys.stdout.write("[CONSOLE][%s][%s]: %s\n" % (url, namedLevel, msg))
+    sys.stdout.write("[CONSOLE][%s][%s]: %s\n" % (url, namedLevel, msg.encode("utf-8")))
     sys.stdout.flush()
 
 log("CEF VERSION %s\n" % cef.__version__)
@@ -159,6 +160,9 @@ class WidgetHandler(object):
     self.size = (width, height)
     self.browser.WasResized()
 
+  def reloadIgnoreCache(self):
+    self.browser.ReloadIgnoreCache()
+
   # JS Bindings
   def onBodyResize(self, height):
     self.resize(self.size[0], height)
@@ -191,6 +195,13 @@ def resizeBrowser(port, width):
   else:
     log(f"Widget not found for port: {port}", 'ERROR')
 
+def reloadBrowser(port):
+  widget = widgetsByPort.get(port, None) # type: WidgetHandler
+  if widget:
+    widget.reloadIgnoreCache()
+  else:
+    log(f"Widget not found for port: {port}", 'ERROR')
+
 tasksQueue = queue.Queue()
 
 def onCommand(command):
@@ -220,7 +231,18 @@ def onCommand(command):
     width = int(float(width))
     log(f"Resizing browser on port: {port} to width: {width}")
     resizeBrowser(port, width)
-    return 
+    return
+  
+  if command.startswith(Commands.RELOAD_BROWSER):
+    parts = command.split(' ')
+    if len(parts) != 2:
+      log(f"Invalid command: {command}")
+      return
+
+    port = int(parts[1])
+    log(f"Reloading browser on port: {port}")
+    reloadBrowser(port)
+    return
   
 
   log(f"Unknown command: {command}")

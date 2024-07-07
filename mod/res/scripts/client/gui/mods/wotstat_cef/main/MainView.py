@@ -43,6 +43,9 @@ class MainView(View):
   def py_requestResize(self, port, width):
     server.resizeBrowser(port, width)
 
+  def py_requestReload(self, port):
+    server.reloadBrowser(port)
+
   def __createWidget(self, url, width):
     
     self.lastPort += 1

@@ -21,7 +21,7 @@ package wotstat.cef.controls {
     }
 
     private function drawContent(graphics:Graphics, size:Number, radius:Number):void {
-      graphics.lineStyle(1, 0xffffff);
+      graphics.lineStyle(1.5, 0xffffff);
 
       if (_isShow) {
         graphics.moveTo(X_OFFSET, WIDTH / 2);

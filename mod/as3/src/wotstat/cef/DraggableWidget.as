@@ -16,6 +16,7 @@ package wotstat.cef {
 
   public class DraggableWidget extends Sprite {
     public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";
+    public static const REQUEST_RELOAD:String = "REQUEST_RELOAD";
 
     private const HANGAR_TOP_OFFSET:int = 0;
     private const HANGAR_BOTTOM_OFFSET:int = 90;
@@ -61,9 +62,10 @@ package wotstat.cef {
 
       addChild(controlPanel);
       controlPanel.y = -controlPanel.height - 3;
+      hitArea = controlPanel;
 
       this.x = (App.appWidth - imageSocket.width) / 2;
-      this.y = (App.appHeight - imageSocket.height) / 2;
+      this.y = (App.appHeight - imageSocket.height - 100) / 2;
 
       resizeControl.contentWidth = imageSocket.width;
       resizeControl.contentHeight = imageSocket.height;
@@ -108,11 +110,11 @@ package wotstat.cef {
       hideShowBtn.isShow = !isContentHidden;
       imageSocket.visible = !isContentHidden;
 
-      for each (var value:Button in [lockBtn, resizeBtn, reloadBtn, closeBtn]) {
-        value.visible = !isContentHidden;
+      if (resizeControl.active) {
+        resizeControl.active = false;
       }
 
-      controlPanel.layout();
+      updateButtonsVisibility();
     }
 
     private function onResizeButtonClick(event:MouseEvent):void {
@@ -126,17 +128,22 @@ package wotstat.cef {
         resizeControl.active = false;
       }
 
+      imageSocket.mouseEnabled = !isLocked;
+      imageSocket.mouseChildren = !isLocked;
+      updateButtonsVisibility();
+    }
+
+    private function updateButtonsVisibility():void {
       for each (var value:Button in [resizeBtn, reloadBtn, closeBtn]) {
-        value.visible = !isLocked;
+        value.visible = !isContentHidden && !isLocked;
       }
 
-      imageSocket.hitArea = isLocked ? new Sprite() : null;
-      imageSocket.mouseChildren = !isLocked;
-      imageSocket.mouseEnabled = !isLocked;
+      lockBtn.visible = !isContentHidden;
+      controlPanel.layout();
     }
 
     private function onReloadButtonClick(event:MouseEvent):void {
-      trace("[DW] Reload button clicked");
+      dispatchEvent(new Event(REQUEST_RELOAD));
     }
 
     private function onCloseButtonClick(event:MouseEvent):void {

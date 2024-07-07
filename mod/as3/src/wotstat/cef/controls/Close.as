@@ -10,7 +10,7 @@ package wotstat.cef.controls {
     }
 
     private function drawContent(graphics:Graphics, size:Number, radius:Number):void {
-      graphics.lineStyle(1, 0xffffff);
+      graphics.lineStyle(1.5, 0xffffff);
       graphics.moveTo(X_OFFSET, X_OFFSET);
       graphics.lineTo(size - X_OFFSET, size - X_OFFSET);
       graphics.moveTo(size - X_OFFSET, X_OFFSET);
