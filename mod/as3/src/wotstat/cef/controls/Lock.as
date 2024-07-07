@@ -1,7 +1,7 @@
 package wotstat.cef.controls {
   public class Lock extends ImageButton {
-    public function Lock() {
-      super('wotstatCefAssets/Lock.png', 0.5);
+    public function Lock(clicked:Function = null) {
+      super('wotstatCefAssets/Lock.png', 0.5, clicked);
     }
   }
 }

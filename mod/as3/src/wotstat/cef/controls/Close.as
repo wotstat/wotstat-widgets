@@ -5,8 +5,8 @@ package wotstat.cef.controls {
     private const WIDTH:int = 18;
     private const X_OFFSET:int = 6;
 
-    public function Close() {
-      super(WIDTH, 10, drawContent);
+    public function Close(clicked:Function = null) {
+      super(WIDTH, 10, drawContent, clicked);
     }
 
     private function drawContent(graphics:Graphics, size:Number, radius:Number):void {

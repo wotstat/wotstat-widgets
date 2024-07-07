@@ -12,9 +12,9 @@ package wotstat.cef.controls {
     private var image:Image = new Image();
     private var imageScale:Number;
 
-    public function ImageButton(source:String, imageScale:Number = 15) {
+    public function ImageButton(source:String, imageScale:Number = 15, clicked:Function = null) {
       this.imageScale = imageScale;
-      super(WIDTH, 10, drawContent);
+      super(WIDTH, 10, drawContent, clicked);
 
       image.addEventListener(Event.CHANGE, function(e:Event):void {
           bitmap = new Bitmap(image.bitmapData);

@@ -9,6 +9,10 @@ package wotstat.cef {
   import wotstat.cef.controls.ResizeControl;
   import flash.events.Event;
   import scaleform.clik.events.ResizeEvent;
+  import wotstat.cef.controls.HideShow;
+  import wotstat.cef.controls.Reload;
+  import wotstat.cef.controls.Close;
+  import wotstat.cef.controls.Button;
 
   public class DraggableWidget extends Sprite {
     public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";
@@ -17,14 +21,23 @@ package wotstat.cef {
     private const HANGAR_BOTTOM_OFFSET:int = 90;
 
     private var imageSocket:ImageSocket;
-    private var dragArea:Sprite;
     private var isDragging:Boolean = false;
     private var targetWidth:Number = 100;
     private var contentWidth:Number = 0;
     private var contentHeight:Number = 0;
+    private var controlPanel:ControlsPanel;
     private var _port:int = 0;
 
+    private var hideShowBtn:HideShow = new HideShow(onHideShowButtonClick);
+    private var lockBtn:Lock = new Lock(onLockButtonClick);
+    private var resizeBtn:Resize = new Resize(onResizeButtonClick);
+    private var reloadBtn:Reload = new Reload(onReloadButtonClick);
+    private var closeBtn:Close = new Close(onCloseButtonClick);
+
     private const resizeControl:ResizeControl = new ResizeControl(40, 0, 0);
+
+    private var isContentHidden:Boolean = false;
+    private var isLocked:Boolean = false;
 
     public function get port():int {
       return _port;
@@ -37,21 +50,17 @@ package wotstat.cef {
       imageSocket = new ImageSocket(host, port);
       addChild(imageSocket);
 
-      var close:Close = new Close();
-      addChild(close);
-      close.x = -20;
-      close.y = 0;
+      controlPanel = new ControlsPanel()
+        .addButton(hideShowBtn)
+        .addButton(lockBtn)
+        .addButton(resizeBtn)
+        .addButton(reloadBtn)
+        .addButton(closeBtn);
 
-      var lock:Lock = new Lock();
-      addChild(lock);
-      lock.x = -20;
-      lock.y = 22;
+      controlPanel.layout();
 
-      var resize:Resize = new Resize();
-      resize.addEventListener(MouseEvent.CLICK, onResizeButtonClick);
-      addChild(resize);
-      resize.x = -20;
-      resize.y = 44;
+      addChild(controlPanel);
+      controlPanel.y = -controlPanel.height - 3;
 
       this.x = (App.appWidth - imageSocket.width) / 2;
       this.y = (App.appHeight - imageSocket.height) / 2;
@@ -61,10 +70,8 @@ package wotstat.cef {
 
       addChild(resizeControl.target);
 
-
       imageSocket.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
       imageSocket.addEventListener(ImageSocket.FRAME_RESIZE, onImageSocketResize);
-      // imageSocket.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
       App.instance.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
       resizeControl.addEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
       resizeControl.addEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
@@ -96,8 +103,44 @@ package wotstat.cef {
       trace("[DW] Mouse up + " + x + "x" + y);
     }
 
+    private function onHideShowButtonClick(event:MouseEvent):void {
+      isContentHidden = !isContentHidden;
+      hideShowBtn.isShow = !isContentHidden;
+      imageSocket.visible = !isContentHidden;
+
+      for each (var value:Button in [lockBtn, resizeBtn, reloadBtn, closeBtn]) {
+        value.visible = !isContentHidden;
+      }
+
+      controlPanel.layout();
+    }
+
     private function onResizeButtonClick(event:MouseEvent):void {
       resizeControl.active = !resizeControl.active;
+    }
+
+    private function onLockButtonClick(event:MouseEvent):void {
+      isLocked = !isLocked;
+
+      if (resizeControl.active) {
+        resizeControl.active = false;
+      }
+
+      for each (var value:Button in [resizeBtn, reloadBtn, closeBtn]) {
+        value.visible = !isLocked;
+      }
+
+      imageSocket.hitArea = isLocked ? new Sprite() : null;
+      imageSocket.mouseChildren = !isLocked;
+      imageSocket.mouseEnabled = !isLocked;
+    }
+
+    private function onReloadButtonClick(event:MouseEvent):void {
+      trace("[DW] Reload button clicked");
+    }
+
+    private function onCloseButtonClick(event:MouseEvent):void {
+      trace("[DW] Close button clicked");
     }
 
     private function onImageSocketResize(event:ResizeEvent):void {

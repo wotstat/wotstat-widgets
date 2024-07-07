@@ -15,7 +15,7 @@
           i++;
           await new Promise(resolve => setTimeout(resolve, 1/30*1000));
 
-          card.style.backgroundColor = ['#ff0000', '#00ff00', '#0000ff'][i % 4];
+          card.style.backgroundColor = `hsl(${i % 360}, 100%, 50%)`;
           card.style.height = `${50 + Math.sin(i / 10) * 10}vw`;
         }
       }
@@ -37,14 +37,10 @@
     .card {
       background-color: #1b1b1b;
       border-radius: 10vw;
-      border-top-left-radius: 0;
-      border-top-right-radius: 20vw;
-      border-bottom-right-radius: 5vw;
       height: 50vw;
 
       position: relative;
     }
-
 
   </style>
 </head>
