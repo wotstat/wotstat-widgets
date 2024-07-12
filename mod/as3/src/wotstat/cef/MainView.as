@@ -23,6 +23,7 @@ package wotstat.cef {
 
     private var hangarView:Hangar = null;
     private var activeWidgets:Vector.<DraggableWidget> = new Vector.<DraggableWidget>();
+    private var activeWidgetsByUUID:Object = new Object();
 
     public function MainView() {
       super();
@@ -82,7 +83,7 @@ package wotstat.cef {
     }
 
     public function as_createWidget(uuid:int, url:String, width:int, height:int):void {
-      _log("as_createWidget [" + uuid + "]: " + url + " " + widget + "x" + height, "INFO");
+      _log("as_createWidget [" + uuid + "]: " + url + " " + width + "x" + height, "INFO");
 
       var widget:DraggableWidget = new DraggableWidget(uuid, width, height);
       widget.addEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
@@ -90,6 +91,7 @@ package wotstat.cef {
       widget.addEventListener(DraggableWidget.REQUEST_CLOSE, onWidgetRequestClose);
 
       activeWidgets.push(widget);
+      activeWidgetsByUUID[uuid] = widget;
       hangarView.addChild(widget);
     }
 
@@ -124,12 +126,8 @@ package wotstat.cef {
 
     public function as_onFrame(uuid:int, width:int, height:int, data:String):void {
       var bytes:ByteArray = decodeBase64(data);
-      for each (var widget:DraggableWidget in activeWidgets) {
-        if (widget.uuid == uuid) {
-          widget.setFrame(bytes);
-          break;
-        }
-      }
+      var widget:DraggableWidget = activeWidgetsByUUID[uuid];
+      widget.setFrame(width, height, bytes);
     }
 
     private function onWidgetRequestResize(event:ResizeEvent):void {
@@ -154,6 +152,8 @@ package wotstat.cef {
       if (idx >= 0) {
         activeWidgets.splice(idx, 1);
       }
+
+      activeWidgetsByUUID[widget.uuid] = null;
 
       hangarView.removeChild(widget);
       widget.dispose();

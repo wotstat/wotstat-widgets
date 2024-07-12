@@ -15,6 +15,8 @@ package wotstat.cef {
   import wotstat.cef.controls.Button;
   import flash.geom.Point;
   import flash.utils.ByteArray;
+  import flash.display.Loader;
+  import flash.display.Graphics;
 
   public class DraggableWidget extends Sprite {
     public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";
@@ -24,11 +26,6 @@ package wotstat.cef {
     private const HANGAR_TOP_OFFSET:int = 0;
     private const HANGAR_BOTTOM_OFFSET:int = 90;
 
-    private var imageSocket:ImageSocket;
-    private var targetWidth:Number = 0;
-    private var contentWidth:Number = 0;
-    private var contentHeight:Number = 0;
-    private var controlPanel:ControlsPanel;
     private var _uuid:int = 0;
 
     private var hideShowBtn:HideShow = new HideShow();
@@ -37,12 +34,22 @@ package wotstat.cef {
     private var reloadBtn:Reload = new Reload(onReloadButtonClick);
     private var closeBtn:Close = new Close(onCloseButtonClick);
 
+    private var controlPanel:ControlsPanel = new ControlsPanel();
     private const resizeControl:ResizeControl = new ResizeControl(0, 0);
+
+    // Target width by resize control in POINTS
+    private var targetWidth:Number = 0;
 
     private var hideShowButtonDownPosition:Point = null;
     private var isDragging:Boolean = false;
     private var isContentHidden:Boolean = false;
     private var isLocked:Boolean = false;
+
+    // CONTENT == Browser Image in readl PIXELS
+    private var contentWidth:Number = 0;
+    private var contentHeight:Number = 0;
+    private var content:Sprite = new Sprite();
+    private var loader:Loader = new Loader();
 
     public function get uuid():int {
       return _uuid;
@@ -52,17 +59,16 @@ package wotstat.cef {
       super();
       _uuid = uuid;
 
-      imageSocket = new ImageSocket();
-      addChild(imageSocket);
+      addChild(content);
+      content.addChild(loader);
 
-      controlPanel = new ControlsPanel()
+      controlPanel
         .addButton(hideShowBtn)
         .addButton(lockBtn)
         .addButton(resizeBtn)
         .addButton(reloadBtn)
-        .addButton(closeBtn);
-
-      controlPanel.layout();
+        .addButton(closeBtn)
+        .layout();
 
       addChild(controlPanel);
       controlPanel.y = -controlPanel.height - 3;
@@ -71,27 +77,42 @@ package wotstat.cef {
       targetWidth = width / App.appScale;
 
       this.x = (App.appWidth - targetWidth) / 2;
-      this.y = (App.appHeight - imageSocket.height - 100) / 2;
+      this.y = (App.appHeight - height / App.appScale - 100) / 2;
+      contentWidth = width;
+      contentHeight = height;
 
       addChild(resizeControl);
 
-      imageSocket.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
-      imageSocket.addEventListener(ImageSocket.FRAME_RESIZE, onImageSocketResize);
+      content.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
       App.instance.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
       App.instance.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
       resizeControl.addEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
       resizeControl.addEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
 
       hideShowBtn.addEventListener(MouseEvent.MOUSE_DOWN, onHideShowButtonMouseDown);
+
+      updateImageScale();
     }
 
-    public function setFrame(data:ByteArray):void {
-      imageSocket.setFrame(data);
+    public function setFrame(width:uint, height:uint, data:ByteArray):void {
+
+      if (width != targetWidth * App.appScale && !resizeControl.isResizing) {
+        trace("[DW] Skip frame with width " + width + "!=" + targetWidth * App.appScale);
+        return;
+      }
+
+      loader.unload();
+      loader.loadBytes(data);
+
+      contentWidth = width;
+      contentHeight = height;
+
+      updateImageScale();
+      updateResizeControl();
     }
 
     public function dispose():void {
-      imageSocket.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
-      imageSocket.removeEventListener(ImageSocket.FRAME_RESIZE, onImageSocketResize);
+      loader.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
       App.instance.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
       App.instance.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
       resizeControl.removeEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
@@ -101,7 +122,7 @@ package wotstat.cef {
         btn.dispose();
       }
 
-      imageSocket.dispose();
+      loader.unload();
     }
 
     private function onMouseDown(event:MouseEvent):void {
@@ -112,8 +133,8 @@ package wotstat.cef {
       startDrag(false, new Rectangle(
             0,
             HANGAR_TOP_OFFSET,
-            App.appWidth - imageSocket.width,
-            App.appHeight - imageSocket.height - HANGAR_TOP_OFFSET - HANGAR_BOTTOM_OFFSET
+            App.appWidth - content.width,
+            App.appHeight - content.height - HANGAR_TOP_OFFSET - HANGAR_BOTTOM_OFFSET
           ));
     }
 
@@ -128,8 +149,8 @@ package wotstat.cef {
           startDrag(false, new Rectangle(
                 0,
                 HANGAR_TOP_OFFSET + controlPanel.height + 3,
-                App.appWidth - imageSocket.width,
-                App.appHeight - imageSocket.height - HANGAR_TOP_OFFSET - HANGAR_BOTTOM_OFFSET
+                App.appWidth - loader.width,
+                App.appHeight - loader.height - HANGAR_TOP_OFFSET - HANGAR_BOTTOM_OFFSET
               ));
         }
       }
@@ -153,7 +174,6 @@ package wotstat.cef {
 
       isDragging = false;
       stopDrag();
-      trace("[DW] Mouse up + " + x + "x" + y);
     }
 
     private function onHideShowButtonMouseDown(event:MouseEvent):void {
@@ -163,7 +183,7 @@ package wotstat.cef {
     private function onHideShowButtonClick():void {
       isContentHidden = !isContentHidden;
       hideShowBtn.isShow = !isContentHidden;
-      imageSocket.visible = !isContentHidden;
+      content.visible = !isContentHidden;
 
       if (resizeControl.active) {
         resizeControl.active = false;
@@ -183,8 +203,8 @@ package wotstat.cef {
         resizeControl.active = false;
       }
 
-      imageSocket.mouseEnabled = !isLocked;
-      imageSocket.mouseChildren = !isLocked;
+      content.mouseEnabled = !isLocked;
+      content.mouseChildren = !isLocked;
       updateButtonsVisibility();
     }
 
@@ -205,14 +225,6 @@ package wotstat.cef {
       dispatchEvent(new Event(REQUEST_CLOSE));
     }
 
-    private function onImageSocketResize(event:ResizeEvent):void {
-      // trace("[DW] Image socket resized " + event.scaleX + "x" + event.scaleY);
-      contentWidth = event.scaleX;
-      contentHeight = event.scaleY;
-      updateImageScale();
-      updateResizeControl();
-    }
-
     private function onResizeControlChange(event:ResizeEvent):void {
       // trace("[DW] Resize control changed " + event.scaleX + "x" + event.scaleY);
       targetWidth = event.scaleX;
@@ -229,13 +241,22 @@ package wotstat.cef {
     }
 
     private function updateImageScale():void {
-      imageSocket.scaleX = targetWidth / contentWidth;
-      imageSocket.scaleY = imageSocket.scaleX;
+      var k:Number = targetWidth / contentWidth;
+      content.scaleX = k;
+      content.scaleY = k;
+
+      if (content.width != contentWidth / App.appScale || content.height != contentHeight / App.appScale) {
+        var graphics:Graphics = content.graphics;
+        graphics.clear();
+        graphics.beginFill(0x000000, 0);
+        graphics.drawRect(0, 0, contentWidth, contentHeight);
+        graphics.endFill();
+      }
     }
 
     private function updateResizeControl():void {
-      resizeControl.contentWidth = contentWidth * imageSocket.scaleX;
-      resizeControl.contentHeight = contentHeight * imageSocket.scaleY;
+      resizeControl.contentWidth = contentWidth * content.scaleX;
+      resizeControl.contentHeight = contentHeight * content.scaleY;
     }
   }
 }

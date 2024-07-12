@@ -15,8 +15,8 @@ package wotstat.cef.controls {
 
     private const CONTROL_WIDTH:int = 5;
     private const CONTROL_HEIGHT:int = 40;
-    private const MAX_WIDTH:int = 320;
-    private const MIN_WIDTHOL_HEIGHT:int = 80;
+    private const MAX_WIDTH:int = 400;
+    private const MIN_WIDTH:int = 105;
 
     private var control:Sprite;
     private var hitArea:Sprite;
@@ -63,6 +63,10 @@ package wotstat.cef.controls {
       resetPosition();
     }
 
+    public function get isResizing():Boolean {
+      return isDragging;
+    }
+
     public function ResizeControl(x:Number, y:Number) {
       control = new Sprite();
       control.x = x;
@@ -74,6 +78,7 @@ package wotstat.cef.controls {
       hitArea = new Sprite();
       control.addChild(hitArea);
       control.hitArea = hitArea;
+      hitArea.useHandCursor = true;
 
       draw();
 
@@ -113,7 +118,7 @@ package wotstat.cef.controls {
       }
 
       isDragging = true;
-      control.startDrag(true, new Rectangle(MIN_WIDTHOL_HEIGHT, control.y, MAX_WIDTH, 0));
+      control.startDrag(true, new Rectangle(MIN_WIDTH - CONTROL_WIDTH / 2 + 1, control.y, MAX_WIDTH - MIN_WIDTH, 0));
     }
 
     private function onMouseUpHandler():void {
@@ -139,7 +144,7 @@ package wotstat.cef.controls {
       if (isDragging) {
         control.stopDrag();
         control.y = _contentHeight / 2 - controlHeight / 2;
-        control.startDrag(true, new Rectangle(MIN_WIDTHOL_HEIGHT, control.y, MAX_WIDTH, 0));
+        control.startDrag(true, new Rectangle(MIN_WIDTH - CONTROL_WIDTH / 2 + 1, control.y, MAX_WIDTH - MIN_WIDTH, 0));
         return;
       }
 
