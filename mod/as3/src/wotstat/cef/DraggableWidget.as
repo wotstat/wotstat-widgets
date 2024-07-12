@@ -14,6 +14,7 @@ package wotstat.cef {
   import wotstat.cef.controls.Close;
   import wotstat.cef.controls.Button;
   import flash.geom.Point;
+  import flash.utils.ByteArray;
 
   public class DraggableWidget extends Sprite {
     public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";
@@ -28,7 +29,7 @@ package wotstat.cef {
     private var contentWidth:Number = 0;
     private var contentHeight:Number = 0;
     private var controlPanel:ControlsPanel;
-    private var _port:int = 0;
+    private var _uuid:int = 0;
 
     private var hideShowBtn:HideShow = new HideShow();
     private var lockBtn:Lock = new Lock(onLockButtonClick);
@@ -43,15 +44,15 @@ package wotstat.cef {
     private var isContentHidden:Boolean = false;
     private var isLocked:Boolean = false;
 
-    public function get port():int {
-      return _port;
+    public function get uuid():int {
+      return _uuid;
     }
 
-    public function DraggableWidget(host:String, port:int, width:int) {
+    public function DraggableWidget(uuid:int, width:int, height:int) {
       super();
-      _port = port;
+      _uuid = uuid;
 
-      imageSocket = new ImageSocket(host, port);
+      imageSocket = new ImageSocket();
       addChild(imageSocket);
 
       controlPanel = new ControlsPanel()
@@ -82,6 +83,10 @@ package wotstat.cef {
       resizeControl.addEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
 
       hideShowBtn.addEventListener(MouseEvent.MOUSE_DOWN, onHideShowButtonMouseDown);
+    }
+
+    public function setFrame(data:ByteArray):void {
+      imageSocket.setFrame(data);
     }
 
     public function dispose():void {

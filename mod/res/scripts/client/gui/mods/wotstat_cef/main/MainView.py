@@ -9,58 +9,53 @@ from gui.app_loader.settings import APP_NAME_SPACE
 from frameworks.wulf import WindowLayer
 from helpers import dependency
 from skeletons.gui.impl import IGuiLoader
+import base64
 
 from ..common.Logger import Logger
 from .CefServer import server
 from .EventsManager import manager
-from ..common.utils import isPortAvailable
 
 CEF_MAIN_VIEW = "WOTSTAT_CEF_MAIN_VIEW"
-START_PORT = 31200
 
 logger = Logger.instance()
+lastWidgetUUID = 0
 
 class MainView(View):
-
-  lastPort = START_PORT
-
   def __init__(self, *args, **kwargs):
     super(MainView, self).__init__(*args, **kwargs)
 
   def _populate(self):
     super(MainView, self)._populate()
     logger.info("MainView populated")
-    manager.createWidget += self.__createWidget
+    manager.createWidget += self._createWidget
+    server.onFrame += self._onFrame
 
   def _dispose(self):
-    manager.createWidget -= self.__createWidget
+    manager.createWidget -= self._createWidget
+    server.onFrame -= self._onFrame
     logger.info("MainView disposed")
     super(MainView, self)._dispose()
 
   def py_log(self, msg, level):
     logger.printLog(level, msg)
 
-  def py_requestResize(self, port, width):
-    server.resizeBrowser(port, width)
+  def py_requestResize(self, uuid, width, height):
+    server.resizeWidget(uuid, width, height)
 
-  def py_requestReload(self, port):
-    server.reloadBrowser(port)
+  def py_requestReload(self, uuid):
+    server.reloadWidget(uuid)
 
-  def py_requestClose(self, port):
-    server.closeBrowser(port)
+  def py_requestClose(self, uuid):
+    server.closeWidget(uuid)
 
-  def __createWidget(self, url, width):
-    
-    self.lastPort += 1
-    limit = 10
-    while not isPortAvailable(self.lastPort) and limit > 0:
-      self.lastPort += 1
-      limit -= 1
+  def _createWidget(self, url, width, height=-1):
+    global lastWidgetUUID
+    lastWidgetUUID += 1
+    server.createNewWidget(lastWidgetUUID, url, width, height)
+    self.flashObject.as_createWidget(lastWidgetUUID, url, width, height)
 
-    logger.info("Create widget: %s:%s" % (url, self.lastPort))
-    width = int(width)
-    server.openNewBrowser(url, self.lastPort, width)
-    self.flashObject.as_createWidget(url, self.lastPort, width)
+  def _onFrame(self, uuid, width, height, length, data):
+    self.flashObject.as_onFrame(uuid, width, height, base64.b64encode(data).decode('utf-8'))
 
 
 def setup():

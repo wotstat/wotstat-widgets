@@ -10,6 +10,7 @@ package wotstat.cef {
   import net.wg.gui.components.containers.MainViewContainer;
   import scaleform.clik.events.ResizeEvent;
   import flash.events.Event;
+  import flash.utils.ByteArray;
 
   public class MainView extends AbstractView {
 
@@ -80,10 +81,10 @@ package wotstat.cef {
       }
     }
 
-    public function as_createWidget(url:String, port:int, width:int):void {
-      _log("as_createWidget: " + url, "INFO");
+    public function as_createWidget(uuid:int, url:String, width:int, height:int):void {
+      _log("as_createWidget [" + uuid + "]: " + url + " " + widget + "x" + height, "INFO");
 
-      var widget:DraggableWidget = new DraggableWidget('127.0.0.1', port, width);
+      var widget:DraggableWidget = new DraggableWidget(uuid, width, height);
       widget.addEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
       widget.addEventListener(DraggableWidget.REQUEST_RELOAD, onWidgetRequestReload);
       widget.addEventListener(DraggableWidget.REQUEST_CLOSE, onWidgetRequestClose);
@@ -92,17 +93,56 @@ package wotstat.cef {
       hangarView.addChild(widget);
     }
 
+    private function decodeBase64(base64:String):ByteArray {
+      var lookup:String = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+      var output:ByteArray = new ByteArray();
+
+      var i:int = 0;
+      var enc1:int, enc2:int, enc3:int, enc4:int;
+      var chr1:int, chr2:int, chr3:int;
+
+      while (i < base64.length) {
+        enc1 = lookup.indexOf(base64.charAt(i++ ));
+        enc2 = lookup.indexOf(base64.charAt(i++ ));
+        enc3 = lookup.indexOf(base64.charAt(i++ ));
+        enc4 = lookup.indexOf(base64.charAt(i++ ));
+
+        chr1 = (enc1 << 2) | (enc2 >> 4);
+        chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+        chr3 = ((enc3 & 3) << 6) | enc4;
+
+        output.writeByte(chr1);
+        if (enc3 != 64)
+          output.writeByte(chr2);
+        if (enc4 != 64)
+          output.writeByte(chr3);
+      }
+
+      output.position = 0;
+      return output;
+    }
+
+    public function as_onFrame(uuid:int, width:int, height:int, data:String):void {
+      var bytes:ByteArray = decodeBase64(data);
+      for each (var widget:DraggableWidget in activeWidgets) {
+        if (widget.uuid == uuid) {
+          widget.setFrame(bytes);
+          break;
+        }
+      }
+    }
+
     private function onWidgetRequestResize(event:ResizeEvent):void {
       if (this.py_requestResize != null) {
         var widget:DraggableWidget = event.target as DraggableWidget;
-        this.py_requestResize(widget.port, event.scaleX);
+        this.py_requestResize(widget.uuid, event.scaleX, -1);
       }
     }
 
     private function onWidgetRequestReload(event:Event):void {
       if (this.py_requestReload != null) {
         var widget:DraggableWidget = event.target as DraggableWidget;
-        this.py_requestReload(widget.port);
+        this.py_requestReload(widget.uuid);
       }
     }
 
@@ -122,7 +162,7 @@ package wotstat.cef {
       widget.removeEventListener(DraggableWidget.REQUEST_CLOSE, onWidgetRequestClose);
 
       if (this.py_requestClose != null) {
-        this.py_requestClose(widget.port);
+        this.py_requestClose(widget.uuid);
       }
     }
   }

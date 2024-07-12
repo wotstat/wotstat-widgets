@@ -18,7 +18,7 @@ TICK_DELTA = 0.01
 logLock = threading.Lock()
 def log(msg, level='INFO'):
   with logLock:
-    sys.stdout.write("[LOG][%s]%s\n" % (level, msg))
+    sys.stdout.write("[LOG][SERVER][%s]%s\n" % (level, msg))
     sys.stdout.flush()
 
 def consoleLog(url, level, msg):
@@ -122,7 +122,6 @@ class Widget(object):
     self.browser.ReloadIgnoreCache()
 
   def close(self):
-    self.frameServer.close()
     self.browser.CloseBrowser(True)
 
   # JS Bindings
@@ -159,8 +158,6 @@ class CEFServer(object):
     self.socket.listen(1)
     log("Server listening on %s:%s" % (str(self.host), str(self.port)))
     self.client_socket, addr = self.socket.accept()
-    if self.last_frame:
-      self.client_socket.sendall(self.last_frame)
     log("Connection from %s" % str(addr))
     self.connected = True
 
@@ -185,6 +182,9 @@ class CEFServer(object):
         self.connected = False
 
   def createWidget(self, uuid, url, width, height):
+    if height == -1:
+      height = width
+
     log(f"Creating widget [{uuid}] with url: {url} and siz: {width}x{height}")
 
     browserSettings = {
@@ -224,14 +224,13 @@ class CEFServer(object):
     widget.close()
     del self.widgets[uuid]
 
+class Commands:
+  OPEN_NEW_WIDGET = 'OPEN_NEW_WIDGET'
+  RESIZE_WIDGET = 'RESIZE_WIDGET'
+  RELOAD_WIDGET = 'RELOAD_WIDGET'
+  CLOSE_WIDGET = 'CLOSE_WIDGET'  
+
 class Main(object):
-
-  class Commands:
-    OPEN_NEW_BROWSER = 'OPEN_NEW_BROWSER'
-    RESIZE_BROWSER = 'RESIZE_BROWSER'
-    RELOAD_BROWSER = 'RELOAD_BROWSER'
-    CLOSE_BROWSER = 'CLOSE_BROWSER'
-
   killNow = False
   tasksQueue = queue.Queue()
 
@@ -240,11 +239,11 @@ class Main(object):
     signal.signal(signal.SIGINT, self.exitGracefully)
     signal.signal(signal.SIGTERM, self.exitGracefully)
 
-    self.server = CEFServer(port=port)
-    self.server.startServer()
-
     self.inputThread = threading.Thread(target=self.inputLoopThread)
     self.inputThread.start()
+
+    self.server = CEFServer(port=port)
+    self.server.startServer()
 
   def start(self):
     while self.inputThread.is_alive() and self.killNow == False:
@@ -269,42 +268,46 @@ class Main(object):
       self.tasksQueue.put((self.onCommand, (line,)))
     
   def onCommand(self, command: str):
-    if command.startswith(Main.Commands.OPEN_NEW_BROWSER):
+    if command.startswith(Commands.OPEN_NEW_WIDGET):
       parts = getCommandParts(command, 4)
       if not parts: return
 
       uuid, url, width, height = parts
+      uuid = int(uuid)
       width = int(float(width))
       height = int(float(height))
       log(f"Opening widget [{uuid}], url: {url}, size: {width}x{height}")
       self.server.createWidget(uuid, url, width, height)
       return 
     
-    if command.startswith(Main.Commands.RESIZE_BROWSER):
+    if command.startswith(Commands.RESIZE_WIDGET):
       parts = getCommandParts(command, 3)
       if not parts: return
 
       uuid, width, height = parts
+      uuid = int(uuid)
       width = int(float(width))
       height = int(float(height))
       log(f"Resizing widget [{uuid}] to: {width}x{height}")
       self.server.resizeWidget(uuid, width, height)
       return
     
-    if command.startswith(Main.Commands.RELOAD_BROWSER):
+    if command.startswith(Commands.RELOAD_WIDGET):
       parts = getCommandParts(command, 1)
       if not parts: return
 
       uuid = parts[0]
+      uuid = int(uuid)
       log(f"Reloading widget [{uuid}]")
       self.server.reloadWidget(uuid)
       return
     
-    if command.startswith(Main.Commands.CLOSE_BROWSER):
+    if command.startswith(Commands.CLOSE_WIDGET):
       parts = getCommandParts(command, 1)
       if not parts: return
 
       uuid = parts[0]
+      uuid = int(uuid)
       log(f"Closing widget [{uuid}]")
       self.server.closeWidget(uuid)
     
@@ -318,12 +321,19 @@ class Main(object):
 
 if __name__ == '__main__':
 
-  port = 30000
+  port = 33000
   if len(sys.argv) > 1:
     port = int(sys.argv[1])
+  else:
+    port = int(sys.stdin.readline().strip())
+
+  log("Starting CEF server on port %s" % port)
 
   main = Main(port)
   main.start()
+
+  while True:
+    time.sleep(TICK_DELTA)
 
 
 

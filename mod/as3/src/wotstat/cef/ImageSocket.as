@@ -18,7 +18,7 @@ package wotstat.cef {
 
     private var isLoading:Boolean;
 
-    public function ImageSocket(host:String, port:int) {
+    public function ImageSocket() {
       socket = new Socket();
       loader = new Loader();
       headerRead = false;
@@ -30,8 +30,8 @@ package wotstat.cef {
       socket.addEventListener(ProgressEvent.SOCKET_DATA, onSocketData);
       loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onImageLoadComplete);
 
-      trace("[IS] Connecting to server: " + host + ":" + port);
-      socket.connect(host, port);
+      // trace("[IS] Connecting to server: " + host + ":" + port);
+      // socket.connect(host, port);
       trace("[IS] Connected to server: " + socket.connected);
 
       addChild(loader);
@@ -44,8 +44,13 @@ package wotstat.cef {
       socket.removeEventListener(ProgressEvent.SOCKET_DATA, onSocketData);
       loader.contentLoaderInfo.removeEventListener(Event.COMPLETE, onImageLoadComplete);
 
-      socket.close();
+      // socket.close();
       loader.unload();
+    }
+
+    public function setFrame(data:ByteArray):void {
+      loader.unload();
+      loader.loadBytes(data);
     }
 
     private function onConnect(event:Event):void {

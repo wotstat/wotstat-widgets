@@ -1,25 +1,87 @@
+import BigWorld
+
 import subprocess
 import threading
+import socket
+import struct
+from Queue import Queue
+from typing import Tuple
 
+from Event import Event
+
+from ..common.utils import isPortAvailable
 from ..common.Logger import Logger
 from .constants import CEF_EXE_PATH
 
 logger = Logger.instance()
 
-
 class Commands:
-  OPEN_NEW_BROWSER = 'OPEN_NEW_BROWSER'
-  RESIZE_BROWSER = 'RESIZE_BROWSER'
-  RELOAD_BROWSER = 'RELOAD_BROWSER'
-  CLOSE_BROWSER = 'CLOSE_BROWSER'
+  OPEN_NEW_WIDGET = 'OPEN_NEW_WIDGET'
+  RESIZE_WIDGET = 'RESIZE_WIDGET'
+  RELOAD_WIDGET = 'RELOAD_WIDGET'
+  CLOSE_WIDGET = 'CLOSE_WIDGET'
 
 
 class CefServer(object):
 
   enabled = False
+  socket = None
+  queue = Queue()
+  onFrame = Event()
 
   def __init__(self):
-    pass
+    self._checkQueueLoop()
+
+  def enable(self):
+    self.enabled = True
+
+    port = 33100
+    for _ in range(100):
+      if isPortAvailable(port): break
+      port += 1
+
+    startupInfo = subprocess.STARTUPINFO()
+    # startupInfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    # startupInfo.wShowWindow = subprocess.SW_HIDE
+
+    self.process = subprocess.Popen([CEF_EXE_PATH, str(port)],
+      startupinfo=startupInfo,
+      stdin=subprocess.PIPE,
+      stdout=subprocess.PIPE,
+      stderr=subprocess.PIPE)
+    
+    outputThread = threading.Thread(target=self._readOutput)
+    outputThread.start()
+    logger.info("CEF server started")
+
+    logger.info("Waiting for a connection on port: %s..." % str(port))
+    self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.socket.connect(('127.0.0.1', port))
+    logger.info("Connected")
+
+    receiver_thread = threading.Thread(target=self._socketReceiverLoop, args=(self.socket, self.queue))
+    receiver_thread.daemon = True
+    receiver_thread.start()
+
+  def dispose(self):
+    self.enabled = False
+    self.process.terminate()
+    logger.info("CEF server stopped")
+
+  def createNewWidget(self, uuid, url, width, height):
+    self._sendCommand(Commands.OPEN_NEW_WIDGET, uuid, url, width, height)
+
+  def resizeWidget(self, uuid, width, height):
+    logger.debug("Resize widget: %s to %sx%s" % (uuid, width, height))
+    self._sendCommand(Commands.RESIZE_WIDGET, uuid, width, height)
+
+  def reloadWidget(self, uuid):
+    logger.debug("Reload widget: %s" % uuid)
+    self._sendCommand(Commands.RELOAD_WIDGET, uuid)
+
+  def closeWidget(self, uuid):
+    logger.debug("Close widget: %s" % uuid)
+    self._sendCommand(Commands.CLOSE_WIDGET, uuid)
 
   def _readOutput(self):
     while self.enabled:
@@ -58,41 +120,56 @@ class CefServer(object):
     cmd = command + ' ' + ' '.join([str(arg) for arg in args])
     self._wrightInput(str(cmd) + '\n')
 
-  def enable(self):
-    self.enabled = True
-    startupInfo = subprocess.STARTUPINFO()
-    # startupInfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    # startupInfo.wShowWindow = subprocess.SW_HIDE
+  def _readFrame(self, sock):
+    # type: (socket.socket) -> Tuple[int, int, int, bytes]
 
-    self.process = subprocess.Popen(CEF_EXE_PATH,
-      startupinfo=startupInfo,
-      stdin=subprocess.PIPE,
-      stdout=subprocess.PIPE,
-      stderr=subprocess.PIPE)
+    uuid_bytes = sock.recv(4)
+    if not uuid_bytes: return None
+
+    width_bytes = sock.recv(4)
+    if not width_bytes: return None
     
-    outputThread = threading.Thread(target=self._readOutput)
-    outputThread.start()
-    logger.info("CEF server started")
+    height_bytes = sock.recv(4)
+    if not height_bytes: return None
+    
+    length_bytes = sock.recv(4)
+    if not length_bytes: return None
+    
+    uuid = struct.unpack('!I', uuid_bytes)[0]
+    width = struct.unpack('!I', width_bytes)[0]
+    height = struct.unpack('!I', height_bytes)[0]
+    length = struct.unpack('!I', length_bytes)[0]
+    
+    data = sock.recv(length)
+    if not data: return None
+    
+    return uuid, width, height, length, data
 
-  def dispose(self):
-    self.enabled = False
-    self.process.terminate()
-    logger.info("CEF server stopped")
+  def _socketReceiverLoop(self, sock, queue):
+    # type: (socket.socket, Queue) -> None
+    while True:
+      frame = self._readFrame(sock)
+      if frame is None:
+        logger.info("Disconnected from server.")
+        break
 
-  def openNewBrowser(self, url, port, width):
-    self._sendCommand(Commands.OPEN_NEW_BROWSER, url, port, width)
+      uuid, width, height, length, data = frame
+      queue.put((uuid, width, height, length, data))
 
-  def resizeBrowser(self, port, width):
-    logger.debug("Resize browser: %s to width: %s" % (port, width))
-    self._sendCommand(Commands.RESIZE_BROWSER, port, width)
+  def _checkQueueLoop(self):
+    # TODO: Sync to FPS
+    BigWorld.callback(1 / 120, self._checkQueueLoop)
 
-  def reloadBrowser(self, port):
-    logger.debug("Reload browser: %s" % port)
-    self._sendCommand(Commands.RELOAD_BROWSER, port)
+    newFrames = {}
 
-  def closeBrowser(self, port):
-    logger.debug("Close browser: %s" % port)
-    self._sendCommand(Commands.CLOSE_BROWSER, port)
+    while not self.queue.empty():
+      uuid, width, height, length, data = self.queue.get()
+      newFrames[uuid] = (width, height, length, data)
+      
+    for uuid, frame in newFrames.items():
+      width, height, length, data = frame
+      if data:
+        self.onFrame(uuid, width, height, length, data)
 
 
 server = CefServer()
