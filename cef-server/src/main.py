@@ -1,4 +1,5 @@
 from functools import partial
+import math
 import time
 import sys
 import socket
@@ -18,7 +19,7 @@ TICK_DELTA = 0.01
 logLock = threading.Lock()
 def log(msg, level='INFO'):
   with logLock:
-    sys.stdout.write("[LOG][SERVER][%s]%s\n" % (level, msg))
+    sys.stdout.write("[LOG][%s]%s\n" % (level, msg))
     sys.stdout.flush()
 
 def consoleLog(url, level, msg):
@@ -76,10 +77,14 @@ class ClientHandler(object):
     self.widget = widget
 
   # LoadHandler
-  def OnLoadStart(self, browser, **_):
-    log("[%s] Load started" % self.widget.url)
-    browser.ExecuteJavascript(injectJs)
-
+  def OnLoadingStateChange(self, browser, is_loading, **_):
+    if not is_loading:
+      log("[%s] Load finished" % self.widget.url)
+      browser.ExecuteJavascript(injectJs)
+      self.widget.setZoomPercent(self.widget.zoomLevel)
+    else:
+      log("[%s] Loading..." % self.widget.url)
+    
   # DisplayHandler
   def OnConsoleMessage(self, browser, level, message, **_):
     consoleLog(self.widget.url, level, message)
@@ -99,11 +104,12 @@ class ClientHandler(object):
       log("Invalid frame size: %s, %s" % (width, height), 'ERROR')
 
 class Widget(object):
-  def __init__(self, url, browser, width, height, sendFrame):
+  def __init__(self, url, browser, zoom, width, height, sendFrame):
     self.url = url
     self.size = (width, height)
     self.browser = browser
     self.sendFrame = sendFrame
+    self.zoomLevel = zoom
 
     bindings = cef.JavascriptBindings()
     bindings.SetFunction("onBodyResize", self.onBodyResize)
@@ -121,18 +127,30 @@ class Widget(object):
   def reloadIgnoreCache(self):
     self.browser.ReloadIgnoreCache()
 
+  def showDevTools(self):
+    self.browser.ShowDevTools()
+
   def close(self):
     self.browser.CloseBrowser(True)
 
+  def setZoomPercent(self, zoom):
+    self.zoomLevel = zoom
+    self.browser.SetZoomLevel(math.log(zoom) / math.log(1.2))
+    self.browser.WasResized()
+    log("[%s] Zoom level set to: %s" % (self.url, zoom))
+
   # JS Bindings
   def onBodyResize(self, height):
+    height = min(height, 1000 * self.zoomLevel)
     self.resize(self.size[0], height)
     log("[%s] On resize: %s" % (self.url, height))
 
 class CEFServer(object):
-  def __init__(self, host='localhost', port=30000):
+  def __init__(self, host='localhost', port=30000, debug=False):
     self.host = host
     self.port = port
+    self.debug = debug
+    self.interfaceScale = 1.0
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.client_socket = None
     self.connected = False
@@ -198,8 +216,11 @@ class CEFServer(object):
                                     settings=browserSettings,
                                     url=url)
     
-    widget = Widget(url, browser, width, height, partial(self.sendFrame, uuid))
+    widget = Widget(url, browser, self.interfaceScale, width, height, partial(self.sendFrame, uuid))
     self.widgets[uuid] = widget
+
+    if self.debug:
+      widget.showDevTools()
 
   def resizeWidget(self, uuid, width, height):
     widget = self.widgets.get(uuid, None)
@@ -224,25 +245,30 @@ class CEFServer(object):
     widget.close()
     del self.widgets[uuid]
 
+  def setInterfaceScale(self, scale):
+    self.interfaceScale = scale
+    for widget in self.widgets.values():
+      widget.setZoomPercent(scale)
+
 class Commands:
   OPEN_NEW_WIDGET = 'OPEN_NEW_WIDGET'
   RESIZE_WIDGET = 'RESIZE_WIDGET'
   RELOAD_WIDGET = 'RELOAD_WIDGET'
-  CLOSE_WIDGET = 'CLOSE_WIDGET'  
+  CLOSE_WIDGET = 'CLOSE_WIDGET'
+  SET_INTERFACE_SCALE = 'SET_INTERFACE_SCALE'
 
 class Main(object):
   killNow = False
   tasksQueue = queue.Queue()
 
-  def __init__(self, port):
-
+  def __init__(self, port, debug):
     signal.signal(signal.SIGINT, self.exitGracefully)
     signal.signal(signal.SIGTERM, self.exitGracefully)
 
     self.inputThread = threading.Thread(target=self.inputLoopThread)
     self.inputThread.start()
 
-    self.server = CEFServer(port=port)
+    self.server = CEFServer(port=port, debug=debug)
     self.server.startServer()
 
   def start(self):
@@ -310,6 +336,16 @@ class Main(object):
       uuid = int(uuid)
       log(f"Closing widget [{uuid}]")
       self.server.closeWidget(uuid)
+      return
+
+    if command.startswith(Commands.SET_INTERFACE_SCALE):
+      parts = getCommandParts(command, 1)
+      if not parts: return
+
+      scale = float(parts[0])
+      log(f"Setting interface scale: {scale}")
+      self.server.setInterfaceScale(scale)
+      return
     
     log(f"Unknown command: {command}")
 
@@ -321,15 +357,12 @@ class Main(object):
 
 if __name__ == '__main__':
 
-  port = 33000
-  if len(sys.argv) > 1:
-    port = int(sys.argv[1])
-  else:
-    port = int(sys.stdin.readline().strip())
+  port = int(sys.argv[1]) if len(sys.argv) > 1 else int(sys.stdin.readline().strip())
+  debug = bool(sys.argv[2] == 'True') if len(sys.argv) > 2 else False
 
-  log("Starting CEF server on port %s" % port)
+  log(f"Starting CEF server on port {port}; debug ${debug}")
 
-  main = Main(port)
+  main = Main(port, debug)
   main.start()
 
   while True:

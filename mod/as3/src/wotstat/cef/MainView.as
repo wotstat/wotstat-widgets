@@ -5,7 +5,6 @@ package wotstat.cef {
   import net.wg.data.Aliases;
   import net.wg.gui.lobby.hangar.Hangar;
   import net.wg.infrastructure.managers.impl.ContainerManagerBase;
-  import net.wg.infrastructure.interfaces.IManagedContent;
   import net.wg.data.constants.generated.LAYER_NAMES;
   import net.wg.gui.components.containers.MainViewContainer;
   import scaleform.clik.events.ResizeEvent;
@@ -41,10 +40,6 @@ package wotstat.cef {
             processView(view);
           }
         }
-        var topmostView:IManagedContent = viewContainer.getTopmostView();
-        if (topmostView != null) {
-          viewContainer.setFocusedView(topmostView);
-        }
       }
 
       (App.containerMgr as ContainerManagerBase).loader.addEventListener(LoaderEvent.VIEW_LOADED, onViewLoaded, false, 0, true);
@@ -52,6 +47,9 @@ package wotstat.cef {
 
     override protected function onDispose():void {
       (App.containerMgr as ContainerManagerBase).loader.removeEventListener(LoaderEvent.VIEW_LOADED, onViewLoaded);
+      for each (var widget:DraggableWidget in activeWidgets) {
+        widget.dispose();
+      }
       super.onDispose();
     }
 
@@ -93,6 +91,12 @@ package wotstat.cef {
       activeWidgets.push(widget);
       activeWidgetsByUUID[uuid] = widget;
       hangarView.addChild(widget);
+    }
+
+    public function as_setInterfaceScale(scale:Number):void {
+      for each (var widget:DraggableWidget in activeWidgets) {
+        widget.onInterfaceScaleChanged(scale);
+      }
     }
 
     private function decodeBase64(base64:String):ByteArray {

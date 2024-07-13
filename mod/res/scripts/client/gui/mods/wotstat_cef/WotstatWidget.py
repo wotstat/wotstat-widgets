@@ -14,7 +14,7 @@ from .main.constants import CEF_PATH
 
 
 DEBUG_MODE = '{{DEBUG_MODE}}'
-CONFIG_PATH = './mods/configs/wotstat.cef/config.cfg'
+CONFIG_PATH = './mods/configs/wotstat.widgets/config.cfg'
 
 logger = Logger.instance()
 
@@ -44,7 +44,7 @@ class WotstatWidget(object):
     ])
 
     copyCef()
-    server.enable()
+    server.enable(self.config.get('devtools'))
     mainViewSetup()
 
     logger.info("WotStatWidget started")

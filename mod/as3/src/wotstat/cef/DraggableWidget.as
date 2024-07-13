@@ -17,6 +17,8 @@ package wotstat.cef {
   import flash.utils.ByteArray;
   import flash.display.Loader;
   import flash.display.Graphics;
+  import flash.display.Bitmap;
+  import flash.display.PixelSnapping;
 
   public class DraggableWidget extends Sprite {
     public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";
@@ -25,6 +27,7 @@ package wotstat.cef {
 
     private const HANGAR_TOP_OFFSET:int = 0;
     private const HANGAR_BOTTOM_OFFSET:int = 90;
+    private const HANGAR_HEADER_MINIFIED_HEIGHT:int = 35;
 
     private var _uuid:int = 0;
 
@@ -88,10 +91,26 @@ package wotstat.cef {
       App.instance.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
       resizeControl.addEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
       resizeControl.addEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
-
+      loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onLoaderComplete);
       hideShowBtn.addEventListener(MouseEvent.MOUSE_DOWN, onHideShowButtonMouseDown);
 
       updateImageScale();
+    }
+
+    public function dispose():void {
+      loader.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+      App.instance.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
+      App.instance.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
+      resizeControl.removeEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
+      resizeControl.removeEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
+      loader.contentLoaderInfo.removeEventListener(Event.COMPLETE, onLoaderComplete);
+      hideShowBtn.removeEventListener(MouseEvent.MOUSE_DOWN, onHideShowButtonMouseDown);
+
+      for each (var btn:Button in [hideShowBtn, lockBtn, resizeBtn, reloadBtn, closeBtn]) {
+        btn.dispose();
+      }
+
+      loader.unload();
     }
 
     public function setFrame(width:uint, height:uint, data:ByteArray):void {
@@ -111,18 +130,16 @@ package wotstat.cef {
       updateResizeControl();
     }
 
-    public function dispose():void {
-      loader.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
-      App.instance.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
-      App.instance.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
-      resizeControl.removeEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
-      resizeControl.removeEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
+    public function onInterfaceScaleChanged(scale:Number):void {
+      trace("[DW] Interface scale changed " + scale + "x" + App.appScale);
+      updateImageScale();
+      updateResizeControl();
+      dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, 0));
+    }
 
-      for each (var btn:Button in [hideShowBtn, lockBtn, resizeBtn, reloadBtn, closeBtn]) {
-        btn.dispose();
-      }
-
-      loader.unload();
+    private function onLoaderComplete(event:Event):void {
+      (loader.content as Bitmap).pixelSnapping = PixelSnapping.ALWAYS;
+      (loader.content as Bitmap).smoothing = false;
     }
 
     private function onMouseDown(event:MouseEvent):void {
@@ -148,9 +165,9 @@ package wotstat.cef {
           isDragging = true;
           startDrag(false, new Rectangle(
                 0,
-                HANGAR_TOP_OFFSET + controlPanel.height + 3,
-                App.appWidth - loader.width,
-                App.appHeight - loader.height - HANGAR_TOP_OFFSET - HANGAR_BOTTOM_OFFSET
+                HANGAR_TOP_OFFSET + controlPanel.height + 3 + HANGAR_HEADER_MINIFIED_HEIGHT,
+                App.appWidth - content.width,
+                App.appHeight - content.height - HANGAR_TOP_OFFSET - HANGAR_BOTTOM_OFFSET - controlPanel.height - 3 - HANGAR_HEADER_MINIFIED_HEIGHT
               ));
         }
       }

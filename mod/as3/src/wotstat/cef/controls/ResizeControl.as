@@ -145,6 +145,7 @@ package wotstat.cef.controls {
         control.stopDrag();
         control.y = _contentHeight / 2 - controlHeight / 2;
         control.startDrag(true, new Rectangle(MIN_WIDTH - CONTROL_WIDTH / 2 + 1, control.y, MAX_WIDTH - MIN_WIDTH, 0));
+        drawFrame();
         return;
       }
 

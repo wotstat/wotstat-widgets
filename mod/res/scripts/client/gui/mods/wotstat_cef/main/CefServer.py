@@ -8,6 +8,8 @@ from Queue import Queue
 from typing import Tuple
 
 from Event import Event
+from helpers import dependency
+from skeletons.account_helpers.settings_core import ISettingsCore
 
 from ..common.utils import isPortAvailable
 from ..common.Logger import Logger
@@ -20,6 +22,7 @@ class Commands:
   RESIZE_WIDGET = 'RESIZE_WIDGET'
   RELOAD_WIDGET = 'RELOAD_WIDGET'
   CLOSE_WIDGET = 'CLOSE_WIDGET'
+  SET_INTERFACE_SCALE = 'SET_INTERFACE_SCALE'
 
 
 class CefServer(object):
@@ -28,11 +31,12 @@ class CefServer(object):
   socket = None
   queue = Queue()
   onFrame = Event()
+  settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
 
   def __init__(self):
     self._checkQueueLoop()
 
-  def enable(self):
+  def enable(self, devtools=False):
     self.enabled = True
 
     port = 33100
@@ -41,16 +45,17 @@ class CefServer(object):
       port += 1
 
     startupInfo = subprocess.STARTUPINFO()
-    # startupInfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    # startupInfo.wShowWindow = subprocess.SW_HIDE
+    if not devtools:
+      startupInfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+      startupInfo.wShowWindow = subprocess.SW_HIDE
 
-    self.process = subprocess.Popen([CEF_EXE_PATH, str(port)],
+    self.process = subprocess.Popen([CEF_EXE_PATH, str(port), str(devtools)],
       startupinfo=startupInfo,
       stdin=subprocess.PIPE,
       stdout=subprocess.PIPE,
       stderr=subprocess.PIPE)
     
-    outputThread = threading.Thread(target=self._readOutput)
+    outputThread = threading.Thread(target=self._readOutputLoop)
     outputThread.start()
     logger.info("CEF server started")
 
@@ -62,6 +67,9 @@ class CefServer(object):
     receiver_thread = threading.Thread(target=self._socketReceiverLoop, args=(self.socket, self.queue))
     receiver_thread.daemon = True
     receiver_thread.start()
+
+    self.settingsCore.interfaceScale.onScaleChanged += self._setInterfaceScale
+    self._setInterfaceScale()
 
   def dispose(self):
     self.enabled = False
@@ -83,42 +91,54 @@ class CefServer(object):
     logger.debug("Close widget: %s" % uuid)
     self._sendCommand(Commands.CLOSE_WIDGET, uuid)
 
-  def _readOutput(self):
-    while self.enabled:
-      output = self.process.stdout.readline()
-      if output == '' and self.process.poll() is not None:
-        continue
+  def _setInterfaceScale(self, scale=None):
+    if scale is None:
+      scale = self.settingsCore.interfaceScale.get()
+    logger.info("Set interface scale: %s" % scale)
+    self._sendCommand(Commands.SET_INTERFACE_SCALE, scale)
 
-      if not output:
-        continue
+  def _readOutputLoop(self):
+    while self.enabled:
+      if not self.process: continue
+
+      output = self.process.stdout.readline()
+      if output == '' and self.process.poll() is not None: continue
+
+      if not output: continue
 
       line = output.decode().strip()
-      if not line:
-        continue
+      if not line: continue
 
       if line.startswith('[LOG]'):
         line = line[5:]
+        if line.endswith('\n'):
+          line = line[:-1]
+        template = '[SERVER] %s'
         if line.startswith('[DEBUG]'):
-          logger.debug(line[7:])
+          logger.debug(template % line[7:])
         elif line.startswith('[INFO]'):
-          logger.info(line[6:])
+          logger.info(template % line[6:])
         elif line.startswith('[WARN]'):
-          logger.warn(line[6:])
+          logger.warn(template % line[6:])
         elif line.startswith('[ERROR]'):
-          logger.error(line[7:])
+          logger.error(template % line[7:])
+        else:
+          logger.error('Unknown level: %s' % line)
       elif line.startswith('[CONSOLE]'):
         logger.info(line)
       else:
         logger.error('Unknown format: %s' % line)
 
+    logger.info("Output loop stopped")
+
   def _wrightInput(self, inputData):
     logger.debug("Send input data: %s" % str(inputData))
-    self.process.stdin.write(str(inputData))
+    self.process.stdin.write(str(inputData) + '\n')
     self.process.stdin.flush()
 
   def _sendCommand(self, command, *args):
     cmd = command + ' ' + ' '.join([str(arg) for arg in args])
-    self._wrightInput(str(cmd) + '\n')
+    self._wrightInput(str(cmd))
 
   def _readFrame(self, sock):
     # type: (socket.socket) -> Tuple[int, int, int, bytes]

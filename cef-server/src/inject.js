@@ -10,9 +10,10 @@ function setup() {
   console.log('Injected style');
 
 
-  const resizeObserver = new ResizeObserver(entries =>
-    onBodyResize(entries[0].target.clientHeight)
-  )
+  const resizeObserver = new ResizeObserver(entries => {
+    const realHeight = Math.ceil(entries[0].target.clientHeight * devicePixelRatio);
+    onBodyResize(realHeight)
+  })
 
   resizeObserver.observe(document.body);
 }

@@ -9,6 +9,7 @@ from gui.app_loader.settings import APP_NAME_SPACE
 from frameworks.wulf import WindowLayer
 from helpers import dependency
 from skeletons.gui.impl import IGuiLoader
+from skeletons.account_helpers.settings_core import ISettingsCore
 import base64
 
 from ..common.Logger import Logger
@@ -21,6 +22,8 @@ logger = Logger.instance()
 lastWidgetUUID = 0
 
 class MainView(View):
+  settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
+
   def __init__(self, *args, **kwargs):
     super(MainView, self).__init__(*args, **kwargs)
 
@@ -30,9 +33,13 @@ class MainView(View):
     manager.createWidget += self._createWidget
     server.onFrame += self._onFrame
 
+    self.settingsCore.interfaceScale.onScaleChanged += self.setInterfaceScale
+    self.setInterfaceScale()
+
   def _dispose(self):
     manager.createWidget -= self._createWidget
     server.onFrame -= self._onFrame
+    self.settingsCore.interfaceScale.onScaleChanged -= self.setInterfaceScale
     logger.info("MainView disposed")
     super(MainView, self)._dispose()
 
@@ -57,6 +64,10 @@ class MainView(View):
   def _onFrame(self, uuid, width, height, length, data):
     self.flashObject.as_onFrame(uuid, width, height, base64.b64encode(data).decode('utf-8'))
 
+  def setInterfaceScale(self, scale=None):
+    if not scale:
+      scale = self.settingsCore.interfaceScale.get()
+    self.flashObject.as_setInterfaceScale(scale)
 
 def setup():
   mainViewSettings = ViewSettings(
