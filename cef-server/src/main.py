@@ -98,12 +98,19 @@ class ClientHandler(object):
     frameBuffer = paint_buffer.GetString(mode="rgba", origin="top-left")
     if width == self.widget.size[0] or height != self.widget.size[1]:
       pngBuffer = bufferToPng(frameBuffer, width, height)
-      self.widget.sendFrame(width, height, pngBuffer)
+      self.widget.sendFrame(self.widget.getFlags(), width, height, pngBuffer)
 
     else:
       log("Invalid frame size: %s, %s" % (width, height), 'ERROR')
 
 class Widget(object):
+
+  class Flags:
+    AUTO_HEIGHT = 1 << 0
+
+  autoHeight = False
+  lastBodyHeight = 0
+
   def __init__(self, url, browser, zoom, width, height, sendFrame):
     self.url = url
     self.size = (width, height)
@@ -112,7 +119,8 @@ class Widget(object):
     self.zoomLevel = zoom
 
     bindings = cef.JavascriptBindings()
-    bindings.SetFunction("onBodyResize", self.onBodyResize)
+    bindings.SetFunction("wotstatWidgetOnBodyResize", self.onBodyResize)
+    bindings.SetFunction("wotstatWidgetOnFeatureFlagsChange", self.onFeatureFlagsChange)
     browser.SetJavascriptBindings(bindings)
 
     self.handler = ClientHandler(self)
@@ -139,11 +147,27 @@ class Widget(object):
     self.browser.WasResized()
     log("[%s] Zoom level set to: %s" % (self.url, zoom))
 
+  def resizeByHeight(self):
+    if self.autoHeight:
+      height = min(self.lastBodyHeight, 1000 * self.zoomLevel)
+      self.resize(self.size[0], height)
+
+  def getFlags(self):
+    flags = 0
+
+    if self.autoHeight: flags |= self.Flags.AUTO_HEIGHT
+
+    return flags
+    
+
   # JS Bindings
   def onBodyResize(self, height):
-    height = min(height, 1000 * self.zoomLevel)
-    self.resize(self.size[0], height)
-    log("[%s] On resize: %s" % (self.url, height))
+    self.lastBodyHeight = height
+    self.resizeByHeight()
+
+  def onFeatureFlagsChange(self, flags):
+    self.autoHeight = flags.get('autoHeight', False)
+    self.resizeByHeight()
 
 class CEFServer(object):
   def __init__(self, host='localhost', port=30000, debug=False):
@@ -185,13 +209,14 @@ class CEFServer(object):
     self.socket.close()
     log("Server closed on %s:%s" % (str(self.host), str(self.port)))
 
-  def sendFrame(self, uuid, width, height, frameBytes):
+  def sendFrame(self, uuid, flags, width, height, frameBytes):
     uuidBytes = struct.pack('!I', uuid)
+    flagsBytes = struct.pack('!I', flags)
     widthBytes = struct.pack('!I', width)
     heightBytes = struct.pack('!I', height)
     frameLength = struct.pack('!I', len(frameBytes))
 
-    frame = uuidBytes + widthBytes + heightBytes + frameLength + frameBytes
+    frame = uuidBytes + flagsBytes + widthBytes + heightBytes + frameLength + frameBytes
     if self.connected and self.client_socket:
       try:
         self.client_socket.sendall(frame)
@@ -200,7 +225,7 @@ class CEFServer(object):
         self.connected = False
 
   def createWidget(self, uuid, url, width, height):
-    if height == -1:
+    if height < 0:
       height = width
 
     log(f"Creating widget [{uuid}] with url: {url} and siz: {width}x{height}")
@@ -226,7 +251,7 @@ class CEFServer(object):
     widget = self.widgets.get(uuid, None)
     if not widget: return
 
-    if height == -1:
+    if height < 0:
       aspect = widget.size[0] / widget.size[1]
       widget.resize(width, width / aspect)
     else:

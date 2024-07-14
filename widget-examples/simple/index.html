@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="wotstat-widget:auto-height">
   <title>Simple Widget</title>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
@@ -36,6 +37,27 @@
         console.log('toggle subtitle ', subtitle.style.display);
         subtitle.style.display = subtitle.style.display.trim() == '' ? 'none' : ''
       }, 5000);
+
+      async function blick() {
+        while (true) {
+          const metaToDelete = document.querySelector('meta[name="wotstat-widget:auto-height"]');
+          if (metaToDelete) {
+            metaToDelete.remove();
+          }
+          console.log('auto-height removed'); 
+
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          const meta = document.createElement('meta');
+          meta.setAttribute('name', 'wotstat-widget:auto-height');
+          meta.setAttribute('content', '');
+          document.head.appendChild(meta);
+          console.log('auto-height added');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+
+      blick();
     });
 
   </script>

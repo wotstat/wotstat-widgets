@@ -42,6 +42,7 @@ package wotstat.cef {
 
     // Target width by resize control in POINTS
     private var targetWidth:Number = 0;
+    private var targetHeight:Number = 0;
 
     private var hideShowButtonDownPosition:Point = null;
     private var isDragging:Boolean = false;
@@ -128,6 +129,11 @@ package wotstat.cef {
 
       updateImageScale();
       updateResizeControl();
+    }
+
+    public function setResizeMode(full:Boolean):void {
+      trace("[DW] Set resize mode " + full);
+      resizeControl.fullResize = full;
     }
 
     public function onInterfaceScaleChanged(scale:Number):void {
@@ -243,24 +249,31 @@ package wotstat.cef {
     }
 
     private function onResizeControlChange(event:ResizeEvent):void {
-      // trace("[DW] Resize control changed " + event.scaleX + "x" + event.scaleY);
+      trace("[DW] Resize control changed " + event.scaleX + "x" + event.scaleY);
       targetWidth = event.scaleX;
+      targetHeight = event.scaleY;
       updateImageScale();
       updateResizeControl();
     }
 
     private function onReziseControlEnd(event:Event):void {
-      // trace("[DW] Resize control end " + targetWidth + "x" + contentWidth);
       targetWidth = Math.round(targetWidth);
+      targetHeight = Math.round(targetHeight);
+      trace("[DW] Resize control end " + targetWidth + "x" + targetHeight);
       updateImageScale();
-      updateResizeControl();
-      dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, 0));
+
+      resizeControl.contentWidth = targetWidth;
+      resizeControl.contentHeight = targetHeight >= 0 ? targetHeight : targetWidth * contentHeight / contentWidth;
+
+      dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, targetHeight * App.appScale));
     }
 
     private function updateImageScale():void {
-      var k:Number = targetWidth / contentWidth;
-      content.scaleX = k;
-      content.scaleY = k;
+      if (!resizeControl.fullResize) {
+        var k:Number = targetWidth / contentWidth;
+        content.scaleX = k;
+        content.scaleY = k;
+      }
 
       if (content.width != contentWidth / App.appScale || content.height != contentHeight / App.appScale) {
         var graphics:Graphics = content.graphics;

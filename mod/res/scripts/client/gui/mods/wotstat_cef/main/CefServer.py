@@ -27,6 +27,9 @@ class Commands:
 
 class CefServer(object):
 
+  class Flags:
+    AUTO_HEIGHT = 1 << 0
+
   enabled = False
   socket = None
   queue = Queue()
@@ -146,6 +149,9 @@ class CefServer(object):
     uuid_bytes = sock.recv(4)
     if not uuid_bytes: return None
 
+    flags_bytes = sock.recv(4)
+    if not flags_bytes: return None
+
     width_bytes = sock.recv(4)
     if not width_bytes: return None
     
@@ -156,6 +162,7 @@ class CefServer(object):
     if not length_bytes: return None
     
     uuid = struct.unpack('!I', uuid_bytes)[0]
+    flags = struct.unpack('!I', flags_bytes)[0]
     width = struct.unpack('!I', width_bytes)[0]
     height = struct.unpack('!I', height_bytes)[0]
     length = struct.unpack('!I', length_bytes)[0]
@@ -163,7 +170,7 @@ class CefServer(object):
     data = sock.recv(length)
     if not data: return None
     
-    return uuid, width, height, length, data
+    return uuid, flags, width, height, length, data
 
   def _socketReceiverLoop(self, sock, queue):
     # type: (socket.socket, Queue) -> None
@@ -173,23 +180,22 @@ class CefServer(object):
         logger.info("Disconnected from server.")
         break
 
-      uuid, width, height, length, data = frame
-      queue.put((uuid, width, height, length, data))
+      queue.put(frame)
 
   def _checkQueueLoop(self):
     # TODO: Sync to FPS
-    BigWorld.callback(1 / 120, self._checkQueueLoop)
+    BigWorld.callback(1/120, self._checkQueueLoop)
 
     newFrames = {}
 
     while not self.queue.empty():
-      uuid, width, height, length, data = self.queue.get()
-      newFrames[uuid] = (width, height, length, data)
+      uuid, flags, width, height, length, data = self.queue.get()
+      newFrames[uuid] = (flags, width, height, length, data)
       
     for uuid, frame in newFrames.items():
-      width, height, length, data = frame
+      flags, width, height, length, data = frame
       if data:
-        self.onFrame(uuid, width, height, length, data)
+        self.onFrame(uuid, flags, width, height, length, data)
 
 
 server = CefServer()

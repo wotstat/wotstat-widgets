@@ -131,13 +131,22 @@ package wotstat.cef {
     public function as_onFrame(uuid:int, width:int, height:int, data:String):void {
       var bytes:ByteArray = decodeBase64(data);
       var widget:DraggableWidget = activeWidgetsByUUID[uuid];
+      if (widget == null)
+        return;
       widget.setFrame(width, height, bytes);
+    }
+
+    public function as_setResizeMode(uuid:int, full:Boolean):void {
+      var widget:DraggableWidget = activeWidgetsByUUID[uuid];
+      if (widget == null)
+        return;
+      widget.setResizeMode(full);
     }
 
     private function onWidgetRequestResize(event:ResizeEvent):void {
       if (this.py_requestResize != null) {
         var widget:DraggableWidget = event.target as DraggableWidget;
-        this.py_requestResize(widget.uuid, event.scaleX, -1);
+        this.py_requestResize(widget.uuid, event.scaleX, event.scaleY);
       }
     }
 

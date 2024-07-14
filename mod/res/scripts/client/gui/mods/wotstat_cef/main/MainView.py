@@ -13,7 +13,7 @@ from skeletons.account_helpers.settings_core import ISettingsCore
 import base64
 
 from ..common.Logger import Logger
-from .CefServer import server
+from .CefServer import CefServer, server
 from .EventsManager import manager
 
 CEF_MAIN_VIEW = "WOTSTAT_CEF_MAIN_VIEW"
@@ -23,6 +23,8 @@ lastWidgetUUID = 0
 
 class MainView(View):
   settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
+
+  widgetFlags = {}
 
   def __init__(self, *args, **kwargs):
     super(MainView, self).__init__(*args, **kwargs)
@@ -54,20 +56,45 @@ class MainView(View):
 
   def py_requestClose(self, uuid):
     server.closeWidget(uuid)
+    self.widgetFlags.pop(uuid, None)
 
   def _createWidget(self, url, width, height=-1):
     global lastWidgetUUID
     lastWidgetUUID += 1
     server.createNewWidget(lastWidgetUUID, url, width, height)
-    self.flashObject.as_createWidget(lastWidgetUUID, url, width, height)
+    self._as_createWidget(lastWidgetUUID, url, width, height)
 
-  def _onFrame(self, uuid, width, height, length, data):
-    self.flashObject.as_onFrame(uuid, width, height, base64.b64encode(data).decode('utf-8'))
+  def _onFrame(self, uuid, flags, width, height, length, data):
+    self._as_onFrame(uuid, width, height, base64.b64encode(data).decode('utf-8'))
 
+    oldFlags = self.widgetFlags.get(uuid, None)
+    self.widgetFlags[uuid] = flags
+
+    def isChanged(flag):
+      return oldFlags is None or (oldFlags & flag) != (flags & flag)
+
+    if isChanged(CefServer.Flags.AUTO_HEIGHT):
+      logger.info("Resize mode changed: %s" % (flags & CefServer.Flags.AUTO_HEIGHT == 0))
+      self._as_setResizeMode(uuid, flags & CefServer.Flags.AUTO_HEIGHT == 0)
+      
   def setInterfaceScale(self, scale=None):
     if not scale:
       scale = self.settingsCore.interfaceScale.get()
+    self._as_setInterfaceScale(scale)
+
+  def _as_onFrame(self, uuid, width, height, data):
+    self.flashObject.as_onFrame(uuid, width, height, data)
+
+  def _as_createWidget(self, uuid, url, width, height):
+    self.flashObject.as_createWidget(uuid, url, width, height)
+
+  def _as_setResizeMode(self, uuid, mode):
+    self.flashObject.as_setResizeMode(uuid, mode)
+
+  def _as_setInterfaceScale(self, scale):
     self.flashObject.as_setInterfaceScale(scale)
+
+
 
 def setup():
   mainViewSettings = ViewSettings(

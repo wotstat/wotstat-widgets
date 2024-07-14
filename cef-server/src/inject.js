@@ -1,25 +1,42 @@
 
-function setup() {
-  const style = document.createElement('style');
+function wotstatWidgetSetup() {
+  const style = document.createElement('style')
   style.textContent = `
     body {
       overflow: hidden !important;
     }
   `;
-  document.head.append(style);
-  console.log('Injected style');
+  document.head.append(style)
+  console.log('Injected style')
 
 
-  const resizeObserver = new ResizeObserver(entries => {
-    const realHeight = Math.ceil(entries[0].target.clientHeight * devicePixelRatio);
-    onBodyResize(realHeight)
-  })
+  function onResize() {
+    const realHeight = Math.ceil(document.body.clientHeight * devicePixelRatio);
+    wotstatWidgetOnBodyResize(realHeight)
+  }
 
-  resizeObserver.observe(document.body);
+  function onHeadMutate() {
+    const wotstatMeta = [...document.querySelectorAll('meta')]
+      .filter(e => e.name.startsWith('wotstat-widget:'))
+      .map(e => [e.name.slice(15), e.content === '' ? true : e.content])
+
+    const metaMap = new Map(wotstatMeta)
+    const getMeta = (key, defaultValue, proc) => proc && metaMap.get(key) ? proc(metaMap.get(key)) : (metaMap.get(key) ?? defaultValue)
+
+    wotstatWidgetOnFeatureFlagsChange({
+      autoHeight: getMeta('auto-height', false, t => t !== 'false')
+    })
+  }
+
+  new ResizeObserver(_ => onResize()).observe(document.body)
+  new MutationObserver(_ => onHeadMutate()).observe(document.head, { childList: true, subtree: true, attributes: true });
+
+  onResize()
+  onHeadMutate()
 }
 
 if (document.readyState === "complete") {
-  setup();
+  wotstatWidgetSetup();
 } else {
   document.addEventListener('DOMContentLoaded', setup);
 }
