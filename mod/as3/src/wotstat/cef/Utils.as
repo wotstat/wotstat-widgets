@@ -77,5 +77,34 @@ package wotstat.cef {
       }
       return str;
     }
+
+    public static function decodeBase64(base64:String):ByteArray {
+      var lookup:String = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+      var output:ByteArray = new ByteArray();
+
+      var i:int = 0;
+      var enc1:int, enc2:int, enc3:int, enc4:int;
+      var chr1:int, chr2:int, chr3:int;
+
+      while (i < base64.length) {
+        enc1 = lookup.indexOf(base64.charAt(i++ ));
+        enc2 = lookup.indexOf(base64.charAt(i++ ));
+        enc3 = lookup.indexOf(base64.charAt(i++ ));
+        enc4 = lookup.indexOf(base64.charAt(i++ ));
+
+        chr1 = (enc1 << 2) | (enc2 >> 4);
+        chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+        chr3 = ((enc3 & 3) << 6) | enc4;
+
+        output.writeByte(chr1);
+        if (enc3 != 64)
+          output.writeByte(chr2);
+        if (enc4 != 64)
+          output.writeByte(chr3);
+      }
+
+      output.position = 0;
+      return output;
+    }
   }
 }
