@@ -11,7 +11,9 @@
       "libs/gui_base-1.0-SNAPSHOT.swc",
       "libs/gui_battle-1.0-SNAPSHOT.swc",
       "libs/gui_lobby-1.0-SNAPSHOT.swc",
-      "libs/lobby.swc"
+      "libs/lobby.swc",
+      "libs/playerglobal.swc",
+      "libs/flash.swc"
     ],
     "output": "bin/Main.swf"
   },
