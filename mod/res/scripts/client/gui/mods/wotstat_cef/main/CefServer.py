@@ -166,8 +166,17 @@ class CefServer(object):
     width = struct.unpack('!I', width_bytes)[0]
     height = struct.unpack('!I', height_bytes)[0]
     length = struct.unpack('!I', length_bytes)[0]
+
+
+    READ_SIZE = 4096
+    read = 0
+    data = b''
+    while read < length:
+      temp = sock.recv(min(READ_SIZE, length - read))
+      if not temp: return None
+      read += len(temp)
+      data += temp
     
-    data = sock.recv(length)
     if not data: return None
     
     return uuid, flags, width, height, length, data
