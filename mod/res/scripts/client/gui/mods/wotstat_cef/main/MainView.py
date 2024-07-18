@@ -10,7 +10,7 @@ from frameworks.wulf import WindowLayer
 from helpers import dependency
 from skeletons.gui.impl import IGuiLoader
 from skeletons.account_helpers.settings_core import ISettingsCore
-import base64
+import struct
 
 from ..common.Logger import Logger
 from .CefServer import CefServer, server
@@ -64,8 +64,26 @@ class MainView(View):
     server.createNewWidget(lastWidgetUUID, url, width, height)
     self._as_createWidget(lastWidgetUUID, url, width, height)
 
+  def bytesToIntArray(self, data):
+    # type: (bytes) -> list[int]
+
+    numIntegers = len(data) // 4
+    intArray = struct.unpack('!%sI' % numIntegers, data[:numIntegers*4])
+
+    mod = len(data) % 4
+    if mod > 0:
+      shift = 4 - mod
+      data += b'\x00' * shift
+
+      intArray += struct.unpack('!I', data[numIntegers*4:])
+
+    return (4 - mod if mod > 0 else 0, list(intArray))
+  
   def _onFrame(self, uuid, flags, width, height, length, data):
-    self._as_onFrame(uuid, width, height, base64.b64encode(data).decode('utf-8'))
+    # type: (int, int, int, int, int, bytes) -> None
+  
+    (shift, int_array) = self.bytesToIntArray(data)
+    self._as_onFrame(uuid, width, height, int_array, shift)
 
     oldFlags = self.widgetFlags.get(uuid, None)
     self.widgetFlags[uuid] = flags
@@ -82,8 +100,8 @@ class MainView(View):
       scale = self.settingsCore.interfaceScale.get()
     self._as_setInterfaceScale(scale)
 
-  def _as_onFrame(self, uuid, width, height, data):
-    self.flashObject.as_onFrame(uuid, width, height, data)
+  def _as_onFrame(self, uuid, width, height, data, shift):
+    self.flashObject.as_onFrame(uuid, width, height, data, shift)
 
   def _as_createWidget(self, uuid, url, width, height):
     self.flashObject.as_createWidget(uuid, url, width, height)
