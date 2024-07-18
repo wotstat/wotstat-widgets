@@ -41,8 +41,8 @@ package wotstat.cef {
     private const resizeControl:ResizeControl = new ResizeControl(0, 0);
 
     // Target width by resize control in POINTS
-    private var targetWidth:Number = 0;
-    private var targetHeight:Number = 0;
+    private var targetWidth:Number = -1;
+    private var targetHeight:Number = -1;
 
     private var hideShowButtonDownPosition:Point = null;
     private var isDragging:Boolean = false;
@@ -140,7 +140,7 @@ package wotstat.cef {
       trace("[DW] Interface scale changed " + scale + "x" + App.appScale);
       updateImageScale();
       updateResizeControl();
-      dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, 0));
+      dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, targetHeight * App.appScale));
     }
 
     private function onLoaderComplete(event:Event):void {

@@ -60,6 +60,10 @@ class CefServer(object):
     
     outputThread = threading.Thread(target=self._readOutputLoop)
     outputThread.start()
+
+    errorOutputThread = threading.Thread(target=self._readErrorOutputLoop)
+    errorOutputThread.start()
+
     logger.info("CEF server started")
 
     logger.info("Waiting for a connection on port: %s..." % str(port))
@@ -99,6 +103,22 @@ class CefServer(object):
       scale = self.settingsCore.interfaceScale.get()
     logger.info("Set interface scale: %s" % scale)
     self._sendCommand(Commands.SET_INTERFACE_SCALE, scale)
+
+  def _readErrorOutputLoop(self):
+    while self.enabled:
+      if not self.process: continue
+
+      output = self.process.stderr.readline()
+      if output == '' and self.process.poll() is not None: continue
+
+      if not output: continue
+
+      line = output.decode().strip()
+      if not line: continue
+
+      logger.error(line)
+
+    logger.info("Error output loop stopped")
 
   def _readOutputLoop(self):
     while self.enabled:
@@ -178,7 +198,8 @@ class CefServer(object):
       data += temp
     
     if not data: return None
-    
+
+    logger.debug("Received frame [%s]: %s bytes" % (uuid, len(data)))
     return uuid, flags, width, height, length, data
 
   def _socketReceiverLoop(self, sock, queue):

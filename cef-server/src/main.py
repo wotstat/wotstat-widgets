@@ -130,6 +130,11 @@ class Widget(object):
 
   def resize(self, width, height):
     self.size = (width, height)
+
+    if self.size[0] <= 0 or self.size[1] <= 0:
+      log("Invalid size: %s, %s" % self.size, 'ERROR')
+      self.size = (100, 100)
+
     self.browser.WasResized()
 
   def reloadIgnoreCache(self):
