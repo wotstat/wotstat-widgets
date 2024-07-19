@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <royale-config>
-  <target-player>10.2</target-player>
-  <swf-version>11</swf-version>
+  <target-player>17.0</target-player>
+  <swf-version>17</swf-version>
 
   <compiler>
 

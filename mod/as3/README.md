@@ -16,6 +16,7 @@ For correct compilation add next libraries to `/libs`:
 - `gui_battle-1.0-SNAPSHOT.swc`
 - `gui_lobby-1.0-SNAPSHOT.swc`
 - `lobby.swc`
-- `playerglobal.swc`
+- [`playerglobal.swc`](https://github.com/nexussays/playerglobal)
 
 You can find these libraries in the `wot/res/packages/gui-part1.pkg/gui/flash/swc/` and `wot/res/packages/gui-part2.pkg/gui/flash/swc/` folders.
+
