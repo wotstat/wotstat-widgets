@@ -3,16 +3,16 @@ package wotstat.cef {
   import net.wg.infrastructure.interfaces.IView;
   import net.wg.infrastructure.events.LoaderEvent;
   import net.wg.data.Aliases;
-  import net.wg.gui.lobby.hangar.Hangar;
   import net.wg.infrastructure.managers.impl.ContainerManagerBase;
   import net.wg.data.constants.generated.LAYER_NAMES;
   import net.wg.gui.components.containers.MainViewContainer;
   import scaleform.clik.events.ResizeEvent;
   import flash.events.Event;
   import flash.utils.ByteArray;
+  import net.wg.gui.battle.views.BaseBattlePage;
+  import flash.display.DisplayObject;
 
   public class MainView extends AbstractView {
-
 
     public var py_log:Function;
     public var py_requestResize:Function;
@@ -20,9 +20,11 @@ package wotstat.cef {
     public var py_requestClose:Function;
 
 
-    private var hangarView:Hangar = null;
+    private var targetView:IView = null;
     private var activeWidgets:Vector.<DraggableWidget> = new Vector.<DraggableWidget>();
     private var activeWidgetsByUUID:Object = new Object();
+
+    private var isInBattle:Boolean = false;
 
     public function MainView() {
       super();
@@ -33,12 +35,23 @@ package wotstat.cef {
 
       var viewContainer:MainViewContainer = App.containerMgr.getContainer(LAYER_NAMES.LAYER_ORDER.indexOf(LAYER_NAMES.VIEWS)) as MainViewContainer;
       if (viewContainer != null) {
-        var num:int = viewContainer.numChildren;
-        for (var idx:int = 0; idx < num; ++idx) {
-          var view:IView = viewContainer.getChildAt(idx) as IView;
-          if (view != null) {
-            processView(view);
+
+        for (var i:int = 0; i < viewContainer.numChildren; ++i) {
+          var child:DisplayObject = viewContainer.getChildAt(i);
+
+          try {
+
+            if (child is IView) {
+              processView(child as IView);
+            }
+
+            if (viewContainer.getChildAt(i) is BaseBattlePage) {
+              targetView = viewContainer.getChildAt(i) as IView;
+              isInBattle = true;
+              setupWidgets();
+            }
           }
+          catch (error:Error) {}
         }
       }
 
@@ -62,12 +75,15 @@ package wotstat.cef {
         return;
 
       if (view.as_config.alias == Aliases.LOBBY_HANGAR) {
-        hangarView = view as Hangar;
-        _log("Hangar view found", "INFO");
+        targetView = view;
+        isInBattle = false;
+        setupWidgets();
+      }
+    }
 
-        for each (var widget:DraggableWidget in activeWidgets) {
-          hangarView.addChild(widget);
-        }
+    private function setupWidgets():void {
+      for each (var widget:DraggableWidget in activeWidgets) {
+        targetView.addChild(widget);
       }
     }
 
@@ -90,7 +106,7 @@ package wotstat.cef {
 
       activeWidgets.push(widget);
       activeWidgetsByUUID[uuid] = widget;
-      hangarView.addChild(widget);
+      targetView.addChild(widget);
     }
 
     public function as_setInterfaceScale(scale:Number):void {
@@ -114,6 +130,17 @@ package wotstat.cef {
       if (widget == null)
         return;
       widget.setResizeMode(full);
+      widget.setControlsVisible(!isInBattle);
+    }
+
+    public function as_setControlPressed(isPress:Boolean):void {
+      if (!isInBattle)
+        return;
+
+
+      for each (var widget:DraggableWidget in activeWidgets) {
+        widget.setControlsVisible(isPress);
+      }
     }
 
     private function onWidgetRequestResize(event:ResizeEvent):void {
@@ -141,7 +168,7 @@ package wotstat.cef {
 
       activeWidgetsByUUID[widget.uuid] = null;
 
-      hangarView.removeChild(widget);
+      targetView.removeChild(widget);
       widget.dispose();
       widget.removeEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
       widget.removeEventListener(DraggableWidget.REQUEST_RELOAD, onWidgetRequestReload);

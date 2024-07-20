@@ -136,6 +136,11 @@ package wotstat.cef {
       resizeControl.fullResize = full;
     }
 
+    public function setControlsVisible(isVisible:Boolean):void {
+      controlPanel.visible = isVisible;
+      resizeControl.active = false;
+    }
+
     public function onInterfaceScaleChanged(scale:Number):void {
       trace("[DW] Interface scale changed " + scale + "x" + App.appScale);
       updateImageScale();

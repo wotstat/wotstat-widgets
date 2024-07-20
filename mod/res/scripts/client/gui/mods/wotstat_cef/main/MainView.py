@@ -6,11 +6,13 @@ from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from gui.shared import events, EVENT_BUS_SCOPE, g_eventBus
 from gui.shared.personality import ServicesLocator
 from gui.app_loader.settings import APP_NAME_SPACE
+from gui import InputHandler
 from frameworks.wulf import WindowLayer
 from helpers import dependency
 from skeletons.gui.impl import IGuiLoader
 from skeletons.account_helpers.settings_core import ISettingsCore
 import struct
+import Keys
 
 from ..common.Logger import Logger
 from .CefServer import CefServer, server
@@ -25,6 +27,7 @@ class MainView(View):
   settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
 
   widgetFlags = {}
+  controlPressed = False
 
   def __init__(self, *args, **kwargs):
     super(MainView, self).__init__(*args, **kwargs)
@@ -35,6 +38,9 @@ class MainView(View):
     manager.createWidget += self._createWidget
     server.onFrame += self._onFrame
 
+    InputHandler.g_instance.onKeyDown += self._onKey
+    InputHandler.g_instance.onKeyUp += self._onKey
+
     self.settingsCore.interfaceScale.onScaleChanged += self.setInterfaceScale
     self.setInterfaceScale()
 
@@ -42,8 +48,21 @@ class MainView(View):
     manager.createWidget -= self._createWidget
     server.onFrame -= self._onFrame
     self.settingsCore.interfaceScale.onScaleChanged -= self.setInterfaceScale
+
+    InputHandler.g_instance.onKeyDown -= self._onKey
+    InputHandler.g_instance.onKeyUp -= self._onKey
+
     logger.info("MainView disposed")
     super(MainView, self)._dispose()
+
+  def _onKey(self, event):
+    # type: (BigWorld.KeyEvent) -> None
+
+    if event.key in (Keys.KEY_LCONTROL, Keys.KEY_RCONTROL):
+
+      if self.controlPressed != event.isKeyDown():
+        self.controlPressed = event.isKeyDown()
+        self._as_setControlPressed(self.controlPressed)
 
   def py_log(self, msg, level):
     logger.printLog(level, msg)
@@ -112,6 +131,9 @@ class MainView(View):
   def _as_setInterfaceScale(self, scale):
     self.flashObject.as_setInterfaceScale(scale)
 
+  def _as_setControlPressed(self, pressed):
+    self.flashObject.as_setControlPressed(pressed)
+
 
 
 def setup():
@@ -127,6 +149,7 @@ def setup():
 
 
   def onAppInitialized(event):
+    logger.info("App initialized: %s" % event.ns)
     if event.ns == APP_NAME_SPACE.SF_LOBBY:
       logger.info("SF_LOBBY initialized")
 
@@ -138,5 +161,15 @@ def setup():
       uiLoader = dependency.instance(IGuiLoader)  # type: IGuiLoader
       parent = uiLoader.windowsManager.getMainWindow() if uiLoader and uiLoader.windowsManager else None
       app.loadView(SFViewLoadParams(CEF_MAIN_VIEW, parent=parent))
+
+    elif event.ns == APP_NAME_SPACE.SF_BATTLE:
+      logger.info("SF_BATTLE initialized")
+
+      app = ServicesLocator.appLoader.getApp(event.ns)  # type: AppEntry
+      if not app:
+        logger.error("App not found")
+        return
+      
+      app.loadView(SFViewLoadParams(CEF_MAIN_VIEW))
 
   g_eventBus.addListener(events.AppLifeCycleEvent.INITIALIZED, onAppInitialized, EVENT_BUS_SCOPE.GLOBAL)
