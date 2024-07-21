@@ -13,7 +13,7 @@ from skeletons.account_helpers.settings_core import ISettingsCore
 
 from ..common.utils import isPortAvailable
 from ..common.Logger import Logger
-from .constants import CEF_EXE_PATH
+from ..constants import CEF_EXE_PATH
 
 logger = Logger.instance()
 
@@ -23,6 +23,7 @@ class Commands:
   RELOAD_WIDGET = 'RELOAD_WIDGET'
   CLOSE_WIDGET = 'CLOSE_WIDGET'
   SET_INTERFACE_SCALE = 'SET_INTERFACE_SCALE'
+  REDRAW_WIDGET = 'REDRAW_WIDGET'
 
 
 class CefServer(object):
@@ -97,6 +98,10 @@ class CefServer(object):
   def closeWidget(self, uuid):
     logger.debug("Close widget: %s" % uuid)
     self._sendCommand(Commands.CLOSE_WIDGET, uuid)
+
+  def redrawWidget(self, uuid):
+    logger.debug("Redraw widget: %s" % uuid)
+    self._sendCommand(Commands.REDRAW_WIDGET, uuid)
 
   def _setInterfaceScale(self, scale=None):
     if scale is None:
@@ -199,7 +204,6 @@ class CefServer(object):
     
     if not data: return None
 
-    logger.debug("Received frame [%s]: %s bytes" % (uuid, len(data)))
     return uuid, flags, width, height, length, data
 
   def _socketReceiverLoop(self, sock, queue):

@@ -96,7 +96,7 @@ class ClientHandler(object):
   
   def OnPaint(self, browser, element_type, paint_buffer, width, height, **_):
     frameBuffer = paint_buffer.GetString(mode="rgba", origin="top-left")
-    if width == self.widget.size[0] or height != self.widget.size[1]:
+    if width == self.widget.size[0]:
       pngBuffer = bufferToPng(frameBuffer, width, height)
       self.widget.sendFrame(self.widget.getFlags(), width, height, pngBuffer)
 
@@ -151,6 +151,9 @@ class Widget(object):
     self.browser.SetZoomLevel(math.log(zoom) / math.log(1.2))
     self.browser.WasResized()
     log("[%s] Zoom level set to: %s" % (self.url, zoom))
+
+  def redraw(self):
+    self.browser.Invalidate(cef.PET_VIEW)
 
   def resizeByHeight(self):
     if self.autoHeight:
@@ -280,11 +283,18 @@ class CEFServer(object):
     for widget in self.widgets.values():
       widget.setZoomPercent(scale)
 
+  def redrawWidget(self, uuid):
+    widget = self.widgets.get(uuid, None)
+    if not widget: return
+
+    widget.redraw()
+
 class Commands:
   OPEN_NEW_WIDGET = 'OPEN_NEW_WIDGET'
   RESIZE_WIDGET = 'RESIZE_WIDGET'
   RELOAD_WIDGET = 'RELOAD_WIDGET'
   CLOSE_WIDGET = 'CLOSE_WIDGET'
+  REDRAW_WIDGET = 'REDRAW_WIDGET'
   SET_INTERFACE_SCALE = 'SET_INTERFACE_SCALE'
 
 class Main(object):
@@ -375,6 +385,16 @@ class Main(object):
       scale = float(parts[0])
       log(f"Setting interface scale: {scale}")
       self.server.setInterfaceScale(scale)
+      return
+    
+    if command.startswith(Commands.REDRAW_WIDGET):
+      parts = getCommandParts(command, 1)
+      if not parts: return
+
+      uuid = parts[0]
+      uuid = int(uuid)
+      log(f"Getting widget frame: {uuid}")
+      self.server.redrawWidget(uuid)
       return
     
     log(f"Unknown command: {command}")

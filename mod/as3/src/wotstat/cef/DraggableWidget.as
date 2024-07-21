@@ -19,11 +19,17 @@ package wotstat.cef {
   import flash.display.Graphics;
   import flash.display.Bitmap;
   import flash.display.PixelSnapping;
+  import wotstat.cef.common.MoveEvent;
 
   public class DraggableWidget extends Sprite {
     public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";
     public static const REQUEST_RELOAD:String = "REQUEST_RELOAD";
     public static const REQUEST_CLOSE:String = "REQUEST_CLOSE";
+    public static const MOVE_WIDGET:String = "MOVE_WIDGET";
+    public static const LOCK_WIDGET:String = "LOCK_WIDGET";
+    public static const UNLOCK_WIDGET:String = "UNLOCK_WIDGET";
+    public static const HIDE_WIDGET:String = "HIDE_WIDGET";
+    public static const SHOW_WIDGET:String = "SHOW_WIDGET";
 
     private const HANGAR_TOP_OFFSET:int = 0;
     private const HANGAR_BOTTOM_OFFSET:int = 90;
@@ -47,7 +53,7 @@ package wotstat.cef {
     private var hideShowButtonDownPosition:Point = null;
     private var isDragging:Boolean = false;
     private var isContentHidden:Boolean = false;
-    private var isLocked:Boolean = false;
+    private var _isLocked:Boolean = false;
 
     // CONTENT == Browser Image in readl PIXELS
     private var contentWidth:Number = 0;
@@ -59,7 +65,15 @@ package wotstat.cef {
       return _uuid;
     }
 
-    public function DraggableWidget(uuid:int, width:int, height:int) {
+    public function get isLocked():Boolean {
+      return _isLocked;
+    }
+
+    public function get isHidden():Boolean {
+      return isContentHidden;
+    }
+
+    public function DraggableWidget(uuid:int, width:int, height:int, x:int, y:int, isHidden:Boolean, isLocked:Boolean) {
       super();
       _uuid = uuid;
 
@@ -80,8 +94,8 @@ package wotstat.cef {
 
       targetWidth = width / App.appScale;
 
-      this.x = (App.appWidth - targetWidth) / 2;
-      this.y = (App.appHeight - height / App.appScale - 100) / 2;
+      this.x = x >= 0 ? x : (App.appWidth - targetWidth) / 2;
+      this.y = y >= 0 ? y : (App.appHeight - height / App.appScale - 100) / 2;
       contentWidth = width;
       contentHeight = height;
 
@@ -96,6 +110,9 @@ package wotstat.cef {
       hideShowBtn.addEventListener(MouseEvent.MOUSE_DOWN, onHideShowButtonMouseDown);
 
       updateImageScale();
+
+      setHidden(isHidden);
+      setLocked(isLocked);
     }
 
     public function dispose():void {
@@ -148,6 +165,36 @@ package wotstat.cef {
       dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, targetHeight * App.appScale));
     }
 
+    private function setHidden(value:Boolean):void {
+      if (isContentHidden == value)
+        return;
+
+      isContentHidden = value;
+      hideShowBtn.isShow = !value;
+      content.visible = !value;
+
+      if (resizeControl.active) {
+        resizeControl.active = false;
+      }
+
+      updateButtonsVisibility();
+    }
+
+    private function setLocked(value:Boolean):void {
+      if (_isLocked == value)
+        return;
+
+      _isLocked = value;
+
+      if (resizeControl.active) {
+        resizeControl.active = false;
+      }
+
+      content.mouseEnabled = !_isLocked;
+      content.mouseChildren = !_isLocked;
+      updateButtonsVisibility();
+    }
+
     private function onLoaderComplete(event:Event):void {
       (loader.content as Bitmap).pixelSnapping = PixelSnapping.ALWAYS;
       (loader.content as Bitmap).smoothing = false;
@@ -171,7 +218,7 @@ package wotstat.cef {
         var dx:Number = event.stageX - hideShowButtonDownPosition.x;
         var dy:Number = event.stageY - hideShowButtonDownPosition.y;
 
-        if (Math.sqrt(dx * dx + dy * dy) > 10 && isContentHidden && !isLocked) {
+        if (Math.sqrt(dx * dx + dy * dy) > 10 && isContentHidden && !_isLocked) {
           hideShowButtonDownPosition = null;
           isDragging = true;
           startDrag(false, new Rectangle(
@@ -202,6 +249,7 @@ package wotstat.cef {
 
       isDragging = false;
       stopDrag();
+      dispatchEvent(new MoveEvent(MOVE_WIDGET, x, y));
     }
 
     private function onHideShowButtonMouseDown(event:MouseEvent):void {
@@ -209,15 +257,8 @@ package wotstat.cef {
     }
 
     private function onHideShowButtonClick():void {
-      isContentHidden = !isContentHidden;
-      hideShowBtn.isShow = !isContentHidden;
-      content.visible = !isContentHidden;
-
-      if (resizeControl.active) {
-        resizeControl.active = false;
-      }
-
-      updateButtonsVisibility();
+      setHidden(!isContentHidden);
+      dispatchEvent(isContentHidden ? new Event(HIDE_WIDGET) : new Event(SHOW_WIDGET));
     }
 
     private function onResizeButtonClick(event:MouseEvent):void {
@@ -225,20 +266,13 @@ package wotstat.cef {
     }
 
     private function onLockButtonClick(event:MouseEvent):void {
-      isLocked = !isLocked;
-
-      if (resizeControl.active) {
-        resizeControl.active = false;
-      }
-
-      content.mouseEnabled = !isLocked;
-      content.mouseChildren = !isLocked;
-      updateButtonsVisibility();
+      setLocked(!_isLocked);
+      dispatchEvent(_isLocked ? new Event(UNLOCK_WIDGET) : new Event(LOCK_WIDGET));
     }
 
     private function updateButtonsVisibility():void {
       for each (var value:Button in [resizeBtn, reloadBtn, closeBtn]) {
-        value.visible = !isContentHidden && !isLocked;
+        value.visible = !isContentHidden && !_isLocked;
       }
 
       lockBtn.visible = !isContentHidden;

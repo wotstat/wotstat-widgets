@@ -17,16 +17,16 @@ import Keys
 from ..common.Logger import Logger
 from .CefServer import CefServer, server
 from .EventsManager import manager
+from .WidgetStorage import WidgetStorage
 
 CEF_MAIN_VIEW = "WOTSTAT_CEF_MAIN_VIEW"
 
 logger = Logger.instance()
-lastWidgetUUID = 0
+storage = WidgetStorage.instance()
+lastWidgetId = 0
 
 class MainView(View):
   settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
-
-  widgetFlags = {}
   controlPressed = False
 
   def __init__(self, *args, **kwargs):
@@ -43,6 +43,10 @@ class MainView(View):
 
     self.settingsCore.interfaceScale.onScaleChanged += self.setInterfaceScale
     self.setInterfaceScale()
+
+    for widget in storage.getAllWidgets():
+      self._addWidget(widget.uuid, widget.wid, widget.url, widget.width, widget.height, widget.x, widget.y, widget.flags, widget.isHidden, widget.isLocked)
+      server.redrawWidget(widget.wid)
 
   def _dispose(self):
     manager.createWidget -= self._createWidget
@@ -67,21 +71,49 @@ class MainView(View):
   def py_log(self, msg, level):
     logger.printLog(level, msg)
 
-  def py_requestResize(self, uuid, width, height):
-    server.resizeWidget(uuid, width, height)
+  def py_moveWidget(self, wid, x, y):
+    storage.updateWidget(wid, x=x, y=y)
 
-  def py_requestReload(self, uuid):
-    server.reloadWidget(uuid)
+  def py_lockUnlockWidget(self, wid, isLocked):
+    storage.updateWidget(wid, isLocked=isLocked)
 
-  def py_requestClose(self, uuid):
-    server.closeWidget(uuid)
-    self.widgetFlags.pop(uuid, None)
+  def py_hideShowWidget(self, wid, isHidden):
+    storage.updateWidget(wid, isHidden=isHidden)
+
+  def py_requestResize(self, wid, width, height):
+    server.resizeWidget(wid, width, height)
+    storage.updateWidget(wid, width=width, height=height)
+
+  def py_requestReload(self, wid):
+    server.reloadWidget(wid)
+
+  def py_requestClose(self, wid):
+    server.closeWidget(wid)
+    storage.removeWidget(wid)
+
+  def getNextWidgetId(self):
+    global lastWidgetId
+    lastWidgetId += 1
+    return lastWidgetId
+
+  def _addWidget(self, uuid, wid, url, width=100, height=100, x=-1, y=-1, flags=0, isHidden=False, isLocked=False):
+    if wid:
+      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked)
+    else:
+      wid = self.getNextWidgetId()
+      storage.setWidgetWid(uuid, wid)
+
+      server.createNewWidget(wid, url, width, height)
+      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked)
+
+    self._as_setResizeMode(wid, flags & CefServer.Flags.AUTO_HEIGHT == 0)
 
   def _createWidget(self, url, width, height=-1):
-    global lastWidgetUUID
-    lastWidgetUUID += 1
-    server.createNewWidget(lastWidgetUUID, url, width, height)
-    self._as_createWidget(lastWidgetUUID, url, width, height)
+    wid = self.getNextWidgetId()
+    storage.addWidget(wid, url, width, height)
+    server.createNewWidget(wid, url, width, height)
+    self._as_createWidget(wid, url, width, height)
+    self._as_setResizeMode(wid, True)
 
   def bytesToIntArray(self, data):
     # type: (bytes) -> list[int]
@@ -98,35 +130,36 @@ class MainView(View):
 
     return (4 - mod if mod > 0 else 0, list(intArray))
   
-  def _onFrame(self, uuid, flags, width, height, length, data):
+  def _onFrame(self, wid, flags, width, height, length, data):
     # type: (int, int, int, int, int, bytes) -> None
-  
+
     (shift, int_array) = self.bytesToIntArray(data)
-    self._as_onFrame(uuid, width, height, int_array, shift)
+    self._as_onFrame(wid, width, height, int_array, shift)
 
-    oldFlags = self.widgetFlags.get(uuid, None)
-    self.widgetFlags[uuid] = flags
+    oldFlags = storage.getWidgetFlags(wid)
+    if oldFlags != flags:
+      storage.updateWidget(wid, flags=flags)
 
-    def isChanged(flag):
-      return oldFlags is None or (oldFlags & flag) != (flags & flag)
+      def isChanged(flag):
+        return oldFlags is None or (oldFlags & flag) != (flags & flag)
 
-    if isChanged(CefServer.Flags.AUTO_HEIGHT):
-      logger.info("Resize mode changed: %s" % (flags & CefServer.Flags.AUTO_HEIGHT == 0))
-      self._as_setResizeMode(uuid, flags & CefServer.Flags.AUTO_HEIGHT == 0)
+      if isChanged(CefServer.Flags.AUTO_HEIGHT):
+        logger.info("Resize mode changed: %s" % (flags & CefServer.Flags.AUTO_HEIGHT == 0))
+        self._as_setResizeMode(wid, flags & CefServer.Flags.AUTO_HEIGHT == 0)
       
   def setInterfaceScale(self, scale=None):
     if not scale:
       scale = self.settingsCore.interfaceScale.get()
     self._as_setInterfaceScale(scale)
 
-  def _as_onFrame(self, uuid, width, height, data, shift):
-    self.flashObject.as_onFrame(uuid, width, height, data, shift)
+  def _as_onFrame(self, wid, width, height, data, shift):
+    self.flashObject.as_onFrame(wid, width, height, data, shift)
 
-  def _as_createWidget(self, uuid, url, width, height):
-    self.flashObject.as_createWidget(uuid, url, width, height)
+  def _as_createWidget(self, wid, url, width, height, x=-1, y=-1, isHidden=False, isLocked=False):
+    self.flashObject.as_createWidget(wid, url, width, height, x, y, isHidden, isLocked)
 
-  def _as_setResizeMode(self, uuid, mode):
-    self.flashObject.as_setResizeMode(uuid, mode)
+  def _as_setResizeMode(self, wid, mode):
+    self.flashObject.as_setResizeMode(wid, mode)
 
   def _as_setInterfaceScale(self, scale):
     self.flashObject.as_setInterfaceScale(scale)

@@ -10,11 +10,9 @@ from .common.utils import copyFile
 from .main.MainView import setup as mainViewSetup
 from .main.CefServer import server
 
-from .main.constants import CEF_PATH
-
+from .constants import CEF_PATH, CONFIG_PATH
 
 DEBUG_MODE = '{{DEBUG_MODE}}'
-CONFIG_PATH = './mods/configs/wotstat.widgets/config.cfg'
 
 logger = Logger.instance()
 
