@@ -24,6 +24,7 @@ CEF_MAIN_VIEW = "WOTSTAT_CEF_MAIN_VIEW"
 logger = Logger.instance()
 storage = WidgetStorage.instance()
 lastWidgetId = 0
+lastLoadIsBattle = False
 
 class MainView(View):
   settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
@@ -98,13 +99,13 @@ class MainView(View):
 
   def _addWidget(self, uuid, wid, url, width=100, height=100, x=-1, y=-1, flags=0, isHidden=False, isLocked=False):
     if wid:
-      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked)
+      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, lastLoadIsBattle)
     else:
       wid = self.getNextWidgetId()
       storage.setWidgetWid(uuid, wid)
 
       server.createNewWidget(wid, url, width, height)
-      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked)
+      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, lastLoadIsBattle)
 
     self._as_setResizeMode(wid, flags & CefServer.Flags.AUTO_HEIGHT == 0)
 
@@ -112,7 +113,7 @@ class MainView(View):
     wid = self.getNextWidgetId()
     storage.addWidget(wid, url, width, height)
     server.createNewWidget(wid, url, width, height)
-    self._as_createWidget(wid, url, width, height)
+    self._as_createWidget(wid, url, width, height, isInBattle=lastLoadIsBattle)
     self._as_setResizeMode(wid, True)
 
   def bytesToIntArray(self, data):
@@ -155,8 +156,8 @@ class MainView(View):
   def _as_onFrame(self, wid, width, height, data, shift):
     self.flashObject.as_onFrame(wid, width, height, data, shift)
 
-  def _as_createWidget(self, wid, url, width, height, x=-1, y=-1, isHidden=False, isLocked=False):
-    self.flashObject.as_createWidget(wid, url, width, height, x, y, isHidden, isLocked)
+  def _as_createWidget(self, wid, url, width, height, x=-1, y=-1, isHidden=False, isLocked=False, isInBattle=False):
+    self.flashObject.as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isInBattle)
 
   def _as_setResizeMode(self, wid, mode):
     self.flashObject.as_setResizeMode(wid, mode)
@@ -182,7 +183,9 @@ def setup():
 
 
   def onAppInitialized(event):
+    global lastLoadIsBattle
     logger.info("App initialized: %s" % event.ns)
+
     if event.ns == APP_NAME_SPACE.SF_LOBBY:
       logger.info("SF_LOBBY initialized")
 
@@ -193,6 +196,8 @@ def setup():
 
       uiLoader = dependency.instance(IGuiLoader)  # type: IGuiLoader
       parent = uiLoader.windowsManager.getMainWindow() if uiLoader and uiLoader.windowsManager else None
+
+      lastLoadIsBattle = False
       app.loadView(SFViewLoadParams(CEF_MAIN_VIEW, parent=parent))
 
     elif event.ns == APP_NAME_SPACE.SF_BATTLE:
@@ -203,6 +208,7 @@ def setup():
         logger.error("App not found")
         return
       
+      lastLoadIsBattle = True
       app.loadView(SFViewLoadParams(CEF_MAIN_VIEW))
 
   g_eventBus.addListener(events.AppLifeCycleEvent.INITIALIZED, onAppInitialized, EVENT_BUS_SCOPE.GLOBAL)

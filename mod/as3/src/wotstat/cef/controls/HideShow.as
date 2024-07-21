@@ -2,7 +2,7 @@ package wotstat.cef.controls {
   import flash.display.Graphics;
 
   public class HideShow extends Button {
-    private const WIDTH:int = 18;
+    private const WIDTH:int = 19;
     private const X_OFFSET:int = 6;
 
     private var _isShow:Boolean = true;

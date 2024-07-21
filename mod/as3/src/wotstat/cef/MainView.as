@@ -89,6 +89,7 @@ package wotstat.cef {
       for each (var widget:DraggableWidget in activeWidgets) {
         targetView.addChild(widget);
         widget.setControlsVisible(!isInBattle);
+        widget.isInBattle = isInBattle;
       }
     }
 
@@ -101,10 +102,10 @@ package wotstat.cef {
       }
     }
 
-    public function as_createWidget(wid:int, url:String, width:int, height:int, x:int, y:int, isHidden:Boolean, isLocked:Boolean):void {
+    public function as_createWidget(wid:int, url:String, width:int, height:int, x:int, y:int, isHidden:Boolean, isLocked:Boolean, isInBattle:Boolean):void {
       _log("as_createWidget [" + wid + "]: " + url + " " + width + "x" + height + " (" + x + ";" + y + ")" + " hidden: " + isHidden + " locked: " + isLocked, "INFO");
 
-      var widget:DraggableWidget = new DraggableWidget(wid, width, height, x, y, isHidden, isLocked);
+      var widget:DraggableWidget = new DraggableWidget(wid, width, height, x, y, isHidden, isLocked, isInBattle);
       widget.addEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
       widget.addEventListener(DraggableWidget.REQUEST_RELOAD, onWidgetRequestReload);
       widget.addEventListener(DraggableWidget.REQUEST_CLOSE, onWidgetRequestClose);

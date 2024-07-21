@@ -61,6 +61,8 @@ package wotstat.cef {
     private var content:Sprite = new Sprite();
     private var loader:Loader = new Loader();
 
+    public var isInBattle:Boolean = false;
+
     public function get wid():int {
       return _wid;
     }
@@ -73,9 +75,10 @@ package wotstat.cef {
       return isContentHidden;
     }
 
-    public function DraggableWidget(wid:int, width:int, height:int, x:int, y:int, isHidden:Boolean, isLocked:Boolean) {
+    public function DraggableWidget(wid:int, width:int, height:int, x:int, y:int, isHidden:Boolean, isLocked:Boolean, isInBattle:Boolean) {
       super();
       _wid = wid;
+      this.isInBattle = isInBattle;
 
       addChild(content);
       content.addChild(loader);
@@ -93,6 +96,8 @@ package wotstat.cef {
       hitArea = controlPanel;
 
       targetWidth = width / App.appScale;
+      if (height > 0)
+        targetHeight = height / App.appScale;
 
       this.x = x >= 0 ? x : (App.appWidth - targetWidth) / 2;
       this.y = y >= 0 ? y : (App.appHeight - height / App.appScale - 100) / 2;
@@ -101,9 +106,12 @@ package wotstat.cef {
 
       addChild(resizeControl);
 
+      fixPosition();
+
       content.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
       App.instance.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
       App.instance.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
+      App.instance.addEventListener(Event.RESIZE, onAppResize);
       resizeControl.addEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
       resizeControl.addEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
       loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onLoaderComplete);
@@ -200,17 +208,49 @@ package wotstat.cef {
       (loader.content as Bitmap).smoothing = false;
     }
 
+    private function getDraggingRectange(full:Boolean, battle:Boolean = false):Rectangle {
+      if (full && !battle)
+        return new Rectangle(
+            0,
+            HANGAR_TOP_OFFSET,
+            App.appWidth - content.width,
+            App.appHeight - content.height - HANGAR_TOP_OFFSET - HANGAR_BOTTOM_OFFSET
+          );
+
+      if (!full && !battle)
+        return new Rectangle(
+            0,
+            HANGAR_TOP_OFFSET + HANGAR_HEADER_MINIFIED_HEIGHT + controlPanel.height + 2,
+            App.appWidth - controlPanel.height,
+            App.appHeight - controlPanel.height - HANGAR_TOP_OFFSET - HANGAR_HEADER_MINIFIED_HEIGHT - HANGAR_BOTTOM_OFFSET
+          );
+
+      if (full && battle)
+        return new Rectangle(
+            0,
+            0,
+            App.appWidth - content.width,
+            App.appHeight - content.height
+          );
+
+
+      if (!full && battle)
+        return new Rectangle(
+            0,
+            controlPanel.height + 2,
+            App.appWidth - controlPanel.height,
+            App.appHeight - controlPanel.height
+          );
+
+      return new Rectangle(0, 0, App.appWidth, App.appHeight);
+    }
+
     private function onMouseDown(event:MouseEvent):void {
       if (isDragging)
         return;
 
       isDragging = true;
-      startDrag(false, new Rectangle(
-            0,
-            HANGAR_TOP_OFFSET,
-            App.appWidth - content.width,
-            App.appHeight - content.height - HANGAR_TOP_OFFSET - HANGAR_BOTTOM_OFFSET
-          ));
+      startDrag(false, getDraggingRectange(!isHidden, isInBattle));
     }
 
     private function onMouseMove(event:MouseEvent):void {
@@ -218,15 +258,12 @@ package wotstat.cef {
         var dx:Number = event.stageX - hideShowButtonDownPosition.x;
         var dy:Number = event.stageY - hideShowButtonDownPosition.y;
 
-        if (Math.sqrt(dx * dx + dy * dy) > 10 && isContentHidden && !_isLocked) {
+        if (Math.sqrt(dx * dx + dy * dy) > 5 && isContentHidden && !_isLocked) {
           hideShowButtonDownPosition = null;
           isDragging = true;
-          startDrag(false, new Rectangle(
-                0,
-                HANGAR_TOP_OFFSET + controlPanel.height + 3 + HANGAR_HEADER_MINIFIED_HEIGHT,
-                App.appWidth - content.width,
-                App.appHeight - content.height - HANGAR_TOP_OFFSET - HANGAR_BOTTOM_OFFSET - controlPanel.height - 3 - HANGAR_HEADER_MINIFIED_HEIGHT
-              ));
+          x += dx;
+          y += dy;
+          startDrag(false, getDraggingRectange(!isHidden, isInBattle));
         }
       }
     }
@@ -305,6 +342,29 @@ package wotstat.cef {
       resizeControl.contentHeight = targetHeight >= 0 ? targetHeight : targetWidth * contentHeight / contentWidth;
 
       dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, targetHeight * App.appScale));
+    }
+
+    private function fixPosition():void {
+      x = Math.round(x);
+      y = Math.round(y);
+
+      var rect:Rectangle = getDraggingRectange(!isHidden, isInBattle);
+      if (x < rect.x)
+        x = rect.x;
+      if (y < rect.y)
+        y = rect.y;
+      if (x > rect.width + rect.x)
+        x = rect.width + rect.x;
+      if (y > rect.height + rect.y)
+        y = rect.height + rect.y;
+    }
+
+    private function onAppResize(event:Event):void {
+      if (isDragging) {
+        stopDrag();
+        isDragging = false;
+      }
+      fixPosition();
     }
 
     private function updateImageScale():void {

@@ -17,7 +17,7 @@ package wotstat.cef.controls {
     private const CONTROL_HEIGHT:int = 40;
     private const FULL_CONTROL_SIZE:int = 15;
     private const MAX_WIDTH:int = 400;
-    private const MIN_WIDTH:int = 105;
+    private const MIN_WIDTH:int = 110;
 
     private var _active:Boolean = false;
 

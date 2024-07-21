@@ -2,7 +2,7 @@ package wotstat.cef.controls {
   import flash.display.Graphics;
 
   public class Close extends Button {
-    private const WIDTH:int = 18;
+    private const WIDTH:int = 19;
     private const X_OFFSET:int = 6;
 
     public function Close(clicked:Function = null) {

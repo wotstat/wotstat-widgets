@@ -7,7 +7,7 @@ package wotstat.cef {
     private var gap:int;
     private var buttons:Vector.<Button> = new Vector.<Button>();
 
-    public function ControlsPanel(height:int = 18, gap:int = 3) {
+    public function ControlsPanel(height:int = 19, gap:int = 3) {
       this.gap = gap;
       super();
     }

@@ -54,7 +54,7 @@ class ButtonDisplayState extends Sprite {
   function draw():void {
     graphics.clear();
     graphics.beginFill(background >>> 8, Number(background & 0xFF) / 255);
-    graphics.lineStyle(1.5, border >>> 8, Number(border & 0xFF) / 255);
+    graphics.lineStyle(1, border >>> 8, Number(border & 0xFF) / 255);
     graphics.drawRoundRect(0, 0, size, size, radius);
     graphics.endFill();
 

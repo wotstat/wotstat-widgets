@@ -6,7 +6,7 @@ package wotstat.cef.controls {
   import flash.geom.Matrix;
 
   public class ImageButton extends Button {
-    private const WIDTH:int = 18;
+    private const WIDTH:int = 19;
     private const X_OFFSET:int = 6;
     private var bitmap:Bitmap = null;
     private var image:Image = new Image();
