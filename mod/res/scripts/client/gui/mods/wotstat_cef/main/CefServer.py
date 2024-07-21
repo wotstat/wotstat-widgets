@@ -84,24 +84,24 @@ class CefServer(object):
     self.process.terminate()
     logger.info("CEF server stopped")
 
-  def createNewWidget(self, uuid, url, width, height):
-    self._sendCommand(Commands.OPEN_NEW_WIDGET, uuid, url, width, height)
+  def createNewWidget(self, wid, url, width, height):
+    self._sendCommand(Commands.OPEN_NEW_WIDGET, wid, url, width, height)
 
-  def resizeWidget(self, uuid, width, height):
-    logger.debug("Resize widget: %s to %sx%s" % (uuid, width, height))
-    self._sendCommand(Commands.RESIZE_WIDGET, uuid, width, height)
+  def resizeWidget(self, wid, width, height):
+    logger.debug("Resize widget: %s to %sx%s" % (wid, width, height))
+    self._sendCommand(Commands.RESIZE_WIDGET, wid, width, height)
 
-  def reloadWidget(self, uuid):
-    logger.debug("Reload widget: %s" % uuid)
-    self._sendCommand(Commands.RELOAD_WIDGET, uuid)
+  def reloadWidget(self, wid):
+    logger.debug("Reload widget: %s" % wid)
+    self._sendCommand(Commands.RELOAD_WIDGET, wid)
 
-  def closeWidget(self, uuid):
-    logger.debug("Close widget: %s" % uuid)
-    self._sendCommand(Commands.CLOSE_WIDGET, uuid)
+  def closeWidget(self, wid):
+    logger.debug("Close widget: %s" % wid)
+    self._sendCommand(Commands.CLOSE_WIDGET, wid)
 
-  def redrawWidget(self, uuid):
-    logger.debug("Redraw widget: %s" % uuid)
-    self._sendCommand(Commands.REDRAW_WIDGET, uuid)
+  def redrawWidget(self, wid):
+    logger.debug("Redraw widget: %s" % wid)
+    self._sendCommand(Commands.REDRAW_WIDGET, wid)
 
   def _setInterfaceScale(self, scale=None):
     if scale is None:
@@ -171,8 +171,8 @@ class CefServer(object):
   def _readFrame(self, sock):
     # type: (socket.socket) -> Tuple[int, int, int, bytes]
 
-    uuid_bytes = sock.recv(4)
-    if not uuid_bytes: return None
+    wid_bytes = sock.recv(4)
+    if not wid_bytes: return None
 
     flags_bytes = sock.recv(4)
     if not flags_bytes: return None
@@ -186,7 +186,7 @@ class CefServer(object):
     length_bytes = sock.recv(4)
     if not length_bytes: return None
     
-    uuid = struct.unpack('!I', uuid_bytes)[0]
+    wid = struct.unpack('!I', wid_bytes)[0]
     flags = struct.unpack('!I', flags_bytes)[0]
     width = struct.unpack('!I', width_bytes)[0]
     height = struct.unpack('!I', height_bytes)[0]
@@ -204,7 +204,7 @@ class CefServer(object):
     
     if not data: return None
 
-    return uuid, flags, width, height, length, data
+    return wid, flags, width, height, length, data
 
   def _socketReceiverLoop(self, sock, queue):
     # type: (socket.socket, Queue) -> None
@@ -223,13 +223,13 @@ class CefServer(object):
     newFrames = {}
 
     while not self.queue.empty():
-      uuid, flags, width, height, length, data = self.queue.get()
-      newFrames[uuid] = (flags, width, height, length, data)
+      wid, flags, width, height, length, data = self.queue.get()
+      newFrames[wid] = (flags, width, height, length, data)
       
-    for uuid, frame in newFrames.items():
+    for wid, frame in newFrames.items():
       flags, width, height, length, data = frame
       if data:
-        self.onFrame(uuid, flags, width, height, length, data)
+        self.onFrame(wid, flags, width, height, length, data)
 
 
 server = CefServer()

@@ -26,7 +26,7 @@ package wotstat.cef {
 
     private var targetView:IView = null;
     private var activeWidgets:Vector.<DraggableWidget> = new Vector.<DraggableWidget>();
-    private var activeWidgetsByUUID:Object = new Object();
+    private var activeWidgetsByWid:Object = new Object();
 
     private var isInBattle:Boolean = false;
 
@@ -116,7 +116,7 @@ package wotstat.cef {
 
 
       activeWidgets.push(widget);
-      activeWidgetsByUUID[wid] = widget;
+      activeWidgetsByWid[wid] = widget;
       widget.setControlsVisible(!isInBattle);
       if (targetView)
         targetView.addChild(widget);
@@ -128,18 +128,18 @@ package wotstat.cef {
       }
     }
 
-    public function as_onFrame(uuid:int, width:int, height:int, data:Array, shift:int):void {
+    public function as_onFrame(wid:int, width:int, height:int, data:Array, shift:int):void {
       var bytes:ByteArray = Utils.decodeIntArrayAMF(data, shift);
 
-      var widget:DraggableWidget = activeWidgetsByUUID[uuid];
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
       if (widget == null)
         return;
 
       widget.setFrame(width, height, bytes);
     }
 
-    public function as_setResizeMode(uuid:int, full:Boolean):void {
-      var widget:DraggableWidget = activeWidgetsByUUID[uuid];
+    public function as_setResizeMode(wid:int, full:Boolean):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
       if (widget == null)
         return;
       widget.setResizeMode(full);
@@ -159,14 +159,14 @@ package wotstat.cef {
     private function onWidgetRequestResize(event:ResizeEvent):void {
       if (this.py_requestResize != null) {
         var widget:DraggableWidget = event.target as DraggableWidget;
-        this.py_requestResize(widget.uuid, event.scaleX, event.scaleY);
+        this.py_requestResize(widget.wid, event.scaleX, event.scaleY);
       }
     }
 
     private function onWidgetRequestReload(event:Event):void {
       if (this.py_requestReload != null) {
         var widget:DraggableWidget = event.target as DraggableWidget;
-        this.py_requestReload(widget.uuid);
+        this.py_requestReload(widget.wid);
       }
     }
 
@@ -179,7 +179,7 @@ package wotstat.cef {
         activeWidgets.splice(idx, 1);
       }
 
-      activeWidgetsByUUID[widget.uuid] = null;
+      activeWidgetsByWid[widget.wid] = null;
 
       targetView.removeChild(widget);
       widget.dispose();
@@ -193,28 +193,28 @@ package wotstat.cef {
       widget.removeEventListener(DraggableWidget.HIDE_WIDGET, onWidgetHideShow);
 
       if (this.py_requestClose != null) {
-        this.py_requestClose(widget.uuid);
+        this.py_requestClose(widget.wid);
       }
     }
 
     private function onWidgetMove(event:MoveEvent):void {
       if (this.py_moveWidget != null) {
         var widget:DraggableWidget = event.target as DraggableWidget;
-        this.py_moveWidget(widget.uuid, event.x, event.y);
+        this.py_moveWidget(widget.wid, event.x, event.y);
       }
     }
 
     private function onWidgetLockUnlock(event:Event):void {
       if (this.py_lockUnlockWidget != null) {
         var widget:DraggableWidget = event.target as DraggableWidget;
-        this.py_lockUnlockWidget(widget.uuid, widget.isLocked);
+        this.py_lockUnlockWidget(widget.wid, widget.isLocked);
       }
     }
 
     private function onWidgetHideShow(event:Event):void {
       if (this.py_hideShowWidget != null) {
         var widget:DraggableWidget = event.target as DraggableWidget;
-        this.py_hideShowWidget(widget.uuid, widget.isHidden);
+        this.py_hideShowWidget(widget.wid, widget.isHidden);
       }
     }
   }

@@ -217,14 +217,14 @@ class CEFServer(object):
     self.socket.close()
     log("Server closed on %s:%s" % (str(self.host), str(self.port)))
 
-  def sendFrame(self, uuid, flags, width, height, frameBytes):
-    uuidBytes = struct.pack('!I', uuid)
+  def sendFrame(self, wid, flags, width, height, frameBytes):
+    widBytes = struct.pack('!I', wid)
     flagsBytes = struct.pack('!I', flags)
     widthBytes = struct.pack('!I', width)
     heightBytes = struct.pack('!I', height)
     frameLength = struct.pack('!I', len(frameBytes))
 
-    frame = uuidBytes + flagsBytes + widthBytes + heightBytes + frameLength + frameBytes
+    frame = widBytes + flagsBytes + widthBytes + heightBytes + frameLength + frameBytes
     if self.connected and self.client_socket:
       try:
         self.client_socket.sendall(frame)
@@ -232,11 +232,11 @@ class CEFServer(object):
         log("Error sending frame: %s" % e, 'ERROR')
         self.connected = False
 
-  def createWidget(self, uuid, url, width, height):
+  def createWidget(self, wid, url, width, height):
     if height < 0:
       height = width
 
-    log(f"Creating widget [{uuid}] with url: {url} and siz: {width}x{height}")
+    log(f"Creating widget [{wid}] with url: {url} and siz: {width}x{height}")
 
     browserSettings = {
       "windowless_frame_rate": 30,
@@ -249,14 +249,14 @@ class CEFServer(object):
                                     settings=browserSettings,
                                     url=url)
     
-    widget = Widget(url, browser, self.interfaceScale, width, height, partial(self.sendFrame, uuid))
-    self.widgets[uuid] = widget
+    widget = Widget(url, browser, self.interfaceScale, width, height, partial(self.sendFrame, wid))
+    self.widgets[wid] = widget
 
     if self.debug:
       widget.showDevTools()
 
-  def resizeWidget(self, uuid, width, height):
-    widget = self.widgets.get(uuid, None)
+  def resizeWidget(self, wid, width, height):
+    widget = self.widgets.get(wid, None)
     if not widget: return
 
     if height < 0:
@@ -265,26 +265,26 @@ class CEFServer(object):
     else:
       widget.resize(width, height)
 
-  def reloadWidget(self, uuid):
-    widget = self.widgets.get(uuid, None)
+  def reloadWidget(self, wid):
+    widget = self.widgets.get(wid, None)
     if not widget: return
 
     widget.reloadIgnoreCache()
 
-  def closeWidget(self, uuid):
-    widget = self.widgets.get(uuid, None)
+  def closeWidget(self, wid):
+    widget = self.widgets.get(wid, None)
     if not widget: return
 
     widget.close()
-    del self.widgets[uuid]
+    del self.widgets[wid]
 
   def setInterfaceScale(self, scale):
     self.interfaceScale = scale
     for widget in self.widgets.values():
       widget.setZoomPercent(scale)
 
-  def redrawWidget(self, uuid):
-    widget = self.widgets.get(uuid, None)
+  def redrawWidget(self, wid):
+    widget = self.widgets.get(wid, None)
     if not widget: return
 
     widget.redraw()
@@ -338,44 +338,42 @@ class Main(object):
       parts = getCommandParts(command, 4)
       if not parts: return
 
-      uuid, url, width, height = parts
-      uuid = int(uuid)
+      wid, url, width, height = parts
+      wid = int(wid)
       width = int(float(width))
       height = int(float(height))
-      log(f"Opening widget [{uuid}], url: {url}, size: {width}x{height}")
-      self.server.createWidget(uuid, url, width, height)
+      log(f"Opening widget [{wid}], url: {url}, size: {width}x{height}")
+      self.server.createWidget(wid, url, width, height)
       return 
     
     if command.startswith(Commands.RESIZE_WIDGET):
       parts = getCommandParts(command, 3)
       if not parts: return
 
-      uuid, width, height = parts
-      uuid = int(uuid)
+      wid, width, height = parts
+      wid = int(wid)
       width = int(float(width))
       height = int(float(height))
-      log(f"Resizing widget [{uuid}] to: {width}x{height}")
-      self.server.resizeWidget(uuid, width, height)
+      log(f"Resizing widget [{wid}] to: {width}x{height}")
+      self.server.resizeWidget(wid, width, height)
       return
     
     if command.startswith(Commands.RELOAD_WIDGET):
       parts = getCommandParts(command, 1)
       if not parts: return
 
-      uuid = parts[0]
-      uuid = int(uuid)
-      log(f"Reloading widget [{uuid}]")
-      self.server.reloadWidget(uuid)
+      wid = int(parts[0])
+      log(f"Reloading widget [{wid}]")
+      self.server.reloadWidget(wid)
       return
     
     if command.startswith(Commands.CLOSE_WIDGET):
       parts = getCommandParts(command, 1)
       if not parts: return
 
-      uuid = parts[0]
-      uuid = int(uuid)
-      log(f"Closing widget [{uuid}]")
-      self.server.closeWidget(uuid)
+      wid = int(parts[0])
+      log(f"Closing widget [{wid}]")
+      self.server.closeWidget(wid)
       return
 
     if command.startswith(Commands.SET_INTERFACE_SCALE):
@@ -391,10 +389,9 @@ class Main(object):
       parts = getCommandParts(command, 1)
       if not parts: return
 
-      uuid = parts[0]
-      uuid = int(uuid)
-      log(f"Getting widget frame: {uuid}")
-      self.server.redrawWidget(uuid)
+      wid = int(parts[0])
+      log(f"Getting widget frame: {wid}")
+      self.server.redrawWidget(wid)
       return
     
     log(f"Unknown command: {command}")

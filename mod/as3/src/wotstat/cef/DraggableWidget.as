@@ -35,7 +35,7 @@ package wotstat.cef {
     private const HANGAR_BOTTOM_OFFSET:int = 90;
     private const HANGAR_HEADER_MINIFIED_HEIGHT:int = 35;
 
-    private var _uuid:int = 0;
+    private var _wid:int = 0;
 
     private var hideShowBtn:HideShow = new HideShow();
     private var lockBtn:Lock = new Lock(onLockButtonClick);
@@ -61,8 +61,8 @@ package wotstat.cef {
     private var content:Sprite = new Sprite();
     private var loader:Loader = new Loader();
 
-    public function get uuid():int {
-      return _uuid;
+    public function get wid():int {
+      return _wid;
     }
 
     public function get isLocked():Boolean {
@@ -73,9 +73,9 @@ package wotstat.cef {
       return isContentHidden;
     }
 
-    public function DraggableWidget(uuid:int, width:int, height:int, x:int, y:int, isHidden:Boolean, isLocked:Boolean) {
+    public function DraggableWidget(wid:int, width:int, height:int, x:int, y:int, isHidden:Boolean, isLocked:Boolean) {
       super();
-      _uuid = uuid;
+      _wid = wid;
 
       addChild(content);
       content.addChild(loader);
