@@ -17,27 +17,44 @@ def setup():
 setup()
 
 class WidgetInfo(object):
-  uuid = ""
-  wid = None
-  url = ""
-  width = 0
-  height = 0
-  x = 0
-  y = 0
-  isHidden = False
-  isLocked = False
-  flags = 0
+  
+  class PositionState(object):
+    def __init__(self):
+      self.width = 0
+      self.height = 0
+      self.x = 0
+      self.y = 0
+      self.isHidden = False
+      self.isLocked = False
+    
+  def __init__(self):
+    self.uuid = ""
+    self.wid = None
+    self.url = ""
+    self.hangar = WidgetInfo.PositionState()
+    self.battle = WidgetInfo.PositionState()
+    self.flags = 0
 
   def toSerializable(self):
     return {
       "uuid": self.uuid,
       "url": self.url,
-      "width": self.width,
-      "height": self.height,
-      "x": self.x,
-      "y": self.y,
-      "isHidden": self.isHidden,
-      "isLocked": self.isLocked
+      "hangar": {
+        "width": self.hangar.width,
+        "height": self.hangar.height,
+        "x": self.hangar.x,
+        "y": self.hangar.y,
+        "isHidden": self.hangar.isHidden,
+        "isLocked": self.hangar.isLocked
+      },
+      "battle": {
+        "width": self.battle.width,
+        "height": self.battle.height,
+        "x": self.battle.x,
+        "y": self.battle.y,
+        "isHidden": self.battle.isHidden,
+        "isLocked": self.battle.isLocked
+      },
     }
   
   @staticmethod
@@ -46,13 +63,23 @@ class WidgetInfo(object):
 
     w.uuid = data["uuid"]
     w.url = data["url"]
-    w.width = data["width"]
-    w.height = data["height"]
-    w.x = data["x"]
-    w.y = data["y"]
-    w.isHidden = data["isHidden"]
-    w.isLocked = data["isLocked"]
-
+    
+    hangar = data.get("hangar", {})
+    w.hangar.width = hangar.get("width", 0)
+    w.hangar.height = hangar.get("height", 0)
+    w.hangar.x = hangar.get("x", 0)
+    w.hangar.y = hangar.get("y", 0)
+    w.hangar.isHidden = hangar.get("isHidden", False)
+    w.hangar.isLocked = hangar.get("isLocked", False)
+    
+    battle = data.get("battle", {})
+    w.battle.width = battle.get("width", 0)
+    w.battle.height = battle.get("height", 0)
+    w.battle.x = battle.get("x", 0)
+    w.battle.y = battle.get("y", 0)
+    w.battle.isHidden = battle.get("isHidden", False)
+    w.battle.isLocked = battle.get("isLocked", False)
+    
     return w
 
 logger = Logger.instance()
@@ -82,12 +109,21 @@ class WidgetStorage(Singleton):
     widget.uuid = uuid
     widget.wid = wid
     widget.url = url
-    widget.width = width
-    widget.height = height
-    widget.x = x
-    widget.y = y
-    widget.isHidden = isHidden
-    widget.isLocked = isLocked
+    
+    widget.battle.width = width
+    widget.battle.height = height
+    widget.battle.x = x
+    widget.battle.y = y
+    widget.battle.isHidden = isHidden
+    widget.battle.isLocked = isLocked
+    
+    widget.hangar.width = width
+    widget.hangar.height = height
+    widget.hangar.x = x
+    widget.hangar.y = y
+    widget.hangar.isHidden = isHidden
+    widget.hangar.isLocked = isLocked
+    
     self._widgets[uuid] = widget
     self._widgetsByWid[wid] = widget
 
@@ -104,24 +140,30 @@ class WidgetStorage(Singleton):
 
     self._isChanged = True
       
-  def updateWidget(self, wid, url=None, width=None, height=None, x=None, y=None, isHidden=None, isLocked=None, flags=None):
+  def updateWidget(self, wid, fromBattle, url=None, width=None, height=None, x=None, y=None, isHidden=None, isLocked=None, flags=None):
     widget = self._widgetsByWid.get(wid, None)
     if widget is None: return
 
-    def update(param, value):
+    def update(param, value, fromBattle=fromBattle):
       if param is not None and value is not None:
-        if getattr(widget, param) != value:
-          setattr(widget, param, value)
+        target = widget
+
+        if fromBattle == True: target = widget.battle
+        elif fromBattle == False: target = widget.hangar
+        
+        if getattr(target, param) != value:
+          setattr(target, param, value)
           self._isChanged = True
   
-    update("url", url)
+    update("url", url, None)
+    update("flags", flags, None)
+    
     update("width", width)
     update("height", height)
     update("x", x)
     update("y", y)
     update("isHidden", isHidden)
     update("isLocked", isLocked)
-    update("flags", flags)
 
   def setWidgetWid(self, uuid, wid):
     widget = self._widgets.get(uuid, None)

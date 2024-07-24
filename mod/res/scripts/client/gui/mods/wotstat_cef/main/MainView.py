@@ -46,8 +46,10 @@ class MainView(View):
     self.setInterfaceScale()
 
     for widget in storage.getAllWidgets():
-      self._addWidget(widget.uuid, widget.wid, widget.url, widget.width, widget.height, widget.x, widget.y, widget.flags, widget.isHidden, widget.isLocked)
-      server.redrawWidget(widget.wid)
+      pos = widget.battle if lastLoadIsBattle else widget.hangar
+      
+      self._addWidget(widget.uuid, widget.wid, widget.url, pos.width, pos.height, pos.x, pos.y, widget.flags, pos.isHidden, pos.isLocked)
+      server.resizeWidget(widget.wid, pos.width, pos.height)
 
   def _dispose(self):
     manager.createWidget -= self._createWidget
@@ -73,17 +75,17 @@ class MainView(View):
     logger.printLog(level, msg)
 
   def py_moveWidget(self, wid, x, y):
-    storage.updateWidget(wid, x=x, y=y)
+    storage.updateWidget(wid, lastLoadIsBattle, x=x, y=y)
 
   def py_lockUnlockWidget(self, wid, isLocked):
-    storage.updateWidget(wid, isLocked=isLocked)
+    storage.updateWidget(wid, lastLoadIsBattle, isLocked=isLocked)
 
   def py_hideShowWidget(self, wid, isHidden):
-    storage.updateWidget(wid, isHidden=isHidden)
+    storage.updateWidget(wid, lastLoadIsBattle, isHidden=isHidden)
 
   def py_requestResize(self, wid, width, height):
     server.resizeWidget(wid, width, height)
-    storage.updateWidget(wid, width=width, height=height)
+    storage.updateWidget(wid, lastLoadIsBattle, width=width, height=height)
 
   def py_requestReload(self, wid):
     server.reloadWidget(wid)
@@ -139,7 +141,7 @@ class MainView(View):
 
     oldFlags = storage.getWidgetFlags(wid)
     if oldFlags != flags:
-      storage.updateWidget(wid, flags=flags)
+      storage.updateWidget(wid, lastLoadIsBattle, flags=flags)
 
       def isChanged(flag):
         return oldFlags is None or (oldFlags & flag) != (flags & flag)
