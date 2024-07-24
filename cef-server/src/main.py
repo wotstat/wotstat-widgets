@@ -11,6 +11,7 @@ import zlib
 import queue
 import signal
 import os
+from unpremultiply_rgba.unpremultiply_rgba import unpremultiply_rgba
 
 from cefpython3 import cefpython as cef
 
@@ -95,8 +96,10 @@ class ClientHandler(object):
     return True
   
   def OnPaint(self, browser, element_type, paint_buffer, width, height, **_):
-    frameBuffer = paint_buffer.GetString(mode="rgba", origin="top-left")
+    frameBuffer = paint_buffer.GetString(mode="rgba", origin="top-left") # type: bytes
     if width == self.widget.size[0]:
+      frameBuffer = bytearray(frameBuffer)
+      frameBuffer = unpremultiply_rgba(frameBuffer)
       pngBuffer = bufferToPng(frameBuffer, width, height)
       self.widget.sendFrame(self.widget.getFlags(), width, height, pngBuffer)
 
@@ -193,7 +196,6 @@ class CEFServer(object):
     sys.excepthook = cef.ExceptHook
     settings = {
       "windowless_rendering_enabled": True,
-      "background_color": 0x00,
     }
     
     switches = {
@@ -407,7 +409,7 @@ if __name__ == '__main__':
   port = int(sys.argv[1]) if len(sys.argv) > 1 else int(sys.stdin.readline().strip())
   debug = bool(sys.argv[2] == 'True') if len(sys.argv) > 2 else False
 
-  log(f"Starting CEF server on port {port}; debug ${debug}")
+  log(f"Starting CEF server on port {port}; debug {debug}")
 
   main = Main(port, debug)
   main.start()

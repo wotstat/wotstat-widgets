@@ -6,7 +6,9 @@ block_cipher = None
 a = Analysis(['src/main.py'],
              pathex=['Z:\\src'],
              binaries=[],
-             datas=[( 'src/inject.js', '.' )],
+             datas=[
+              ( 'src/inject.js', '.' ),
+              ( 'src/unpremultiply_rgba/unpremultiply_rgba.dll', '.' )],
              hiddenimports=[],
              hookspath=["."],
              runtime_hooks=[],

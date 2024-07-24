@@ -1,0 +1,1 @@
+x86_64-w64-mingw32-g++ -shared -o3 -o unpremultiply_rgba.dll unpremultiply_rgba.cpp
