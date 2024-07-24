@@ -6,9 +6,9 @@ import json
 import BigWorld
 from debug_utils import LOG_CURRENT_EXCEPTION
 from constants import AUTH_REALM
-from account_shared import readClientServerVersion
 
 from .Logger import ILoggerBackend, getLevelOrder, LEVELS_ORDER
+from .crossGameUtils import readClientServerVersion
 
 LEVELS_NAMES = list(LEVELS_ORDER.keys())
 
