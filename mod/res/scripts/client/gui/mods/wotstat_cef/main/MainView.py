@@ -191,12 +191,12 @@ def setup():
     if event.ns == APP_NAME_SPACE.SF_LOBBY:
       logger.info("SF_LOBBY initialized")
 
-      app = ServicesLocator.appLoader.getApp(event.ns)  # type: AppEntry
+      app = ServicesLocator.appLoader.getApp(event.ns) # type: AppEntry
       if not app:
         logger.error("App not found")
         return
 
-      uiLoader = dependency.instance(IGuiLoader)  # type: IGuiLoader
+      uiLoader = dependency.instance(IGuiLoader) # type: IGuiLoader
       parent = uiLoader.windowsManager.getMainWindow() if uiLoader and uiLoader.windowsManager else None
 
       lastLoadIsBattle = False
@@ -205,7 +205,7 @@ def setup():
     elif event.ns == APP_NAME_SPACE.SF_BATTLE:
       logger.info("SF_BATTLE initialized")
 
-      app = ServicesLocator.appLoader.getApp(event.ns)  # type: AppEntry
+      app = ServicesLocator.appLoader.getApp(event.ns) # type: AppEntry
       if not app:
         logger.error("App not found")
         return
