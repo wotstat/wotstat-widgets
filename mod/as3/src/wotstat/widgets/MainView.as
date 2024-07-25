@@ -1,4 +1,4 @@
-package wotstat.cef {
+package wotstat.widgets {
   import net.wg.infrastructure.base.AbstractView;
   import net.wg.infrastructure.interfaces.IView;
   import net.wg.infrastructure.events.LoaderEvent;
@@ -11,7 +11,7 @@ package wotstat.cef {
   import flash.utils.ByteArray;
   import net.wg.gui.battle.views.BaseBattlePage;
   import flash.display.DisplayObject;
-  import wotstat.cef.common.MoveEvent;
+  import wotstat.widgets.common.MoveEvent;
 
   public class MainView extends AbstractView {
 

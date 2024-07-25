@@ -1,4 +1,4 @@
-package wotstat.cef.common {
+package wotstat.widgets.common {
   import flash.events.Event;
 
   public class MoveEvent extends Event {

@@ -186,7 +186,7 @@ def setup():
   mainViewSettings = ViewSettings(
     CEF_MAIN_VIEW,
     MainView,
-    "wotstat.cef.swf",
+    "wotstat.widgets.swf",
     WindowLayer.WINDOW,
     None,
     ScopeTemplates.GLOBAL_SCOPE,

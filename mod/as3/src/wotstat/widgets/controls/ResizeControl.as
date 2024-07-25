@@ -1,4 +1,4 @@
-package wotstat.cef.controls {
+package wotstat.widgets.controls {
   import flash.display.Sprite;
   import flash.display.Graphics;
   import flash.geom.Rectangle;

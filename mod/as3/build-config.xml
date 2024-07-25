@@ -34,6 +34,6 @@
     <verbose-stacktraces>true</verbose-stacktraces>
   </compiler>
 
-  <output>bin/wotstat.cef.swf</output>
+  <output>bin/wotstat.widgets.swf</output>
 
 </royale-config>

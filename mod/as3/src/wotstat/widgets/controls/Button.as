@@ -1,4 +1,4 @@
-package wotstat.cef.controls {
+package wotstat.widgets.controls {
   import flash.display.SimpleButton;
   import flash.events.MouseEvent;
 

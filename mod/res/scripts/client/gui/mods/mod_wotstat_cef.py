@@ -1,4 +1,4 @@
-from .wotstat_cef.WotstatWidget import WotstatWidget
+from .wotstat_widgets.WotstatWidget import WotstatWidget
 
 wotstatWidget = WotstatWidget()
 

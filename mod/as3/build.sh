@@ -1,2 +1,2 @@
-mxmlc -load-config+=build-config.xml src/wotstat/cef/MainView.as
-mxmlc -load-config+=build-config.xml --output=bin/wotstat.cef.settings.swf src/wotstat/cef/SettingsWindow.as
+mxmlc -load-config+=build-config.xml src/wotstat/widgets/MainView.as
+mxmlc -load-config+=build-config.xml --output=bin/wotstat.widgets.settings.swf src/wotstat/widgets/SettingsWindow.as

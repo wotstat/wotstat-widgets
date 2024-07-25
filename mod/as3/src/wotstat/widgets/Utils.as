@@ -1,4 +1,4 @@
-package wotstat.cef {
+package wotstat.widgets {
   import flash.utils.ByteArray;
   import flash.utils.Endian;
 

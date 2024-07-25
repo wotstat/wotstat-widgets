@@ -1,4 +1,4 @@
-package wotstat.cef {
+package wotstat.widgets {
   import net.wg.infrastructure.base.AbstractWindowView;
   import net.wg.gui.components.controls.TextInput;
   import net.wg.gui.components.controls.SoundButton;

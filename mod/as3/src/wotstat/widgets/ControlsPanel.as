@@ -1,6 +1,6 @@
-package wotstat.cef {
+package wotstat.widgets {
   import flash.display.Sprite;
-  import wotstat.cef.controls.Button;
+  import wotstat.widgets.controls.Button;
 
   public class ControlsPanel extends Sprite {
 

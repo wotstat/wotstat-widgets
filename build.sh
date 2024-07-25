@@ -26,7 +26,7 @@ echo "_________________"
 echo ""
 
 
-folder="wotstat.cef_$v.wotmod"
+folder="wotstat.widgets_$v.wotmod"
 rm -rf $folder
 
 
@@ -45,8 +45,8 @@ build_python() {
   cp -r ./mod/res ./build
 
   # Set version and debug mode
-  configPath="./build/res/scripts/client/gui/mods/wotstat_cef/common/Config.py"
-  mainPath="./build/res/scripts/client/gui/mods/wotstat_cef/WotstatWidget.py"
+  configPath="./build/res/scripts/client/gui/mods/wotstat_widgets/common/Config.py"
+  mainPath="./build/res/scripts/client/gui/mods/wotstat_widgets/WotstatWidget.py"
   perl -i -pe "s/{{VERSION}}/$v/g" "$configPath"
   perl -i -pe "s/'{{DEBUG_MODE}}'/$debug/g" "$mainPath"
 
@@ -74,7 +74,7 @@ if [ "$as3Only" = True ] || [ "$serverOnly" = True ] || [ "$pythonOnly" = True ]
         build_as3
     fi
 
-    if [ "$serverOnly" = True ] || [ ! -f ./cef-server/wotstat.widget.cef.zip ]; then
+    if [ "$serverOnly" = True ] || [ ! -f ./cef-server/wotstat.widgets.cef.zip ]; then
         build_server
     fi
 else
@@ -96,8 +96,8 @@ zip -dvr -0 -X $folder res -i "*.swf"
 zip -dvr -0 -X $folder res -i "*.png"
 zip -vr -0 -X $folder meta.xml
 
-cp ../cef-server/wotstat.widget.cef.zip res/wotstat.widget.cef.zip
-zip -dvr -0 -X $folder res/wotstat.widget.cef.zip
+cp ../cef-server/wotstat.widgets.cef.zip res/wotstat.widgets.cef.zip
+zip -dvr -0 -X $folder res/wotstat.widgets.cef.zip
 
 cd ../
 cp ./build/$folder $folder

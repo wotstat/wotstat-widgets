@@ -1,6 +1,6 @@
 <root>
-    <id>wotstat.widget</id>
+    <id>wotstat.widgets</id>
     <version>{{VERSION}}</version>
-    <name>wotstat.widget</name>
+    <name>wotstat.widgets</name>
     <description>CEF by WotStat</description>
 </root>

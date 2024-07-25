@@ -1,25 +1,25 @@
-package wotstat.cef {
+package wotstat.widgets {
 
   import flash.display.Sprite;
   import flash.events.MouseEvent;
   import flash.geom.Rectangle;
-  import wotstat.cef.controls.Close;
-  import wotstat.cef.controls.Lock;
-  import wotstat.cef.controls.Resize;
-  import wotstat.cef.controls.ResizeControl;
+  import wotstat.widgets.controls.Close;
+  import wotstat.widgets.controls.Lock;
+  import wotstat.widgets.controls.Resize;
+  import wotstat.widgets.controls.ResizeControl;
   import flash.events.Event;
   import scaleform.clik.events.ResizeEvent;
-  import wotstat.cef.controls.HideShow;
-  import wotstat.cef.controls.Reload;
-  import wotstat.cef.controls.Close;
-  import wotstat.cef.controls.Button;
+  import wotstat.widgets.controls.HideShow;
+  import wotstat.widgets.controls.Reload;
+  import wotstat.widgets.controls.Close;
+  import wotstat.widgets.controls.Button;
   import flash.geom.Point;
   import flash.utils.ByteArray;
   import flash.display.Loader;
   import flash.display.Graphics;
   import flash.display.Bitmap;
   import flash.display.PixelSnapping;
-  import wotstat.cef.common.MoveEvent;
+  import wotstat.widgets.common.MoveEvent;
 
   public class DraggableWidget extends Sprite {
     public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";

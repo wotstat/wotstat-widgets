@@ -23,9 +23,9 @@ notifier = Notifier.instance()
 
 def copyCef():
   logger.info("Copy CEF to %s" % CEF_PATH)
-  copyFile('wotstat.widget.cef.zip', 'mods/wotstat.widget.cef.zip')
-  zipfile.ZipFile('mods/wotstat.widget.cef.zip').extractall('mods')
-  os.remove('mods/wotstat.widget.cef.zip')
+  copyFile('wotstat.widgets.cef.zip', 'mods/wotstat.widgets.cef.zip')
+  zipfile.ZipFile('mods/wotstat.widgets.cef.zip').extractall('mods')
+  os.remove('mods/wotstat.widgets.cef.zip')
 
 
 class WotstatWidget(object):
@@ -71,7 +71,7 @@ class WotstatWidget(object):
         id="wotstat_widgets",
         name=t('modslist.title'),
         description=t('modslist.description'),
-        icon='gui/maps/wotstat.widget/modsListApi.png',
+        icon='gui/maps/wotstat.widgets/modsListApi.png',
         enabled=True,
         login=False,
         lobby=True,

@@ -1,4 +1,4 @@
-package wotstat.cef.controls {
+package wotstat.widgets.controls {
   import flash.display.Graphics;
   import flash.display.Bitmap;
   import net.wg.gui.components.controls.Image;

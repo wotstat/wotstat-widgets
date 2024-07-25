@@ -39,7 +39,7 @@ def setup():
   settingsViewSettings = ViewSettings(
     CEF_SETTINGS_WINDOW,
     SettingsWindow,
-    "wotstat.cef.settings.swf",
+    "wotstat.widgets.settings.swf",
     WindowLayer.WINDOW,
     None,
     ScopeTemplates.VIEW_SCOPE,
