@@ -1,3 +1,4 @@
+import os
 import BigWorld
 
 import subprocess
@@ -8,14 +9,29 @@ from Queue import Queue
 from typing import Tuple
 
 from Event import Event
+from external_strings_utils import unicode_from_utf8
 from helpers import dependency
 from skeletons.account_helpers.settings_core import ISettingsCore
 
 from ..common.utils import isPortAvailable
+from ..common.ExceptionHandling import withExceptionHandling
 from ..common.Logger import Logger
 from ..constants import CEF_EXE_PATH
 
 logger = Logger.instance()
+
+_preferences_path = unicode_from_utf8(BigWorld.wg_getPreferencesFilePath())[1]
+CACHE_PATH = os.path.normpath(os.path.join(os.path.dirname(_preferences_path), 'mods', 'wotstat.widgets', 'webcache'))
+
+logger = Logger.instance()
+
+@withExceptionHandling()
+def setup():
+  if not os.path.isdir(CACHE_PATH):
+    os.makedirs(CACHE_PATH)
+    
+setup()
+
 
 class Commands:
   OPEN_NEW_WIDGET = 'OPEN_NEW_WIDGET'
@@ -55,7 +71,12 @@ class CefServer(object):
       startupInfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
       startupInfo.wShowWindow = subprocess.SW_HIDE
 
-    self.process = subprocess.Popen([CEF_EXE_PATH, str(port), str(devtools)],
+    self.process = subprocess.Popen([
+        CEF_EXE_PATH,
+        '--port=' + str(port),
+        '--devtools=' + str(devtools),
+        '--cachePath=' + CACHE_PATH,
+      ],
       startupinfo=startupInfo,
       stdin=subprocess.PIPE,
       stdout=subprocess.PIPE,

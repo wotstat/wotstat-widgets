@@ -193,7 +193,7 @@ class Widget(object):
     self.resizeByHeight()
 
 class CEFServer(object):
-  def __init__(self, host='localhost', port=30000, debug=False):
+  def __init__(self, host='localhost', port=30000, cachePath='', debug=False):
     self.host = host
     self.port = port
     self.debug = debug
@@ -208,6 +208,7 @@ class CEFServer(object):
     sys.excepthook = cef.ExceptHook
     settings = {
       "windowless_rendering_enabled": True,
+      "cache_path": cachePath,
     }
     
     switches = {
@@ -329,14 +330,14 @@ class Main(object):
   killNow = False
   tasksQueue = queue.Queue()
 
-  def __init__(self, port, debug):
+  def __init__(self, port, cachePath, debug):
     signal.signal(signal.SIGINT, self.exitGracefully)
     signal.signal(signal.SIGTERM, self.exitGracefully)
 
     self.inputThread = threading.Thread(target=self.inputLoopThread)
     self.inputThread.start()
 
-    self.server = CEFServer(port=port, debug=debug)
+    self.server = CEFServer(port=port, cachePath=cachePath, debug=debug)
     self.server.startServer()
 
   def start(self):
@@ -447,15 +448,27 @@ class Main(object):
     self.killNow = True
 
 
+def parseArguments(argv):
+  args = {}
+  for arg in argv:
+    if arg.startswith('--'):
+      key_value = arg[2:].split('=', 1)
+      if len(key_value) == 2:
+        key, value = key_value
+        args[key] = value
+  return args
 
 if __name__ == '__main__':
+  arguments = parseArguments(sys.argv[1:])
+  
+  port = arguments.get('port', None)
+  port = int(port) if port else input('Enter port: ')
+  cachePath = arguments.get('cachePath', '')
+  devtools = bool(arguments.get('devtools', 'False') == 'True')
 
-  port = int(sys.argv[1]) if len(sys.argv) > 1 else int(sys.stdin.readline().strip())
-  debug = bool(sys.argv[2] == 'True') if len(sys.argv) > 2 else False
+  log(f"Starting CEF server on port {port}; cachePath: {cachePath}; devtools {devtools}")
 
-  log(f"Starting CEF server on port {port}; debug {debug}")
-
-  main = Main(port, debug)
+  main = Main(port, cachePath, devtools)
   main.start()
 
   while True:
