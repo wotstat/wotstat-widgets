@@ -24,6 +24,8 @@ class Commands:
   CLOSE_WIDGET = 'CLOSE_WIDGET'
   SET_INTERFACE_SCALE = 'SET_INTERFACE_SCALE'
   REDRAW_WIDGET = 'REDRAW_WIDGET'
+  SUSPENSE_WIDGET = 'SUSPENSE_WIDGET'
+  RESUME_WIDGET = 'RESUME_WIDGET'
 
 
 class CefServer(object):
@@ -102,6 +104,14 @@ class CefServer(object):
   def redrawWidget(self, wid):
     logger.debug("Redraw widget: %s" % wid)
     self._sendCommand(Commands.REDRAW_WIDGET, wid)
+    
+  def suspenseWidget(self, wid):
+    logger.debug("Suspense widget: %s" % wid)
+    self._sendCommand(Commands.SUSPENSE_WIDGET, wid)
+    
+  def resumeWidget(self, wid):
+    logger.debug("Resume widget: %s" % wid)
+    self._sendCommand(Commands.RESUME_WIDGET, wid)
 
   def _setInterfaceScale(self, scale=None):
     if scale is None:

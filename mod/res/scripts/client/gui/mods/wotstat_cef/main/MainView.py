@@ -49,6 +49,11 @@ class MainView(View):
       pos = widget.battle if lastLoadIsBattle else widget.hangar
       
       self._addWidget(widget.uuid, widget.wid, widget.url, pos.width, pos.height, pos.x, pos.y, widget.flags, pos.isHidden, pos.isLocked)
+      if pos.isHidden:
+        server.suspenseWidget(widget.wid)
+      else:
+        server.resumeWidget(widget.wid)
+        
       server.resizeWidget(widget.wid, pos.width, pos.height)
 
   def _dispose(self):
@@ -82,6 +87,11 @@ class MainView(View):
 
   def py_hideShowWidget(self, wid, isHidden):
     storage.updateWidget(wid, lastLoadIsBattle, isHidden=isHidden)
+    if isHidden:
+      server.suspenseWidget(wid)
+    else:
+      server.resumeWidget(wid)
+      server.redrawWidget(wid)
 
   def py_requestResize(self, wid, width, height):
     server.resizeWidget(wid, width, height)

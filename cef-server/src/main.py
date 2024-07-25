@@ -96,6 +96,9 @@ class ClientHandler(object):
     return True
   
   def OnPaint(self, browser, element_type, paint_buffer, width, height, **_):
+    if self.widget.suspensed:
+      return
+    
     frameBuffer = paint_buffer.GetString(mode="rgba", origin="top-left") # type: bytes
     if width == self.widget.size[0]:
       frameBuffer = bytearray(frameBuffer)
@@ -110,11 +113,14 @@ class Widget(object):
 
   class Flags:
     AUTO_HEIGHT = 1 << 0
-
-  autoHeight = False
-  lastBodyHeight = 0
+  
 
   def __init__(self, url, browser, zoom, width, height, sendFrame):
+    
+    self.autoHeight = False
+    self.lastBodyHeight = 0
+    self.suspensed = False
+    
     self.url = url
     self.size = (width, height)
     self.browser = browser
@@ -169,6 +175,12 @@ class Widget(object):
     if self.autoHeight: flags |= self.Flags.AUTO_HEIGHT
 
     return flags
+  
+  def suspense(self):
+    self.suspensed = True
+  
+  def resume(self):
+    self.suspensed = False
     
 
   # JS Bindings
@@ -290,6 +302,18 @@ class CEFServer(object):
     if not widget: return
 
     widget.redraw()
+    
+  def suspendWidget(self, wid):
+    widget = self.widgets.get(wid, None)
+    if not widget: return
+
+    widget.suspense()
+    
+  def resumeWidget(self, wid):
+    widget = self.widgets.get(wid, None)
+    if not widget: return
+
+    widget.resume()
 
 class Commands:
   OPEN_NEW_WIDGET = 'OPEN_NEW_WIDGET'
@@ -298,6 +322,8 @@ class Commands:
   CLOSE_WIDGET = 'CLOSE_WIDGET'
   REDRAW_WIDGET = 'REDRAW_WIDGET'
   SET_INTERFACE_SCALE = 'SET_INTERFACE_SCALE'
+  SUSPENSE_WIDGET = 'SUSPENSE_WIDGET'
+  RESUME_WIDGET = 'RESUME_WIDGET'
 
 class Main(object):
   killNow = False
@@ -394,6 +420,24 @@ class Main(object):
       wid = int(parts[0])
       log(f"Getting widget frame: {wid}")
       self.server.redrawWidget(wid)
+      return
+    
+    if command.startswith(Commands.SUSPENSE_WIDGET):
+      parts = getCommandParts(command, 1)
+      if not parts: return
+
+      wid = int(parts[0])
+      log(f"Suspending widget: {wid}")
+      self.server.suspendWidget(wid)
+      return
+    
+    if command.startswith(Commands.RESUME_WIDGET):
+      parts = getCommandParts(command, 1)
+      if not parts: return
+
+      wid = int(parts[0])
+      log(f"Resuming widget: {wid}")
+      self.server.resumeWidget(wid)
       return
     
     log(f"Unknown command: {command}")
