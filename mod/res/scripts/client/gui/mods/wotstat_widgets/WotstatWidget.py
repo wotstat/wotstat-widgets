@@ -3,6 +3,9 @@ import zipfile
 
 import BigWorld
 from gui import SystemMessages
+from helpers import dependency
+from skeletons.connection_mgr import IConnectionManager
+from skeletons.gui.shared.utils import IHangarSpace
 
 from .common.ServerLoggerBackend import ServerLoggerBackend
 from .common.Logger import Logger, SimpleLoggerBackend
@@ -29,7 +32,10 @@ def copyCef():
 
 
 class WotstatWidget(object):
+  
   def __init__(self):
+    self.afterConnected = False
+    
     logger.info("Starting WotStatWidget")
 
     self.config = Config(CONFIG_PATH)
@@ -51,14 +57,38 @@ class WotstatWidget(object):
     mainViewSetup()
     settingsWindowSetup()
     
-    if not self.setupModListApi():
-      notifier.showNotification(t('notification.addWidget') % WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS, SystemMessages.SM_TYPE.InformationHeader,  messageData={'header': t('notification.addWidget.header')})
-
+    self.setupModListApi()
+    
+    hangarSpace = dependency.instance(IHangarSpace) # type: IHangarSpace
+    connectionMgr = dependency.instance(IConnectionManager) # type: IConnectionManager
+    
+    connectionMgr.onConnected += self.onConnected
+    hangarSpace.onSpaceCreate += self.onHangarLoaded
+    
     logger.info("WotStatWidget started")
 
   def fini(self):
     logger.info("Stopping WotStatWidget")
     server.dispose()
+    
+  def onConnected(self, *a, **k):
+    self.afterConnected = True
+    
+  def onHangarLoaded(self, *a, **k):
+    if not self.afterConnected: return
+    self.afterConnected = False
+    
+    if self.hasModListApi():
+      return
+    
+    notifier.showNotification(t('notification.addWidget') % WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS, SystemMessages.SM_TYPE.InformationHeader,  messageData={'header': t('notification.addWidget.header')})
+
+  def hasModListApi(self):
+    try:
+      from gui.modsListApi import g_modsListApi
+      return True
+    except:
+      return False
     
   def setupModListApi(self):
     try:
