@@ -16,6 +16,7 @@ from .main.SettingsWindow import setup as settingsWindowSetup, show as showSetti
 from .main.CefServer import server
 from .common.Notifier import Notifier
 from .common.i18n import t
+from .dataProvider import setup as setupDataProvider
 
 from .constants import CEF_PATH, CONFIG_PATH, WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS
 
@@ -66,6 +67,8 @@ class WotstatWidget(object):
     hangarSpace.onSpaceCreate += self.onHangarLoaded
     
     logger.info("WotStatWidget started")
+    
+    setupDataProvider(logger)
 
   def fini(self):
     logger.info("Stopping WotStatWidget")
