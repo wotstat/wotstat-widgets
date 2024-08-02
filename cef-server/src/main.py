@@ -142,7 +142,12 @@ class Widget(object):
 
     if self.size[0] <= 0 or self.size[1] <= 0:
       log("Invalid size: %s, %s" % self.size, 'ERROR')
-      self.size = (100, 100)
+      if self.size[0] <= 0:
+        self.size = (100, self.size[1])
+      elif self.size[1] <= 0:
+        self.size = (self.size[0], 100)
+      else:
+        self.size = (100, 100)
 
     self.browser.WasResized()
 
@@ -165,7 +170,7 @@ class Widget(object):
     self.browser.Invalidate(cef.PET_VIEW)
 
   def resizeByHeight(self):
-    if self.autoHeight:
+    if self.autoHeight and self.lastBodyHeight > 0:
       height = min(self.lastBodyHeight, 1000 * self.zoomLevel)
       self.resize(self.size[0], height)
 
