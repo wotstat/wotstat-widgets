@@ -40,23 +40,23 @@ class WebSocketDataProvider(object):
     
     global logger, instance
     logger = loggerInstance
-    instance = self
-    
-    logger.info("Starting WebSocketDataProvider")
-    
+    instance = self    
     self.onClientConnected = Event()
+    self.server = None
+    self.serverThread = None
     
+  def setup(self):    
     self.server = WebSocketServer('', 38200, WSClient)
     
     self.serverThread = Thread(target=self._requestLoop, args=(self.server,))
     self.serverThread.daemon = True
     self.serverThread.start()
     
-    logger.info("WebSocketDataProvider started")
+    logger.info("WebSocket started")
     
   def _requestLoop(self, server):
     # type: (WebSocketServer) -> None
-    while enabled:
+    while enabled or len(server.connections.items()) != 0:
       try:
         server.handle_request()
       except Exception as e:
@@ -73,7 +73,11 @@ class WebSocketDataProvider(object):
     global enabled
     enabled = False
     
-    self.serverThread.join()
-    self.server.close()
+    if self.server is not None:
+      self.server.close()
+      self.server = None
+      
+    if self.serverThread is not None:
+      self.serverThread.join()
     
     logger.info("WebSocketDataProvider stopped")

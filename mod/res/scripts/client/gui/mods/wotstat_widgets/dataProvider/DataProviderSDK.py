@@ -99,6 +99,9 @@ class DataProviderSDK(object):
     self.extensionsState.setValue(self.extensionsState.getValue() + [extension])
     return DPExtension(extension, self)
   
+  def setup(self):
+    self.wsDataProvider.setup()
+  
   def dispose(self):
     self.wsDataProvider.dispose()
     self.logger.info("DataProviderSDK disposed")

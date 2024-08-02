@@ -31,6 +31,7 @@ def setup(logger):
     def nextFrame():
       if publicDataProviderSDK == BigWorld.wotstat_dataProvider:
         setupProviders(dataProviderSDK)
+        dataProviderSDK.setup()
         logger.info("DataProviderSDK providers setup complete")
       else:
         logger.info("DataProviderSDK has been replaced before setup")
