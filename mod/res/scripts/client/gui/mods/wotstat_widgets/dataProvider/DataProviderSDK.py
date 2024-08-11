@@ -17,18 +17,28 @@ class State(object):
     self.__path = path
     self.__wsDataProvider = wsDataProvider
     self.__value = initialValue
+    self.__oldSerializedValue = None
     
   def getValue(self):
     return self.__value
   
   def setValue(self, value):
+    if self.__value == value:
+      return
+    
     e = canSerializeValue(value)
     if e != True:
       raise Exception("Failed to serialize value: %s" % e)
     
     self.__value = value
     path, value = self.getPathValue()
-    self.__wsDataProvider.sendMessage(json.dumps({ "type": "state", "path": path, "value": value }))
+    
+    serializedValue = json.dumps({ "type": "state", "path": path, "value": value })
+    if serializedValue == self.__oldSerializedValue:
+      return
+    
+    self.__oldSerializedValue = serializedValue
+    self.__wsDataProvider.sendMessage(serializedValue)
     
   def getPathValue(self):
     return ('.'.join(self.__path), self.__value)

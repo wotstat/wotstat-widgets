@@ -18,7 +18,7 @@ class KeyboardProvider(object):
     InputHandler.g_instance.onKeyUp += self.__onKey
     
     
-    for key in filter(lambda x: x.startswith('KEY_') or x.startswith('MODIFIER_'), vars(Keys).keys()):
+    for key in filter(lambda x: x.startswith('KEY_'), vars(Keys).keys()):
       state = sdk.createState(['keyboard', key], False)
       self.states[Keys.__dict__[key]] = state
       self.keycodeToName[Keys.__dict__[key]] = key
