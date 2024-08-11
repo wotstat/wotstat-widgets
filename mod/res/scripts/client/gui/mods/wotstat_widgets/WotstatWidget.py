@@ -21,11 +21,22 @@ from .dataProvider import setup as setupDataProvider
 from .constants import CEF_PATH, CONFIG_PATH, WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS
 
 DEBUG_MODE = '{{DEBUG_MODE}}'
+CEF_SERVER_CHECKSUM = '{{CEF_SERVER_CHECKSUM}}'
 
 logger = Logger.instance()
 notifier = Notifier.instance()
 
 def copyCef():
+  
+  if os.path.exists('mods/wotstat.widgets.cef/checksum'):
+    with open('mods/wotstat.widgets.cef/checksum', 'r') as f:
+      checksum = f.read().strip()
+      if checksum == CEF_SERVER_CHECKSUM:
+        logger.info("Wotstat CEF already exists with checksum %s" % checksum)
+        return
+      else:
+        logger.info("CEF checksum mismatch %s != %s" % (checksum, CEF_SERVER_CHECKSUM))
+  
   logger.info("Copy CEF to %s" % CEF_PATH)
   copyFile('wotstat.widgets.cef.zip', 'mods/wotstat.widgets.cef.zip')
   zipfile.ZipFile('mods/wotstat.widgets.cef.zip').extractall('mods')

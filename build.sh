@@ -44,11 +44,14 @@ build_as3() {
 build_python() {
   cp -r ./mod/res ./build
 
+  checksum=$(shasum ./cef-server/wotstat.widgets.cef.zip | awk '{ print $1 }')
+
   # Set version and debug mode
   configPath="./build/res/scripts/client/gui/mods/wotstat_widgets/common/Config.py"
   mainPath="./build/res/scripts/client/gui/mods/wotstat_widgets/WotstatWidget.py"
   perl -i -pe "s/{{VERSION}}/$v/g" "$configPath"
   perl -i -pe "s/'{{DEBUG_MODE}}'/$debug/g" "$mainPath"
+  perl -i -pe "s/{{CEF_SERVER_CHECKSUM}}/$checksum/g" "$mainPath"
 
   python2 -m compileall ./build
   find ./build -name "*.py" -type f -exec rm {} \;
@@ -61,21 +64,21 @@ build_server() {
 }
 
 full_build() {
+  build_server
   build_python
   build_as3
-  build_server
 }
 
 if [ "$as3Only" = True ] || [ "$serverOnly" = True ] || [ "$pythonOnly" = True ]; then
+
+    if [ "$serverOnly" = True ] || [ ! -f ./cef-server/wotstat.widgets.cef.zip ]; then
+        build_server
+    fi
 
     build_python
 
     if [ "$as3Only" = True ]; then
         build_as3
-    fi
-
-    if [ "$serverOnly" = True ] || [ ! -f ./cef-server/wotstat.widgets.cef.zip ]; then
-        build_server
     fi
 else
     full_build
@@ -97,6 +100,10 @@ zip -dvr -0 -X $folder res -i "*.png"
 zip -vr -0 -X $folder meta.xml
 
 cp ../cef-server/wotstat.widgets.cef.zip res/wotstat.widgets.cef.zip
+
+mkdir -p wotstat.widgets.cef
+echo "$checksum" > wotstat.widgets.cef/checksum
+zip -dvr -0 -X res/wotstat.widgets.cef.zip wotstat.widgets.cef/checksum
 zip -dvr -0 -X $folder res/wotstat.widgets.cef.zip
 
 cd ../
