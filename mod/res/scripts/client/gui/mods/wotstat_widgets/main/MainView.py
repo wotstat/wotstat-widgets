@@ -1,4 +1,5 @@
 import BigWorld
+from Event import Event
 from gui.Scaleform.framework import g_entitiesFactories, ScopeTemplates, ViewSettings
 from gui.Scaleform.framework.entities.View import View
 from gui.Scaleform.framework.application import AppEntry
@@ -11,6 +12,7 @@ from frameworks.wulf import WindowLayer
 from helpers import dependency
 from skeletons.gui.impl import IGuiLoader
 from skeletons.account_helpers.settings_core import ISettingsCore
+from Avatar import PlayerAvatar
 import struct
 import Keys
 
@@ -41,6 +43,9 @@ class MainView(View):
 
     InputHandler.g_instance.onKeyDown += self._onKey
     InputHandler.g_instance.onKeyUp += self._onKey
+    
+    global onStartGUI
+    onStartGUI += self._onStartGUI
 
     self.settingsCore.interfaceScale.onScaleChanged += self.setInterfaceScale
     self.setInterfaceScale()
@@ -63,6 +68,9 @@ class MainView(View):
 
     InputHandler.g_instance.onKeyDown -= self._onKey
     InputHandler.g_instance.onKeyUp -= self._onKey
+    
+    global onStartGUI
+    onStartGUI -= self._onStartGUI
 
     logger.info("MainView disposed")
     super(MainView, self)._dispose()
@@ -75,6 +83,9 @@ class MainView(View):
       if self.controlPressed != event.isKeyDown():
         self.controlPressed = event.isKeyDown()
         self._as_setControlPressed(self.controlPressed)
+
+  def _onStartGUI(self, *a, **k):
+    self._as_setGlobalVisible(True)
 
   def py_log(self, msg, level):
     logger.printLog(level, msg)
@@ -179,8 +190,23 @@ class MainView(View):
 
   def _as_setControlPressed(self, pressed):
     self.flashObject.as_setControlPressed(pressed)
+    
+  def _as_setGlobalVisible(self, visible):
+    self.flashObject.as_setGlobalVisible(visible)
 
+onStartGUI = Event()
 
+oldStartGUI = PlayerAvatar._PlayerAvatar__startGUI
+def startGUI(*a, **k):
+  oldStartGUI(*a, **k)
+  try:
+    logger.info("Starting GUI")
+    onStartGUI(*a, **k)
+  except Exception as e:
+    logger.error("Failed to start GUI")
+    
+PlayerAvatar._PlayerAvatar__startGUI = startGUI
+    
 
 def setup():
   mainViewSettings = ViewSettings(

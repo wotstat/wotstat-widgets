@@ -170,6 +170,7 @@ package wotstat.widgets {
       trace("[DW] Interface scale changed " + scale + "x" + App.appScale);
       updateImageScale();
       updateResizeControl();
+      fixPosition();
       dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, targetHeight * App.appScale));
     }
 

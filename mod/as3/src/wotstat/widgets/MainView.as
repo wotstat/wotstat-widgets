@@ -29,6 +29,7 @@ package wotstat.widgets {
     private var activeWidgetsByWid:Object = new Object();
 
     private var isInBattle:Boolean = false;
+    private var isGlovalVisible:Boolean = true;
 
     public function MainView() {
       super();
@@ -52,6 +53,7 @@ package wotstat.widgets {
             if (viewContainer.getChildAt(i) is BaseBattlePage) {
               targetView = viewContainer.getChildAt(i) as IView;
               isInBattle = true;
+              as_setGlobalVisible(false);
               setupWidgets();
             }
           }
@@ -90,6 +92,7 @@ package wotstat.widgets {
         targetView.addChild(widget);
         widget.setControlsVisible(!isInBattle);
         widget.isInBattle = isInBattle;
+        widget.visible = isGlovalVisible;
       }
     }
 
@@ -155,6 +158,12 @@ package wotstat.widgets {
       }
     }
 
+    public function as_setGlobalVisible(visible:Boolean):void {
+      isGlovalVisible = visible;
+      for each (var widget:DraggableWidget in activeWidgets) {
+        widget.visible = visible;
+      }
+    }
 
     // widget events
     private function onWidgetRequestResize(event:ResizeEvent):void {
