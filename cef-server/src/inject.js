@@ -9,6 +9,7 @@ function wotstatWidgetSetup() {
   document.head.append(style)
   console.log('Injected style')
 
+  window.isFromWotstatWidgetMod = true
 
   function onResize() {
     const realHeight = Math.ceil(document.body.clientHeight * devicePixelRatio);
@@ -35,8 +36,9 @@ function wotstatWidgetSetup() {
   onHeadMutate()
 }
 
+window.isFromWotstatWidgetMod = true
 if (document.readyState === "complete") {
   wotstatWidgetSetup();
 } else {
-  document.addEventListener('DOMContentLoaded', setup);
+  document.addEventListener('DOMContentLoaded', wotstatWidgetSetup);
 }
