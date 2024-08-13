@@ -7,6 +7,7 @@ from items.vehicles import VehicleDescriptor
 from items import vehicles as itemsVehicles
 from skeletons.gui.battle_session import IArenaDataProvider, IBattleSessionProvider
 from gui.battle_control.arena_info.arena_vos import VehicleArenaInfoVO
+from helpers.i18n import makeString
 import copy
 
 from vehicle_systems.vehicle_damage_state import VehicleDamageState
@@ -102,7 +103,8 @@ class BattleProvider(TriggersManager.ITriggerListener):
     
     self.arenaId.setValue(player.arenaUniqueID)
     self.arena.setValue({
-      'tag': arena.arenaType.geometry.split('/')[-1],
+      'tag': arena.arenaType.geometryName,
+      'localizedName': makeString('#arenas:%s/name' % arena.arenaType.geometryName),
       'mode': ARENA_BONUS_TYPE_IDS.get(player.arena.bonusType, None),
       'gameplay': ARENA_GAMEPLAY_NAMES[player.arenaTypeID >> 16],
       'team': player.team
