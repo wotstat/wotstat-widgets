@@ -196,6 +196,8 @@ class Widget(object):
   def onFeatureFlagsChange(self, flags):
     self.autoHeight = flags.get('autoHeight', False)
     self.resizeByHeight()
+    self.redraw()
+    self.browser.WasResized()
 
 class CEFServer(object):
   def __init__(self, host='localhost', port=30000, cachePath='', debug=False):
