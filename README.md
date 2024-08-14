@@ -22,7 +22,7 @@
 > [!IMPORTANT]
 > Работает только на x64 системах
 
-1. Скачайте актуальную версию из [Release](https://github.com/WOT-STAT/wotstat-widgets/releases/latest)
+1. Скачайте актуальную версию из [Releases](https://github.com/WOT-STAT/wotstat-widgets/releases/latest)
 2. Переместите `.wotmod` файл в папку с актуальной версий игры в `Tanki/mods`. Например `Tanki/mods/1.28.0.0`
 3. Запустите игру
 4. В центре уведомлений появится уведомление с предложением добавить виджет ИЛИ через `Mod List`.
