@@ -29,7 +29,7 @@ class SettingsWindow(AbstractWindowView):
     self.destroy()
 
   def py_openDemoWidget(self):
-    manager.createWidget('https://wotstat.info/widgets/demo', 300, -1)
+    manager.createWidget('https://widgets.wotstat.info/demo-widget', 300, -1)
     self.destroy()
     
   def py_t(self, key):
