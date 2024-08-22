@@ -82,8 +82,9 @@ class BattleResultProvider(object):
     if arenaUniqueID not in self.arenaUniqueIdQueue:
       logger.info('BattleResultProvider: Received battle result for unknown arenaUniqueID: %s' % arenaUniqueID)
       return
-      
-    self.arenaUniqueIdQueue.remove(arenaUniqueID)
+    
+    while arenaUniqueID in self.arenaUniqueIdQueue:
+      self.arenaUniqueIdQueue.remove(arenaUniqueID)
     
     logger.info('BattleResultProvider: Processing battle result for arenaUniqueID: %s' % arenaUniqueID)
     self.onBattleResult.trigger(preprocessData(results))
