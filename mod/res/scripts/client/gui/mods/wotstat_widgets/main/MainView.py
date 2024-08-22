@@ -59,6 +59,7 @@ class MainView(View):
       else:
         server.resumeWidget(widget.wid)
         
+      server.redrawWidget(widget.wid)
       server.resizeWidget(widget.wid, pos.width, pos.height)
 
   def _dispose(self):
