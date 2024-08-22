@@ -88,8 +88,17 @@ class BattleProvider(TriggersManager.ITriggerListener):
     arena.onVehicleUpdated -= self.__onVehicleUpdated
     arena.onPeriodChange -= self.__onArenaPeriodChange
     arena.onTeamBasePointsUpdate -= self.__onTeamBasePointsUpdate
-    self.isInBattle.setValue(False)
+    self.arena.setValue(None)
+    self.arenaId.setValue(None)
+    self.vehicle.setValue(None)
+    self.health.setValue(None)
+    self.maxHealth.setValue(None)
+    self.isAlive.setValue(None)
+    self.arenaPeriod.setValue(None)
     self.teamBases.setValue(None)
+    self.position.setValue(None)
+    self.rotation.setValue(None)
+    self.isInBattle.setValue(False)
     
     self.started = False
     if self.battleLoopCallbackHandler:

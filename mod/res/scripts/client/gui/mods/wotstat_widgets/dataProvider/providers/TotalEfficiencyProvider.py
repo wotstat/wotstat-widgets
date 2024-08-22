@@ -34,6 +34,11 @@ class TotalEfficiencyProvider(object):
   def __onBattleSessionStop(self):
     if self.sessionProvider.shared.personalEfficiencyCtrl:
       self.sessionProvider.shared.personalEfficiencyCtrl.onTotalEfficiencyUpdated += self.__onTotalEfficiencyReceived
+      
+    self.damage.setValue(0)
+    self.assist.setValue(0)
+    self.blocked.setValue(0)
+    self.stun.setValue(0)
 
   @withExceptionHandling(logger)
   def __onTotalEfficiencyReceived(self, diff):
