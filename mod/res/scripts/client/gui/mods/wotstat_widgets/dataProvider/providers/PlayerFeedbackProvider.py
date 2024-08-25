@@ -8,25 +8,14 @@ from helpers import dependency
 from skeletons.gui.battle_session import IBattleSessionProvider, IArenaDataProvider
 from gui.battle_control.controllers.feedback_events import _CritsExtra, _DamageExtra, _MultiStunExtra, _VisibilityExtra, PlayerFeedbackEvent
 from typing import List
+from ..crossGameUtils import getBattleLogShellTypesNames
 
 from ..ExceptionHandling import logCurrentException, withExceptionHandling
 from . import logger
 
 IGNORE = 'IGNORE'
 
-BATTLE_LOG_SHELL_TYPES_NAMES = {
-  BATTLE_LOG_SHELL_TYPES.HOLLOW_CHARGE: 'HOLLOW_CHARGE',
-  BATTLE_LOG_SHELL_TYPES.HOLLOW_CHARGE: 'HOLLOW_CHARGE',
-  BATTLE_LOG_SHELL_TYPES.ARMOR_PIERCING: 'ARMOR_PIERCING',
-  BATTLE_LOG_SHELL_TYPES.ARMOR_PIERCING_HE: 'ARMOR_PIERCING_HE',
-  BATTLE_LOG_SHELL_TYPES.ARMOR_PIERCING_CR: 'ARMOR_PIERCING_CR',
-  BATTLE_LOG_SHELL_TYPES.SMOKE: 'SMOKE',
-  BATTLE_LOG_SHELL_TYPES.HE_MODERN: 'HE_MODERN',
-  BATTLE_LOG_SHELL_TYPES.HE_LEGACY_STUN: 'HE_LEGACY_STUN',
-  BATTLE_LOG_SHELL_TYPES.HE_LEGACY_NO_STUN: 'HE_LEGACY_NO_STUN',
-  BATTLE_LOG_SHELL_TYPES.FLAME: 'FLAME',
-}
-
+BATTLE_LOG_SHELL_TYPES_NAMES = getBattleLogShellTypesNames()
 ATTACK_REASONS_MAX = len(ATTACK_REASONS)
 
 class PlayerFeedbackProvider(object):
