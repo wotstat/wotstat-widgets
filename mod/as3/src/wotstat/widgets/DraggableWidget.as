@@ -44,6 +44,7 @@ package wotstat.widgets {
     private var closeBtn:Close = new Close(onCloseButtonClick);
 
     private var controlPanel:ControlsPanel = new ControlsPanel();
+    private var allowInteraction:Boolean = true;
     private const resizeControl:ResizeControl = new ResizeControl(0, 0);
 
     // Target width by resize control in POINTS
@@ -163,7 +164,10 @@ package wotstat.widgets {
 
     public function setControlsVisible(isVisible:Boolean):void {
       controlPanel.visible = isVisible;
+      controlPanel.mouseEnabled = isVisible;
+      controlPanel.mouseChildren = isVisible;
       resizeControl.active = false;
+      allowInteraction = isVisible;
     }
 
     public function onInterfaceScaleChanged(scale:Number):void {
@@ -247,7 +251,7 @@ package wotstat.widgets {
     }
 
     private function onMouseDown(event:MouseEvent):void {
-      if (isDragging)
+      if (isDragging || !allowInteraction)
         return;
 
       isDragging = true;
@@ -255,6 +259,9 @@ package wotstat.widgets {
     }
 
     private function onMouseMove(event:MouseEvent):void {
+      if (!allowInteraction)
+        return;
+
       if (hideShowButtonDownPosition != null) {
         var dx:Number = event.stageX - hideShowButtonDownPosition.x;
         var dy:Number = event.stageY - hideShowButtonDownPosition.y;
@@ -270,6 +277,8 @@ package wotstat.widgets {
     }
 
     private function onMouseUp(event:MouseEvent):void {
+      if (!allowInteraction)
+        return;
 
       if (hideShowButtonDownPosition != null) {
         hideShowButtonDownPosition = null;

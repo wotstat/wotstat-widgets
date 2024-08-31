@@ -9,3 +9,4 @@ CONFIG_PATH = './mods/configs/wotstat.widgets/config.cfg'
 ACTIVE_WIDGETS_PATH = './mods/configs/wotstat.widgets/activeWidgets.json'
 
 WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS = 'WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS'
+GITHUB_URL = 'https://api.github.com/repos/WOT-STAT/wotstat-widgets/releases/latest'

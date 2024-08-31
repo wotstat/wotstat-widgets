@@ -16,9 +16,11 @@ from .main.SettingsWindow import setup as settingsWindowSetup, show as showSetti
 from .main.CefServer import server
 from .common.Notifier import Notifier
 from .common.i18n import t
+from .common.ModUpdater import ModUpdater
 from .dataProvider import setup as setupDataProvider
 
-from .constants import CEF_PATH, CONFIG_PATH, WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS
+
+from .constants import CEF_PATH, CONFIG_PATH, WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS, GITHUB_URL
 
 DEBUG_MODE = '{{DEBUG_MODE}}'
 CEF_SERVER_CHECKSUM = '{{CEF_SERVER_CHECKSUM}}'
@@ -70,6 +72,7 @@ class WotstatWidget(object):
     settingsWindowSetup()
     
     self.setupModListApi()
+    self.checkAndUpdate(version)
     
     hangarSpace = dependency.instance(IHangarSpace) # type: IHangarSpace
     connectionMgr = dependency.instance(IConnectionManager) # type: IConnectionManager
@@ -126,3 +129,8 @@ class WotstatWidget(object):
     except:
       return False
 
+  def checkAndUpdate(self, currentVersion):
+    updater = ModUpdater(modName="wotstat.widgets",
+                      currentVersion=currentVersion,
+                      ghUrl=GITHUB_URL)
+    updater.updateToGitHubReleases(lambda status: logger.info("Update status: %s" % status))

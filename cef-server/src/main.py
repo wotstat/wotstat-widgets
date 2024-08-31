@@ -469,7 +469,7 @@ if __name__ == '__main__':
   arguments = parseArguments(sys.argv[1:])
   
   port = arguments.get('port', None)
-  port = int(port) if port else input('Enter port: ')
+  port = int(port) if port else int(input('Enter port: '))
   cachePath = arguments.get('cachePath', '')
   devtools = bool(arguments.get('devtools', 'False') == 'True')
 
