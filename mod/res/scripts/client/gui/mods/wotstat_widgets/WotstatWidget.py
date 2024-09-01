@@ -14,6 +14,7 @@ from .common.utils import copyFile
 from .main.MainView import setup as mainViewSetup
 from .main.SettingsWindow import setup as settingsWindowSetup, show as showSettingsWindow
 from .main.CefServer import server
+from .main.WebSocketInterface import WebSocketInterface
 from .common.Notifier import Notifier
 from .common.i18n import t
 from .common.ModUpdater import ModUpdater
@@ -74,6 +75,9 @@ class WotstatWidget(object):
     self.setupModListApi()
     self.checkAndUpdate(version)
     
+    self.wsInterface = WebSocketInterface()
+    self.wsInterface.setup()
+    
     hangarSpace = dependency.instance(IHangarSpace) # type: IHangarSpace
     connectionMgr = dependency.instance(IConnectionManager) # type: IConnectionManager
     
@@ -87,6 +91,7 @@ class WotstatWidget(object):
   def fini(self):
     logger.info("Stopping WotStatWidget")
     server.dispose()
+    self.wsInterface.dispose()
     
   def onConnected(self, *a, **k):
     self.afterConnected = True
