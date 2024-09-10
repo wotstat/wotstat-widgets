@@ -31,6 +31,7 @@ lastLoadIsBattle = False
 class MainView(View):
   settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
   controlPressed = False
+  isOnSetupSubscribed = False
 
   def __init__(self, *args, **kwargs):
     super(MainView, self).__init__(*args, **kwargs)
@@ -49,7 +50,19 @@ class MainView(View):
 
     self.settingsCore.interfaceScale.onScaleChanged += self.setInterfaceScale
     self.setInterfaceScale()
+    
+    if server.enabled:
+      self.addWidgets()
+    else:
+      server.onSetupComplete += self.onSetupComplete
+      self.isOnSetupSubscribed = True
 
+  def onSetupComplete(self):
+    self.addWidgets()
+    server.onSetupComplete -= self.onSetupComplete
+    self.isOnSetupSubscribed = False
+    
+  def addWidgets(self):
     for widget in storage.getAllWidgets():
       pos = widget.battle if lastLoadIsBattle else widget.hangar
       
@@ -61,11 +74,14 @@ class MainView(View):
         
       server.redrawWidget(widget.wid)
       server.resizeWidget(widget.wid, pos.width, pos.height)
-
+    
   def _dispose(self):
     manager.createWidget -= self._createWidget
     server.onFrame -= self._onFrame
     self.settingsCore.interfaceScale.onScaleChanged -= self.setInterfaceScale
+    
+    if self.isOnSetupSubscribed:
+      server.onSetupComplete -= self.onSetupComplete
 
     InputHandler.g_instance.onKeyDown -= self._onKey
     InputHandler.g_instance.onKeyUp -= self._onKey

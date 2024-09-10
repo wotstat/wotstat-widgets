@@ -25,7 +25,8 @@ echo "Debug: $debug"
 echo "_________________"
 echo ""
 
-
+cef_shasum=$(find ./cef-server/src/ -type f -exec cat {} + | shasum -a 256 | awk '{print $1}')
+echo "CEF shasum: $cef_shasum"
 folder="wotstat.widgets_$v.wotmod"
 rm -rf $folder
 
@@ -44,14 +45,12 @@ build_as3() {
 build_python() {
   cp -r ./mod/res ./build
 
-  checksum=$(shasum ./cef-server/wotstat.widgets.cef.zip | awk '{ print $1 }')
-
   # Set version and debug mode
   configPath="./build/res/scripts/client/gui/mods/wotstat_widgets/common/Config.py"
   mainPath="./build/res/scripts/client/gui/mods/wotstat_widgets/WotstatWidget.py"
   perl -i -pe "s/{{VERSION}}/$v/g" "$configPath"
   perl -i -pe "s/'{{DEBUG_MODE}}'/$debug/g" "$mainPath"
-  perl -i -pe "s/{{CEF_SERVER_CHECKSUM}}/$checksum/g" "$mainPath"
+  perl -i -pe "s/{{CEF_SERVER_CHECKSUM}}/$cef_shasum/g" "$mainPath"
 
   python2 -m compileall ./build
   find ./build -name "*.py" -type f -exec rm {} \;
@@ -99,12 +98,15 @@ zip -dvr -0 -X $folder res -i "*.swf"
 zip -dvr -0 -X $folder res -i "*.png"
 zip -vr -0 -X $folder meta.xml
 
-cp ../cef-server/wotstat.widgets.cef.zip res/wotstat.widgets.cef.zip
 
+echo "CEF shasum: $cef_shasum"
+cp ../cef-server/wotstat.widgets.cef.zip wotstat.widgets.cef.$cef_shasum.zip
 mkdir -p wotstat.widgets.cef
-echo "$checksum" > wotstat.widgets.cef/checksum
-zip -dvr -0 -X res/wotstat.widgets.cef.zip wotstat.widgets.cef/checksum
-zip -dvr -0 -X $folder res/wotstat.widgets.cef.zip
+echo "$cef_shasum" > wotstat.widgets.cef/checksum
+zip -dvr -0 -X wotstat.widgets.cef.$cef_shasum.zip wotstat.widgets.cef/checksum
+rm -rf wotstat.widgets.cef
+
+cp wotstat.widgets.cef.$cef_shasum.zip ../wotstat.widgets.cef.$cef_shasum.zip
 
 cd ../
 cp ./build/$folder $folder

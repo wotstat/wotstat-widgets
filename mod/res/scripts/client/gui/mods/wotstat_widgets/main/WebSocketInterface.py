@@ -62,6 +62,8 @@ class WebSocketInterface(object):
     global enabled
     enabled = False
     
+    logger.info("WebSocketInterface stopping")
+    
     if self.server is not None:
       self.server.close()
       self.server = None

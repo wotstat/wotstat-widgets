@@ -7,6 +7,7 @@ from helpers import dependency
 from skeletons.connection_mgr import IConnectionManager
 from skeletons.gui.shared.utils import IHangarSpace
 
+from .CefArchive import cefArchive
 from .common.ServerLoggerBackend import ServerLoggerBackend
 from .common.Logger import Logger, SimpleLoggerBackend
 from .common.Config import Config
@@ -29,23 +30,6 @@ CEF_SERVER_CHECKSUM = '{{CEF_SERVER_CHECKSUM}}'
 logger = Logger.instance()
 notifier = Notifier.instance()
 
-def copyCef():
-  
-  if os.path.exists('mods/wotstat.widgets.cef/checksum'):
-    with open('mods/wotstat.widgets.cef/checksum', 'r') as f:
-      checksum = f.read().strip()
-      if checksum == CEF_SERVER_CHECKSUM:
-        logger.info("Wotstat CEF already exists with checksum %s" % checksum)
-        return
-      else:
-        logger.info("CEF checksum mismatch %s != %s" % (checksum, CEF_SERVER_CHECKSUM))
-  
-  logger.info("Copy CEF to %s" % CEF_PATH)
-  copyFile('wotstat.widgets.cef.zip', 'mods/wotstat.widgets.cef.zip')
-  zipfile.ZipFile('mods/wotstat.widgets.cef.zip').extractall('mods')
-  os.remove('mods/wotstat.widgets.cef.zip')
-
-
 class WotstatWidget(object):
   
   def __init__(self):
@@ -67,8 +51,8 @@ class WotstatWidget(object):
                           minLevel="INFO")
     ])
 
-    copyCef()
-    server.enable(self.config.get('devtools'))
+    cefArchive.onReady += self.onCefArchiveReady
+    cefArchive.setup(CEF_SERVER_CHECKSUM)
     mainViewSetup()
     settingsWindowSetup()
     
@@ -88,10 +72,16 @@ class WotstatWidget(object):
     
     setupDataProvider(logger)
 
+  def onCefArchiveReady(self):
+    cefArchive.onReady -= self.onCefArchiveReady
+    server.enable(self.config.get('devtools'))
+
   def fini(self):
     logger.info("Stopping WotStatWidget")
     server.dispose()
+    cefArchive.dispose()
     self.wsInterface.dispose()
+    logger.info('WotStatWidget stopped')
     
   def onConnected(self, *a, **k):
     self.afterConnected = True

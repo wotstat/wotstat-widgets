@@ -63,7 +63,7 @@ class PlatoonProvider(object):
         'name': player.get('userName'),
         'clanTag': player.get('clanAbbrev'),
         'dbid': player.get('dbID'),
-        'rating': int(player.get('accountWTR').replace(',', '')),
+        'rating': int(player.get('accountWTR').replace(',', '').replace(' ', '')),
         'timeJoin': player.get('timeJoin'),
         'isOffline': player.get('isOffline'),
         'isReady': player.get('readyState'),

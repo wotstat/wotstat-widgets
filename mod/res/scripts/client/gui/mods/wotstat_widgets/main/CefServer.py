@@ -53,10 +53,14 @@ class CefServer(object):
   socket = None
   queue = Queue()
   onFrame = Event()
+  onSetupComplete = Event()
   settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
 
   def __init__(self):
     self._checkQueueLoop()
+    self.receiverThread = None
+    self.outputThread = None
+    self.errorOutputThread = None
 
   def enable(self, devtools=False):
     self.enabled = True
@@ -82,11 +86,11 @@ class CefServer(object):
       stdout=subprocess.PIPE,
       stderr=subprocess.PIPE)
     
-    outputThread = threading.Thread(target=self._readOutputLoop)
-    outputThread.start()
+    self.outputThread = threading.Thread(target=self._readOutputLoop)
+    self.outputThread.start()
 
-    errorOutputThread = threading.Thread(target=self._readErrorOutputLoop)
-    errorOutputThread.start()
+    self.errorOutputThread = threading.Thread(target=self._readErrorOutputLoop)
+    self.errorOutputThread.start()
 
     logger.info("CEF server started")
 
@@ -95,16 +99,24 @@ class CefServer(object):
     self.socket.connect(('127.0.0.1', port))
     logger.info("Connected")
 
-    receiver_thread = threading.Thread(target=self._socketReceiverLoop, args=(self.socket, self.queue))
-    receiver_thread.daemon = True
-    receiver_thread.start()
+    self.receiverThread = threading.Thread(target=self._socketReceiverLoop, args=(self.socket, self.queue))
+    self.receiverThread.start()
 
     self.settingsCore.interfaceScale.onScaleChanged += self._setInterfaceScale
     self._setInterfaceScale()
+    self.onSetupComplete()
 
   def dispose(self):
+    if not self.enabled: return
+    logger.info("CEF server stopping")
+    
     self.enabled = False
     self.process.terminate()
+    
+    if self.outputThread: self.outputThread.join()
+    if self.receiverThread: self.receiverThread.join()
+    if self.errorOutputThread: self.errorOutputThread.join()
+    
     logger.info("CEF server stopped")
 
   def createNewWidget(self, wid, url, width, height):
@@ -196,6 +208,7 @@ class CefServer(object):
     self.process.stdin.flush()
 
   def _sendCommand(self, command, *args):
+    if not self.enabled: return
     cmd = command + ' ' + ' '.join([str(arg) for arg in args])
     self._wrightInput(str(cmd))
 
@@ -239,13 +252,17 @@ class CefServer(object):
 
   def _socketReceiverLoop(self, sock, queue):
     # type: (socket.socket, Queue) -> None
-    while True:
-      frame = self._readFrame(sock)
-      if frame is None:
-        logger.info("Disconnected from server.")
+    while self.enabled:
+      try:
+        frame = self._readFrame(sock)
+        if frame is None:
+          logger.info("Disconnected from server.")
+          break
+        
+        queue.put(frame)
+      except Exception as e:
+        if self.enabled: logger.error("Error reading frame: %s" % e)
         break
-
-      queue.put(frame)
 
   def _checkQueueLoop(self):
     # TODO: Sync to FPS
