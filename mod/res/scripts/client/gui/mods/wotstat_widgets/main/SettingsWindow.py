@@ -79,13 +79,18 @@ class SettingsWindow(AbstractWindowView):
     formattedProgress = str(round(cefArchive.progress * 1000)/10) + '%'
     if cefArchive.progress > 1:
       formattedProgress = t('settings.unpackingProcess')
-      
-      
+    
+    
     if cefArchive.progress == -2:
       self._as_setTextState(text_styles.main(t('settings.platformNotSupported') % cefArchive.machine))
       
     elif hasError and cefArchive.progress == -1:
-      self._as_setTextState(text_styles.main(t('settings.cannotUnpack') % str(cefArchive.lastError)))
+      self._as_setTextState(str().join((
+        text_styles.main(t('settings.cannotUnpack')),
+        '\n\n',
+        text_styles.main(t('settings.error')),
+        text_styles.main(str(cefArchive.lastError)),
+      )))
       self._as_showUnpackErrorButton()
       
     elif hasError:
@@ -94,7 +99,8 @@ class SettingsWindow(AbstractWindowView):
         '\n\n<b>',
         text_styles.main(t('settings.retrying') % (str(cefArchive.retryCount+1), formattedProgress)),
         '</b>\n\n',
-        text_styles.main(t('settings.error') % str(cefArchive.lastError)),
+        text_styles.main(t('settings.error')),
+        text_styles.main(str(cefArchive.lastError)),
       )))
       
     else:

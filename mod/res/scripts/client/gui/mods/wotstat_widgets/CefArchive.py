@@ -76,7 +76,14 @@ class CefArchive():
     progressQueue = Queue()
     
     def unpack():
-      zipfile.ZipFile(target).extractall('mods')
+      zipRef = zipfile.ZipFile(target, 'r')
+      try: 
+        zipRef.extractall('mods')
+      except Exception as e: 
+        raise
+      finally: 
+        zipRef.close()
+      
       os.remove(target)
       os.removedirs(os.path.dirname(target))
     
@@ -121,7 +128,7 @@ class CefArchive():
             break
           
         except Exception as e:
-          self.lastError = 'Failed: %s' % e
+          self.lastError = 'Failed: %s' % str(e)
           self.retryCount += 1
           progressQueue.put(0)
           self.onError(self.lastError)
