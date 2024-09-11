@@ -1,3 +1,4 @@
+import base64
 import time
 import hashlib
 import os
@@ -11,6 +12,14 @@ from .Logger import ILoggerBackend, getLevelOrder, LEVELS_ORDER
 from .crossGameUtils import readClientServerVersion
 
 LEVELS_NAMES = list(LEVELS_ORDER.keys())
+
+def prepareString(obj):
+  if isinstance(obj, str):
+    try:
+      obj.decode('utf-8')
+    except UnicodeDecodeError:
+      return base64.b64encode(obj)
+  return obj
 
 def generate_session_id():
   current_time = str(time.time()).encode('utf-8')
@@ -39,6 +48,7 @@ class ServerLoggerBackend(ILoggerBackend):
       self.__send(level, log)
       
   def __send(self, level, msg):
+    msg = prepareString(msg)
     self.__sendingQueue.append((int(time.time() * 1e9), level, msg))
 
   def __sendingLoop(self):

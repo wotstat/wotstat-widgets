@@ -7,10 +7,11 @@ import urllib2
 import threading
 import platform
 import time
+import tempfile
 
 from .common.Logger import Logger
 
-
+TEMP_CEF_ZIP_PATH = os.path.join(tempfile.gettempdir(), 'wotstat.widgets.cef.zip')
 TARGET_CEF_PATH = 'mods/wotstat.widgets.cef'
 TARGET_CEF_PATH_CHECKSUM = TARGET_CEF_PATH + '/checksum'
 
@@ -52,7 +53,7 @@ class CefArchive():
     if currentChecksum is not None:
       logger.info('CefArchive checksum mismatch %s != %s' % (currentChecksum, checksum))
       
-    self.downloadThread = self._downloadCef('mods/wotstat.widgets.temp/wotstat.widgets.cef.zip',
+    self.downloadThread = self._downloadCef(TEMP_CEF_ZIP_PATH,
                       'https://storage.yandexcloud.net/wotstat-cef/wotstat.widgets.cef.%s.zip' % checksum)
     
   def dispose(self):
@@ -60,7 +61,7 @@ class CefArchive():
     logger.info('CefArchive stopping')
     if self.downloadThread: self.downloadThread.join()
     logger.info('CefArchive stopped')
-  
+    
   def _updateProgress(self, progress):
     # type: (float) -> None
     self.progress = progress
@@ -72,15 +73,12 @@ class CefArchive():
     logger.info('CefArchive is ready')
   
   def _downloadCef(self, target, url):
-    logger.info('Download CEF from %s' % url)
+    logger.info('Download CEF from %s to %s' % (url, target))
     progressQueue = Queue()
     
     def unpack():
       with zipfile.ZipFile(target, 'r') as zip:
-        zip.extractall('mods')
-      
-      os.remove(target)
-      os.removedirs(os.path.dirname(target))
+        zip.extractall('mods') 
     
     def downloadFile(chunk_size=1024):
       
@@ -138,7 +136,6 @@ class CefArchive():
           logger.info('Retry download %d' % self.retryCount)
       
       logger.info('Download thread end')
-
 
     def mainThreadProcess():
         
