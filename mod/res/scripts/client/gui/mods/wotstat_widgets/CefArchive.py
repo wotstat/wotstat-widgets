@@ -76,13 +76,8 @@ class CefArchive():
     progressQueue = Queue()
     
     def unpack():
-      zipRef = zipfile.ZipFile(target, 'r')
-      try: 
-        zipRef.extractall('mods')
-      except Exception as e: 
-        raise
-      finally: 
-        zipRef.close()
+      with zipfile.ZipFile(target, 'r') as zip:
+        zip.extractall('mods')
       
       os.remove(target)
       os.removedirs(os.path.dirname(target))
