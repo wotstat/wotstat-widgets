@@ -1,4 +1,6 @@
 import BigWorld
+import re
+
 from constants import ROLE_TYPE_TO_LABEL
 from ..DataProviderSDK import DataProviderSDK
 from PlayerEvents import g_playerEvents
@@ -9,6 +11,10 @@ from items import vehicles as vehiclesUtils
 from ..ExceptionHandling import withExceptionHandling
 
 from . import logger
+
+def formattedToInt(numberStr):
+  cleanedStr = re.sub(r'[^\d]', '', numberStr)
+  return int(cleanedStr)
 
 class PlatoonProvider(object):
   
@@ -63,7 +69,7 @@ class PlatoonProvider(object):
         'name': player.get('userName'),
         'clanTag': player.get('clanAbbrev'),
         'dbid': player.get('dbID'),
-        'rating': int(player.get('accountWTR').replace(',', '').replace(' ', '')),
+        'rating': formattedToInt(player.get('accountWTR', '0')),
         'timeJoin': player.get('timeJoin'),
         'isOffline': player.get('isOffline'),
         'isReady': player.get('readyState'),
