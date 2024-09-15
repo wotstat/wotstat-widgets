@@ -1,4 +1,5 @@
 from constants import PREBATTLE_TYPE_NAMES, QUEUE_TYPE_NAMES, ROLE_TYPE_TO_LABEL
+from post_progression_common import ACTION_TYPES
 from helpers import dependency
 from ..DataProviderSDK import DataProviderSDK
 from PlayerEvents import g_playerEvents
@@ -112,7 +113,6 @@ class HangarProvider(object):
     self.consumables.setValue([vehicles.getItemByCompactDescr(t).name if t else None for t in item.consumables.installed.getStorage])
     self.boosters.setValue([vehicles.getItemByCompactDescr(t).name if t else None for t in item.battleBoosters.installed.getStorage])
     
-    postProgressionCache = vehicles.g_cache.postProgression()
     postProgressionState = item.postProgression.getState()
     
     levels = filter(lambda t: t <= 10, postProgressionState.unlocks)
@@ -121,13 +121,11 @@ class HangarProvider(object):
       'optSwitchEnabled': 1 not in postProgressionState.disabledSwitches,
       'shellsSwitchEnabled': 2 not in postProgressionState.disabledSwitches,
     }
-    
-    
-    unlockedModifications = filter(lambda t: t > 10, postProgressionState.unlocks)
-    rawTree = item.postProgression.getRawTree()
-    possibleModifications = sorted(filter(lambda t: t > 10, rawTree.steps.keys())) if rawTree else []
-    unlockedModificationsName = [postProgressionCache.modifications[t].name for t in unlockedModifications]
-    selectedModificationsName = [postProgressionCache.modifications[t[0] * 10 + t[1]].name if t[1] else None for t in [(t, postProgressionState.getPair(t)) for t in possibleModifications]]
+  
+    currentSteps = [t for t in item.postProgression.iterOrderedSteps() if t.action.actionType == ACTION_TYPES.PAIR_MODIFICATION]
+    purchased = [t.action.getPurchasedModification() for t in currentSteps]
+    unlockedModificationsName = [None if t.isLocked() else t.action.getTechName() for t in currentSteps]
+    selectedModificationsName = [t.getTechName() if t else None for t in purchased]
     
     self.postProgression.setValue({
       'level': level,
