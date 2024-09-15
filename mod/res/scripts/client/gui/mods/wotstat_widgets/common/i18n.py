@@ -21,6 +21,7 @@ RU = {
   'settings.error': 'Ошибка: ',
   'settings.pleaseWait': 'Пожалуйста подождите немного, этот процесс нужно выполнить только один раз.',
   'settings.downloading': 'Идёт загрузка: %s',
+  'settings.runtimeError': 'Произошла ошибка при запуске сервиса обработки виджетов. Попробуйте перезапустить игру.\nЕсли ошибка повторяется, обратитесь к разработчику мода (@WotStat в Discord или по почте support@wotstat.info)',
 }
 
 EN = {
@@ -43,6 +44,7 @@ EN = {
   'settings.error': 'Error: ',
   'settings.pleaseWait': 'Please wait a little, this process only needs to be done once.',
   'settings.downloading': 'Downloading: %s',
+  'settings.runtimeError': 'An error occurred while starting the widget processing service. Try restarting the game.\nIf the error persists, contact the mod developer (@WotStat on Discord or by email support@wotstat.info)',
 }
 
 language = getClientLanguage()

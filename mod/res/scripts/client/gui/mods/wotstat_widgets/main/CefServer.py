@@ -7,6 +7,7 @@ import socket
 import struct
 from Queue import Queue
 from typing import Tuple
+import base64
 
 from Event import Event
 from external_strings_utils import unicode_from_utf8
@@ -22,6 +23,7 @@ logger = Logger.instance()
 
 _preferences_path = unicode_from_utf8(BigWorld.wg_getPreferencesFilePath())[1]
 CACHE_PATH = os.path.normpath(os.path.join(os.path.dirname(_preferences_path), 'mods', 'wotstat.widgets', 'webcache'))
+CACHE_PATH_BASE64 = base64.b64encode(CACHE_PATH.encode('utf-8')).decode('ascii')
 
 logger = Logger.instance()
 
@@ -42,6 +44,7 @@ class Commands:
   REDRAW_WIDGET = 'REDRAW_WIDGET'
   SUSPENSE_WIDGET = 'SUSPENSE_WIDGET'
   RESUME_WIDGET = 'RESUME_WIDGET'
+  TERMINATE = 'TERMINATE'
 
 
 class CefServer(object):
@@ -49,11 +52,14 @@ class CefServer(object):
   class Flags:
     AUTO_HEIGHT = 1 << 0
 
-  enabled = False
+  killNow = threading.Event()
   socket = None
   queue = Queue()
   onFrame = Event()
+  isReady = False
   onSetupComplete = Event()
+  hasProcessError = False
+  onProcessError = Event()
   settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
 
   def __init__(self):
@@ -61,10 +67,24 @@ class CefServer(object):
     self.receiverThread = None
     self.outputThread = None
     self.errorOutputThread = None
+    self.killNow.set()
+    self.process = None
 
+  @withExceptionHandling()
   def enable(self, devtools=False):
-    self.enabled = True
+    self.killNow.clear()
 
+    try:
+      self._startServer(devtools)
+    except Exception as e:
+      logger.critical("Error starting CEF server: %s" % e)
+      if self.process and self.process.poll() is None:
+        self.process.terminate()
+      self.killNow.set()
+      self.hasProcessError = True
+      self.onProcessError(str(e))
+      
+  def _startServer(self, devtools):
     port = 33100
     for _ in range(100):
       if isPortAvailable(port): break
@@ -74,14 +94,20 @@ class CefServer(object):
     if not devtools:
       startupInfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
       startupInfo.wShowWindow = subprocess.SW_HIDE
-
+      
+    env = os.environ.copy()
+    env['PYTHONIOENCODING'] = 'utf-8'
+    env['PYTHONUTF8'] = '1'
+    env['PYTHONLEGACYWINDOWSSTDIO'] = '1'
+    
     self.process = subprocess.Popen([
         CEF_EXE_PATH,
         '--port=' + str(port),
         '--devtools=' + str(devtools),
-        '--cachePath=' + CACHE_PATH,
+        '--cachePathBase64=' + CACHE_PATH_BASE64,
       ],
       startupinfo=startupInfo,
+      env=env,
       stdin=subprocess.PIPE,
       stdout=subprocess.PIPE,
       stderr=subprocess.PIPE)
@@ -103,19 +129,30 @@ class CefServer(object):
     self.receiverThread.start()
 
     self.settingsCore.interfaceScale.onScaleChanged += self._setInterfaceScale
+    self.isReady = True
     self._setInterfaceScale()
     self.onSetupComplete()
+    
 
+  @withExceptionHandling()
   def dispose(self):
-    if not self.enabled: return
+    if self.killNow.is_set(): return
     logger.info("CEF server stopping")
     
-    self.enabled = False
-    self.process.terminate()
+    self.isReady = False
+    try: self._wrightInput(Commands.TERMINATE)
+    except Exception as e: pass
+    self.killNow.set()
     
     if self.outputThread: self.outputThread.join()
     if self.receiverThread: self.receiverThread.join()
     if self.errorOutputThread: self.errorOutputThread.join()
+    
+    if self.process.poll() is None:
+      try:
+        self.process.wait(1)
+      except Exception as e:
+        self.process.terminate()
     
     logger.info("CEF server stopped")
 
@@ -153,7 +190,7 @@ class CefServer(object):
     self._sendCommand(Commands.SET_INTERFACE_SCALE, scale)
 
   def _readErrorOutputLoop(self):
-    while self.enabled:
+    while not self.killNow.is_set():
       if not self.process: continue
 
       output = self.process.stderr.readline()
@@ -161,15 +198,19 @@ class CefServer(object):
 
       if not output: continue
 
-      line = output.decode().strip()
+      line = output.decode('utf-8', errors='replace').strip()
       if not line: continue
 
+      if line.startswith('DevTools listening on'):
+        logger.info(line)
+        continue
+      
       logger.error(line)
 
     logger.info("Error output loop stopped")
 
   def _readOutputLoop(self):
-    while self.enabled:
+    while not self.killNow.is_set():
       if not self.process: continue
 
       output = self.process.stdout.readline()
@@ -177,7 +218,7 @@ class CefServer(object):
 
       if not output: continue
 
-      line = output.decode().strip()
+      line = output.decode('utf-8', errors='replace').strip()
       if not line: continue
 
       if line.startswith('[LOG]'):
@@ -203,12 +244,21 @@ class CefServer(object):
     logger.info("Output loop stopped")
 
   def _wrightInput(self, inputData):
-    logger.debug("Send input data: %s" % str(inputData))
-    self.process.stdin.write(str(inputData) + '\n')
-    self.process.stdin.flush()
+    try:
+      logger.debug("Send input data: %s" % str(inputData))
+      self.process.stdin.write(str(inputData) + '\n')
+      self.process.stdin.flush()
+    except Exception as e:
+      logger.error("Error writing input: %s" % e)
+      if not self.killNow.is_set():
+        self.isReady = False
+        self.killNow.set()
+        self.hasProcessError = True
+        self.onProcessError(str(e))
 
+  @withExceptionHandling()
   def _sendCommand(self, command, *args):
-    if not self.enabled: return
+    if self.killNow.is_set(): return
     cmd = command + ' ' + ' '.join([str(arg) for arg in args])
     self._wrightInput(str(cmd))
 
@@ -252,7 +302,7 @@ class CefServer(object):
 
   def _socketReceiverLoop(self, sock, queue):
     # type: (socket.socket, Queue) -> None
-    while self.enabled:
+    while not self.killNow.is_set():
       try:
         frame = self._readFrame(sock)
         if frame is None:
@@ -261,7 +311,7 @@ class CefServer(object):
         
         queue.put(frame)
       except Exception as e:
-        if self.enabled: logger.error("Error reading frame: %s" % e)
+        if not self.killNow.is_set(): logger.error("Error reading frame: %s" % e)
         break
 
   def _checkQueueLoop(self):

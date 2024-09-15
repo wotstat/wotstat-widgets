@@ -41,6 +41,7 @@ class MainView(View):
     logger.info("MainView populated")
     manager.createWidget += self._createWidget
     server.onFrame += self._onFrame
+    server.onProcessError += self._onServerError
 
     InputHandler.g_instance.onKeyDown += self._onKey
     InputHandler.g_instance.onKeyUp += self._onKey
@@ -51,7 +52,7 @@ class MainView(View):
     self.settingsCore.interfaceScale.onScaleChanged += self.setInterfaceScale
     self.setInterfaceScale()
     
-    if server.enabled:
+    if server.isReady:
       self.addWidgets()
     else:
       server.onSetupComplete += self.onSetupComplete
@@ -137,6 +138,10 @@ class MainView(View):
     lastWidgetId += 1
     return lastWidgetId
 
+  def _onServerError(self, error):
+    logger.info("Server error. Hide MainView: %s" % error)
+    self._dispose()
+
   def _addWidget(self, uuid, wid, url, width=100, height=100, x=-1, y=-1, flags=0, isHidden=False, isLocked=False):
     if wid:
       self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, lastLoadIsBattle)
@@ -150,6 +155,10 @@ class MainView(View):
     self._as_setResizeMode(wid, flags & CefServer.Flags.AUTO_HEIGHT == 0)
 
   def _createWidget(self, url, width, height=-1):
+    if not server.isReady:
+      logger.error("CEF server is not ready")
+      return
+    
     wid = self.getNextWidgetId()
     storage.addWidget(wid, url, width, height)
     server.createNewWidget(wid, url, width, height)

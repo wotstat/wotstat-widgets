@@ -5,6 +5,7 @@ import sys
 import socket
 import struct
 import threading
+import base64
 import io
 from typing import Dict
 import zlib
@@ -16,6 +17,10 @@ from unpremultiply_rgba.unpremultiply_rgba import unpremultiply_rgba
 from cefpython3 import cefpython as cef
 
 TICK_DELTA = 0.01
+
+os.environ['PYTHONIOENCODING'] = 'utf-8'
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
 
 logLock = threading.Lock()
 def log(msg, level='INFO'):
@@ -208,6 +213,7 @@ class CEFServer(object):
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.client_socket = None
     self.connected = False
+    self.connectionThread = None
     self.widgets = {} # type: Dict[int, Widget]
 
     log("CEF VERSION %s\n" % cef.__version__)   
@@ -228,15 +234,31 @@ class CEFServer(object):
   def startServer(self):
     self.socket.bind((self.host, self.port))
     self.socket.listen(1)
-    log("Server listening on %s:%s" % (str(self.host), str(self.port)))
-    self.client_socket, addr = self.socket.accept()
-    log("Connection from %s" % str(addr))
-    self.connected = True
+     
+    def startThread():
+      try:
+        log("Server listening on %s:%s" % (str(self.host), str(self.port)))
+        self.client_socket, addr = self.socket.accept()
+        log("Connection from %s" % str(addr))
+        self.connected = True
+      except Exception as e:
+        log('Terminating connection: %s' % e)
+        self.connected = False
+
+    self.connectionThread = threading.Thread(target=startThread)
+    self.connectionThread.start()
 
   def stopServer(self):
+    log("Stopping server")
+    
     if self.client_socket:
       self.client_socket.close()
+      
     self.socket.close()
+    
+    if self.connectionThread:
+      self.connectionThread.join()
+    
     log("Server closed on %s:%s" % (str(self.host), str(self.port)))
 
   def sendFrame(self, wid, flags, width, height, frameBytes):
@@ -258,7 +280,7 @@ class CEFServer(object):
     if height < 0:
       height = width
 
-    log(f"Creating widget [{wid}] with url: {url} and siz: {width}x{height}")
+    log(f"Creating widget [{wid}] with url: {url} and size: {width}x{height}")
 
     browserSettings = {
       "windowless_frame_rate": 30,
@@ -332,9 +354,10 @@ class Commands:
   SET_INTERFACE_SCALE = 'SET_INTERFACE_SCALE'
   SUSPENSE_WIDGET = 'SUSPENSE_WIDGET'
   RESUME_WIDGET = 'RESUME_WIDGET'
+  TERMINATE = 'TERMINATE'
 
 class Main(object):
-  killNow = False
+  killNow = threading.Event()
   tasksQueue = queue.Queue()
 
   def __init__(self, port, cachePath, debug):
@@ -348,7 +371,7 @@ class Main(object):
     self.server.startServer()
 
   def start(self):
-    while self.inputThread.is_alive() and self.killNow == False:
+    while self.inputThread.is_alive() and not self.killNow.is_set():
       cef.MessageLoopWork()
       if not self.tasksQueue.empty():
         task, args = self.tasksQueue.get(timeout=TICK_DELTA)
@@ -356,17 +379,24 @@ class Main(object):
       else:
         time.sleep(TICK_DELTA)
 
+    self.killNow.set()
+    self.server.stopServer()
+    self.inputThread.join()
     cef.Shutdown()
     log("Exiting")
 
   def inputLoopThread(self):
-    while not self.killNow:
+    while not self.killNow.is_set():
       line = sys.stdin.readline()
       if not line:
         log("EOF")
         break
 
       line = line.strip()
+      if line == Commands.TERMINATE:
+        self.killNow.set()
+        break
+      
       self.tasksQueue.put((self.onCommand, (line,)))
     
   def onCommand(self, command: str):
@@ -452,7 +482,7 @@ class Main(object):
 
   def exitGracefully(self, signum, frame):
     log("Exiting gracefully")
-    self.killNow = True
+    self.killNow.set()
 
 
 def parseArguments(argv):
@@ -471,15 +501,20 @@ if __name__ == '__main__':
   port = arguments.get('port', None)
   port = int(port) if port else int(input('Enter port: '))
   cachePath = arguments.get('cachePath', '')
+  cachePathBase64 = arguments.get('cachePathBase64', None)
   devtools = bool(arguments.get('devtools', 'False') == 'True')
+  
+  if not cachePath and cachePathBase64:
+    base64Bytes = cachePathBase64.encode('ascii')
+    utf8Bytes = base64.b64decode(base64Bytes)
+    cachePath = utf8Bytes.decode('utf-8')
 
   log(f"Starting CEF server on port {port}; cachePath: {cachePath}; devtools {devtools}")
 
   main = Main(port, cachePath, devtools)
   main.start()
-
-  while True:
-    time.sleep(TICK_DELTA)
+  
+  log("Close")
 
 
 

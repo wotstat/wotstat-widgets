@@ -9,6 +9,7 @@ from gui.Scaleform.framework.application import AppEntry
 from gui.shared.formatters import text_styles
 
 from .EventsManager import manager
+from .CefServer import server
 from ..CefArchive import cefArchive
 from ..common.Notifier import Notifier
 from ..constants import WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS
@@ -44,42 +45,54 @@ class SettingsWindow(AbstractWindowView):
     super(SettingsWindow, self)._populate()
     self.isWaitingForCef = False
     
-    if cefArchive.isReady:
-      self._as_setNormalState()
-    else:
+    server.onProcessError += self._onCefRuntimeError
+    
+    if not cefArchive.isReady:
       self.isWaitingForCef = True
       cefArchive.onReady += self._onCefServerReady
       cefArchive.onProgressChange += self._onCefProgressChange
       cefArchive.onError += self._onCefError
-      self._updateDownloadState()
+      
+    self._updateState()
   
   def _dispose(self):
     if self.isWaitingForCef:
       cefArchive.onReady -= self._onCefServerReady
       cefArchive.onProgressChange -= self._onCefProgressChange
       cefArchive.onError -= self._onCefError
+      
+    server.onProcessError -= self._onCefRuntimeError
     super(SettingsWindow, self)._dispose()
     return
         
   def _onCefServerReady(self):
-    self._as_setNormalState()
+    self._updateState()
     self.isWaitingForCef = False
     cefArchive.onReady -= self._onCefServerReady
     cefArchive.onProgressChange -= self._onCefProgressChange
     cefArchive.onError -= self._onCefError
     
   def _onCefProgressChange(self, progress):
-    self._updateDownloadState()
+    self._updateState()
 
   def _onCefError(self, error):
-    self._updateDownloadState()
+    self._updateState()
   
-  def _updateDownloadState(self):
+  def _onCefRuntimeError(self, error):
+    self._updateState()
+  
+  def _updateState(self):
+    if server.hasProcessError:
+      self._as_setTextState(text_styles.main(t('settings.runtimeError')))
+      return
+    
+    if cefArchive.isReady:
+      self._as_setNormalState()
+      return
+    
     hasError = cefArchive.lastError is not None
     formattedProgress = str(round(cefArchive.progress * 1000)/10) + '%'
-    if cefArchive.progress > 1:
-      formattedProgress = t('settings.unpackingProcess')
-    
+    if cefArchive.progress > 1: formattedProgress = t('settings.unpackingProcess')
     
     if cefArchive.progress == -2:
       self._as_setTextState(text_styles.main(t('settings.platformNotSupported') % cefArchive.machine))
@@ -112,7 +125,7 @@ class SettingsWindow(AbstractWindowView):
         text_styles.main(t('settings.downloading') % formattedProgress),
         '</b>'
       )))
-      
+
   def _as_setNormalState(self):
     self.flashObject.as_setNormalState()
     
