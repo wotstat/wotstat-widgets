@@ -14,6 +14,9 @@ from .common.Logger import Logger
 TEMP_CEF_ZIP_PATH = os.path.join(tempfile.gettempdir(), 'wotstat.widgets.cef.zip')
 TARGET_CEF_PATH = 'mods/wotstat.widgets.cef'
 TARGET_CEF_PATH_CHECKSUM = TARGET_CEF_PATH + '/checksum'
+CDN_URL= 'https://cef-storage.wotstat.info/wotstat.widgets.cef.%s.zip'
+DIRECT_URL = 'https://storage.yandexcloud.net/cef-storage.wotstat.info/wotstat.widgets.cef.%s.zip'
+MAX_RETRY_ATTEMPTS = 4
 
 logger = Logger.instance()
 
@@ -53,8 +56,7 @@ class CefArchive():
     if currentChecksum is not None:
       logger.info('CefArchive checksum mismatch %s != %s' % (currentChecksum, checksum))
       
-    self.downloadThread = self._downloadCef(TEMP_CEF_ZIP_PATH,
-                      'https://storage.yandexcloud.net/wotstat-cef/wotstat.widgets.cef.%s.zip' % checksum)
+    self.downloadThread = self._downloadCef(TEMP_CEF_ZIP_PATH, checksum)
     
   def dispose(self):
     self.enabled = False
@@ -72,8 +74,8 @@ class CefArchive():
     self.onReady()
     logger.info('CefArchive is ready')
   
-  def _downloadCef(self, target, url):
-    logger.info('Download CEF from %s to %s' % (url, target))
+  def _downloadCef(self, target, checksum):
+    logger.info('Download CEF with %s to %s' % (checksum, target))
     progressQueue = Queue()
     
     def unpack():
@@ -82,8 +84,10 @@ class CefArchive():
     
     def downloadFile(chunk_size=1024):
       
-      while self.retryCount < 3 and self.enabled:
+      while self.retryCount < MAX_RETRY_ATTEMPTS and self.enabled:
         try:
+          url = (DIRECT_URL if self.retryCount == MAX_RETRY_ATTEMPTS - 1 else CDN_URL) % checksum
+          logger.info('Download attempt %d starting from %s' % (self.retryCount, url))
           response = urllib2.urlopen(url)
           totalSize = int(response.info().getheader('Content-Length').strip())
           
@@ -127,8 +131,8 @@ class CefArchive():
           self.onError(self.lastError)
           logger.error(self.lastError)
       
-          if self.retryCount == 3:
-            logger.error('Download failed after 3 retries')
+          if self.retryCount == MAX_RETRY_ATTEMPTS:
+            logger.error('Download failed after %d retries' % MAX_RETRY_ATTEMPTS)
             progressQueue.put(-1)
             break
             
