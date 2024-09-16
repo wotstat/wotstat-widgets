@@ -1,5 +1,6 @@
 import json
 import os
+import errno
 
 import BigWorld
 from Singleton import Singleton
@@ -129,7 +130,6 @@ class WidgetStorage(Singleton):
 
     self._isChanged = True
 
-
   def removeWidget(self, wid):
     for key, widget in self._widgets.items():
       if widget.wid == wid:
@@ -203,6 +203,13 @@ class WidgetStorage(Singleton):
     try:
       with open(ACTIVE_WIDGETS_PATH, "r") as f:
         data = json.load(f)
+    except IOError as e:
+      if e.errno == errno.ENOENT:
+        logger.info("No widgets file found: %s" % e)
+      else:
+        logger.error("Failed to load widget data: %s" % e)
+          
+      return
     except Exception as e:
       logger.error("Failed to load widget data: %s" % e)
       return
