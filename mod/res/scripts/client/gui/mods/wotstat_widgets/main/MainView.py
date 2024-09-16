@@ -45,6 +45,9 @@ class MainView(View):
 
     InputHandler.g_instance.onKeyDown += self._onKey
     InputHandler.g_instance.onKeyUp += self._onKey
+    g_eventBus.addListener(events.GameEvent.FULL_STATS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
+    g_eventBus.addListener(events.GameEvent.FULL_STATS_QUEST_PROGRESS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
+    g_eventBus.addListener(events.GameEvent.FULL_STATS_PERSONAL_RESERVES, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     
     global onStartGUI
     onStartGUI += self._onStartGUI
@@ -80,6 +83,10 @@ class MainView(View):
     manager.createWidget -= self._createWidget
     server.onFrame -= self._onFrame
     self.settingsCore.interfaceScale.onScaleChanged -= self.setInterfaceScale
+    g_eventBus.removeListener(events.GameEvent.FULL_STATS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
+    g_eventBus.removeListener(events.GameEvent.FULL_STATS_QUEST_PROGRESS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
+    g_eventBus.removeListener(events.GameEvent.FULL_STATS_PERSONAL_RESERVES, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
+    
     
     if self.isOnSetupSubscribed:
       server.onSetupComplete -= self.onSetupComplete
@@ -97,11 +104,13 @@ class MainView(View):
     # type: (BigWorld.KeyEvent) -> None
 
     if event.key in (Keys.KEY_LCONTROL, Keys.KEY_RCONTROL):
-
       if self.controlPressed != event.isKeyDown():
         self.controlPressed = event.isKeyDown()
         self._as_setControlPressed(self.controlPressed)
-
+    
+  def _handleToggleFullStats(self, event):
+    self._as_setGlobalVisible(not event.ctx.get('isDown', False))
+    
   def _onStartGUI(self, *a, **k):
     self._as_setGlobalVisible(True)
 
