@@ -42,6 +42,7 @@ package wotstat.widgets {
     private var resizeBtn:Resize = new Resize(onResizeButtonClick);
     private var reloadBtn:Reload = new Reload(onReloadButtonClick);
     private var closeBtn:Close = new Close(onCloseButtonClick);
+    private var contextMenuBtn:HideShow = new HideShow();
 
     private var controlPanel:ControlsPanel = new ControlsPanel();
     private var allowInteraction:Boolean = true;
@@ -90,6 +91,7 @@ package wotstat.widgets {
         .addButton(resizeBtn)
         .addButton(reloadBtn)
         .addButton(closeBtn)
+        .addButton(contextMenuBtn)
         .layout();
 
       addChild(controlPanel);
@@ -117,6 +119,7 @@ package wotstat.widgets {
       resizeControl.addEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
       loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onLoaderComplete);
       hideShowBtn.addEventListener(MouseEvent.MOUSE_DOWN, onHideShowButtonMouseDown);
+      contextMenuBtn.addEventListener(MouseEvent.MOUSE_DOWN, showContextMenu);
 
       updateImageScale();
 
@@ -125,13 +128,14 @@ package wotstat.widgets {
     }
 
     public function dispose():void {
-      loader.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+      content.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
       App.instance.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
       App.instance.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
       resizeControl.removeEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
       resizeControl.removeEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
       loader.contentLoaderInfo.removeEventListener(Event.COMPLETE, onLoaderComplete);
       hideShowBtn.removeEventListener(MouseEvent.MOUSE_DOWN, onHideShowButtonMouseDown);
+      contextMenuBtn.removeEventListener(MouseEvent.MOUSE_DOWN, showContextMenu);
 
       for each (var btn:Button in [hideShowBtn, lockBtn, resizeBtn, reloadBtn, closeBtn]) {
         btn.dispose();
@@ -168,6 +172,12 @@ package wotstat.widgets {
       controlPanel.mouseChildren = isVisible;
       resizeControl.active = false;
       allowInteraction = isVisible;
+
+      if (!isVisible) {
+        stopDrag();
+        isDragging = false;
+        App.contextMenuMgr.hide();
+      }
     }
 
     public function onInterfaceScaleChanged(scale:Number):void {
@@ -176,6 +186,25 @@ package wotstat.widgets {
       updateResizeControl();
       fixPosition();
       dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, targetHeight * App.appScale));
+    }
+
+    public function setResizing(enabled:Boolean):void {
+      resizeControl.active = enabled;
+    }
+
+    public function setLocked(value:Boolean):void {
+      if (_isLocked == value)
+        return;
+
+      _isLocked = value;
+
+      if (resizeControl.active) {
+        resizeControl.active = false;
+      }
+
+      content.mouseEnabled = !_isLocked;
+      content.mouseChildren = !_isLocked;
+      updateButtonsVisibility();
     }
 
     private function setHidden(value:Boolean):void {
@@ -190,21 +219,6 @@ package wotstat.widgets {
         resizeControl.active = false;
       }
 
-      updateButtonsVisibility();
-    }
-
-    private function setLocked(value:Boolean):void {
-      if (_isLocked == value)
-        return;
-
-      _isLocked = value;
-
-      if (resizeControl.active) {
-        resizeControl.active = false;
-      }
-
-      content.mouseEnabled = !_isLocked;
-      content.mouseChildren = !_isLocked;
       updateButtonsVisibility();
     }
 
@@ -250,9 +264,26 @@ package wotstat.widgets {
       return new Rectangle(0, 0, App.appWidth, App.appHeight);
     }
 
+    private function showContextMenu(event:MouseEvent):void {
+      var ctx:Object = {
+          'wid': _wid,
+          'isLocked': _isLocked,
+          'isInResizing': resizeControl.active,
+          'isHidden': isContentHidden,
+          'isInBattle': isInBattle
+        };
+
+      App.contextMenuMgr.show('WOTSTAT_WIDGET_CONTEXT_MENU', null, ctx);
+    }
+
     private function onMouseDown(event:MouseEvent):void {
       if (isDragging || !allowInteraction)
         return;
+
+      if (!event.buttonDown) {
+        showContextMenu(event);
+        return;
+      }
 
       isDragging = true;
       startDrag(false, getDraggingRectange(!isHidden, isInBattle));
@@ -309,7 +340,7 @@ package wotstat.widgets {
     }
 
     private function onResizeButtonClick(event:MouseEvent):void {
-      resizeControl.active = !resizeControl.active;
+      setResizing(!resizeControl.active);
     }
 
     private function onLockButtonClick(event:MouseEvent):void {

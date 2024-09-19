@@ -10,6 +10,7 @@ from gui.app_loader.settings import APP_NAME_SPACE
 from gui import InputHandler
 from frameworks.wulf import WindowLayer
 from helpers import dependency
+from .WidgetContextMenu import WidgetContextMenuHandler, BUTTONS as CE
 from skeletons.gui.impl import IGuiLoader
 from skeletons.account_helpers.settings_core import ISettingsCore
 from Avatar import PlayerAvatar
@@ -45,6 +46,7 @@ class MainView(View):
 
     InputHandler.g_instance.onKeyDown += self._onKey
     InputHandler.g_instance.onKeyUp += self._onKey
+    WidgetContextMenuHandler.onEvent += self._onWidgetContextEvent
     g_eventBus.addListener(events.GameEvent.FULL_STATS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     g_eventBus.addListener(events.GameEvent.FULL_STATS_QUEST_PROGRESS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     g_eventBus.addListener(events.GameEvent.FULL_STATS_PERSONAL_RESERVES, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
@@ -83,17 +85,17 @@ class MainView(View):
     manager.createWidget -= self._createWidget
     server.onFrame -= self._onFrame
     self.settingsCore.interfaceScale.onScaleChanged -= self.setInterfaceScale
+    
+    InputHandler.g_instance.onKeyDown -= self._onKey
+    InputHandler.g_instance.onKeyUp -= self._onKey
+    WidgetContextMenuHandler.onEvent -= self._onWidgetContextEvent
     g_eventBus.removeListener(events.GameEvent.FULL_STATS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     g_eventBus.removeListener(events.GameEvent.FULL_STATS_QUEST_PROGRESS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     g_eventBus.removeListener(events.GameEvent.FULL_STATS_PERSONAL_RESERVES, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     
-    
     if self.isOnSetupSubscribed:
       server.onSetupComplete -= self.onSetupComplete
 
-    InputHandler.g_instance.onKeyDown -= self._onKey
-    InputHandler.g_instance.onKeyUp -= self._onKey
-    
     global onStartGUI
     onStartGUI -= self._onStartGUI
 
@@ -113,6 +115,21 @@ class MainView(View):
     
   def _onStartGUI(self, *a, **k):
     self._as_setGlobalVisible(True)
+
+  def _onWidgetContextEvent(self, event):
+    eventName, wid = event
+    logger.info("Widget context event[%d]: %s" % (wid, eventName))
+    
+    if eventName == CE.LOCK or eventName == CE.UNLOCK:
+      target = eventName == CE.LOCK
+      storage.updateWidget(wid, lastLoadIsBattle, isLocked=target)
+      self._as_setLocked(wid, target)
+      
+    elif eventName == CE.RESIZE or eventName == CE.END_RESIZE:
+      self._as_setResizing(wid, eventName == CE.RESIZE)
+    
+    else:
+      logger.error("Unknown context event: %s" % eventName)
 
   def py_log(self, msg, level):
     logger.printLog(level, msg)
@@ -219,6 +236,12 @@ class MainView(View):
 
   def _as_setResizeMode(self, wid, mode):
     self.flashObject.as_setResizeMode(wid, mode)
+    
+  def _as_setResizing(self, wid, enabled):
+    self.flashObject.as_setResizing(wid, enabled)
+    
+  def _as_setLocked(self, wid, locked):
+    self.flashObject.as_setLocked(wid, locked)
 
   def _as_setInterfaceScale(self, scale):
     self.flashObject.as_setInterfaceScale(scale)
@@ -244,6 +267,8 @@ PlayerAvatar._PlayerAvatar__startGUI = startGUI
     
 
 def setup():
+  WidgetContextMenuHandler.register()
+  
   mainViewSettings = ViewSettings(
     CEF_MAIN_VIEW,
     MainView,

@@ -165,6 +165,21 @@ package wotstat.widgets {
       }
     }
 
+    // context menu events
+    public function as_setResizing(wid:int, enabled:Boolean):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+      if (widget == null)
+        return;
+      widget.setResizing(enabled);
+    }
+
+    public function as_setLocked(wid:int, locked:Boolean):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+      if (widget == null)
+        return;
+      widget.setLocked(locked);
+    }
+
     // widget events
     private function onWidgetRequestResize(event:ResizeEvent):void {
       if (this.py_requestResize != null) {
