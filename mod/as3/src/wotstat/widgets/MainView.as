@@ -17,8 +17,6 @@ package wotstat.widgets {
 
     public var py_log:Function;
     public var py_requestResize:Function;
-    public var py_requestReload:Function;
-    public var py_requestClose:Function;
     public var py_moveWidget:Function;
     public var py_lockUnlockWidget:Function;
     public var py_hideShowWidget:Function;
@@ -110,8 +108,6 @@ package wotstat.widgets {
 
       var widget:DraggableWidget = new DraggableWidget(wid, width, height, x, y, isHidden, isLocked, isInBattle);
       widget.addEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
-      widget.addEventListener(DraggableWidget.REQUEST_RELOAD, onWidgetRequestReload);
-      widget.addEventListener(DraggableWidget.REQUEST_CLOSE, onWidgetRequestClose);
       widget.addEventListener(DraggableWidget.MOVE_WIDGET, onWidgetMove);
       widget.addEventListener(DraggableWidget.LOCK_WIDGET, onWidgetLockUnlock);
       widget.addEventListener(DraggableWidget.UNLOCK_WIDGET, onWidgetLockUnlock);
@@ -165,6 +161,26 @@ package wotstat.widgets {
       }
     }
 
+    public function as_closeWidget(wid:int):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+
+      var idx:int = activeWidgets.indexOf(widget);
+      if (idx >= 0) {
+        activeWidgets.splice(idx, 1);
+      }
+
+      activeWidgetsByWid[widget.wid] = null;
+
+      targetView.removeChild(widget);
+      widget.dispose();
+      widget.removeEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
+      widget.removeEventListener(DraggableWidget.MOVE_WIDGET, onWidgetMove);
+      widget.removeEventListener(DraggableWidget.LOCK_WIDGET, onWidgetLockUnlock);
+      widget.removeEventListener(DraggableWidget.UNLOCK_WIDGET, onWidgetLockUnlock);
+      widget.removeEventListener(DraggableWidget.SHOW_WIDGET, onWidgetHideShow);
+      widget.removeEventListener(DraggableWidget.HIDE_WIDGET, onWidgetHideShow);
+    }
+
     // context menu events
     public function as_setResizing(wid:int, enabled:Boolean):void {
       var widget:DraggableWidget = activeWidgetsByWid[wid];
@@ -180,45 +196,18 @@ package wotstat.widgets {
       widget.setLocked(locked);
     }
 
+    public function as_setControlsHiddenInHangar(wid:int, enabled:Boolean):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+      if (widget == null)
+        return;
+      widget.setControlsHiddenInHangar(enabled);
+    }
+
     // widget events
     private function onWidgetRequestResize(event:ResizeEvent):void {
       if (this.py_requestResize != null) {
         var widget:DraggableWidget = event.target as DraggableWidget;
         this.py_requestResize(widget.wid, event.scaleX, event.scaleY);
-      }
-    }
-
-    private function onWidgetRequestReload(event:Event):void {
-      if (this.py_requestReload != null) {
-        var widget:DraggableWidget = event.target as DraggableWidget;
-        this.py_requestReload(widget.wid);
-      }
-    }
-
-    private function onWidgetRequestClose(event:Event):void {
-
-      var widget:DraggableWidget = event.target as DraggableWidget;
-
-      var idx:int = activeWidgets.indexOf(widget);
-      if (idx >= 0) {
-        activeWidgets.splice(idx, 1);
-      }
-
-      activeWidgetsByWid[widget.wid] = null;
-
-      targetView.removeChild(widget);
-      widget.dispose();
-      widget.removeEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
-      widget.removeEventListener(DraggableWidget.REQUEST_RELOAD, onWidgetRequestReload);
-      widget.removeEventListener(DraggableWidget.REQUEST_CLOSE, onWidgetRequestClose);
-      widget.removeEventListener(DraggableWidget.MOVE_WIDGET, onWidgetMove);
-      widget.removeEventListener(DraggableWidget.LOCK_WIDGET, onWidgetLockUnlock);
-      widget.removeEventListener(DraggableWidget.UNLOCK_WIDGET, onWidgetLockUnlock);
-      widget.removeEventListener(DraggableWidget.SHOW_WIDGET, onWidgetHideShow);
-      widget.removeEventListener(DraggableWidget.HIDE_WIDGET, onWidgetHideShow);
-
-      if (this.py_requestClose != null) {
-        this.py_requestClose(widget.wid);
       }
     }
 

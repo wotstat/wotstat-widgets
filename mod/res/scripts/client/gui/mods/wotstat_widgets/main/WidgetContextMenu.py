@@ -17,6 +17,7 @@ class BUTTONS(object):
     CHANGE_URL = 'CHANGE_URL'
     RELOAD = 'RELOAD'
     HIDE_CONTROLS = 'HIDE_CONTROLS'
+    SHOW_CONTROLS = 'SHOW_CONTROLS'
     CLEAR_DATA = 'CLEAR_DATA'
     REMOVE = 'REMOVE'
 
@@ -33,6 +34,7 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
       BUTTONS.CHANGE_URL: 'changeUrl',
       BUTTONS.RELOAD: 'reload',
       BUTTONS.HIDE_CONTROLS: 'hideControls',
+      BUTTONS.SHOW_CONTROLS: 'showControls',
       BUTTONS.CLEAR_DATA: 'clearData',
       BUTTONS.REMOVE: 'remove'
     })
@@ -41,6 +43,8 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
     self.wid = int(ctx.wid)
     self.isInResizing = bool(ctx.isInResizing)
     self.isLocked = bool(ctx.isLocked)
+    self.isInBattle = bool(ctx.isInBattle)
+    self.controlsVisible = bool(ctx.controlsVisible)
     
   @staticmethod
   def register():
@@ -57,7 +61,11 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
     
     options.append(self._makeItem(BUTTONS.CHANGE_URL, 'Изменить URL'))
     options.append(self._makeItem(BUTTONS.RELOAD, 'Перезагрузить'))
-    options.append(self._makeItem(BUTTONS.HIDE_CONTROLS, 'Скрыть элементы управления'))
+    
+    if not self.isInBattle and not self.controlsVisible:
+      options.insert(0, self._makeItem(BUTTONS.SHOW_CONTROLS, 'Показать элементы управления', GREEN_TEXT))
+    else: options.append(self._makeItem(BUTTONS.HIDE_CONTROLS, 'Скрыть элементы управления'))
+    
     options.append(self._makeItem(BUTTONS.CLEAR_DATA, 'Очистить данные', RED_TEXT))
     options.append(self._makeItem(BUTTONS.REMOVE, 'Удалить виджет', RED_TEXT))
       
@@ -73,6 +81,7 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
   def changeUrl(self): self.callEvent(BUTTONS.CHANGE_URL)
   def reload(self): self.callEvent(BUTTONS.RELOAD)
   def hideControls(self): self.callEvent(BUTTONS.HIDE_CONTROLS)
+  def showControls(self): self.callEvent(BUTTONS.SHOW_CONTROLS)
   def clearData(self): self.callEvent(BUTTONS.CLEAR_DATA)
   def remove(self): self.callEvent(BUTTONS.REMOVE)
     

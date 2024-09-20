@@ -127,9 +127,32 @@ class MainView(View):
       
     elif eventName == CE.RESIZE or eventName == CE.END_RESIZE:
       self._as_setResizing(wid, eventName == CE.RESIZE)
+      
+    elif eventName == CE.RELOAD:
+      self.reloadWidget(wid)
+      
+    elif eventName == CE.REMOVE:
+      self.closeWidget(wid)
+      
+    elif eventName == CE.CHANGE_URL:
+      pass
+      
+    elif eventName == CE.HIDE_CONTROLS or eventName == CE.SHOW_CONTROLS:
+      self._as_setControlsHiddenInHangar(wid, eventName == CE.HIDE_CONTROLS)
+      
+    elif eventName == CE.CLEAR_DATA:
+      server.sendWidgetCommand(wid, "CLEAR_DATA")
     
     else:
       logger.error("Unknown context event: %s" % eventName)
+      
+  def closeWidget(self, wid):
+    server.closeWidget(wid)
+    storage.removeWidget(wid)
+    self._as_closeWidget(wid)
+  
+  def reloadWidget(self, wid):
+    server.reloadWidget(wid)
 
   def py_log(self, msg, level):
     logger.printLog(level, msg)
@@ -151,13 +174,6 @@ class MainView(View):
   def py_requestResize(self, wid, width, height):
     server.resizeWidget(wid, width, height)
     storage.updateWidget(wid, lastLoadIsBattle, width=width, height=height)
-
-  def py_requestReload(self, wid):
-    server.reloadWidget(wid)
-
-  def py_requestClose(self, wid):
-    server.closeWidget(wid)
-    storage.removeWidget(wid)
 
   def getNextWidgetId(self):
     global lastWidgetId
@@ -243,6 +259,9 @@ class MainView(View):
   def _as_setLocked(self, wid, locked):
     self.flashObject.as_setLocked(wid, locked)
 
+  def _as_setControlsHiddenInHangar(self, wid, hidden):
+    self.flashObject.as_setControlsHiddenInHangar(wid, hidden)
+
   def _as_setInterfaceScale(self, scale):
     self.flashObject.as_setInterfaceScale(scale)
 
@@ -251,6 +270,9 @@ class MainView(View):
     
   def _as_setGlobalVisible(self, visible):
     self.flashObject.as_setGlobalVisible(visible)
+
+  def _as_closeWidget(self, wid):
+    self.flashObject.as_closeWidget(wid)
 
 onStartGUI = Event()
 

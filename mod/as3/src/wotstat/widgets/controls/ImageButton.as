@@ -9,7 +9,7 @@ package wotstat.widgets.controls {
     private const WIDTH:int = 19;
     private const X_OFFSET:int = 6;
     private var bitmap:Bitmap = null;
-    private var image:Image = new Image();
+    protected var image:Image = new Image();
     private var imageScale:Number;
 
     public function ImageButton(source:String, imageScale:Number = 15, clicked:Function = null) {

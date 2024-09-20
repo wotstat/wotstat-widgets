@@ -45,6 +45,7 @@ class Commands:
   SUSPENSE_WIDGET = 'SUSPENSE_WIDGET'
   RESUME_WIDGET = 'RESUME_WIDGET'
   TERMINATE = 'TERMINATE'
+  WIDGET_COMMAND = 'WIDGET_COMMAND'
 
 
 class CefServer(object):
@@ -182,6 +183,10 @@ class CefServer(object):
   def resumeWidget(self, wid):
     logger.debug("Resume widget: %s" % wid)
     self._sendCommand(Commands.RESUME_WIDGET, wid)
+    
+  def sendWidgetCommand(self, wid, command):
+    logger.debug("Send widget command: %s" % command)
+    self._sendCommand(Commands.WIDGET_COMMAND, wid, command)
 
   def _setInterfaceScale(self, scale=None):
     if scale is None:
