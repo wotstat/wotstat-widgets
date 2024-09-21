@@ -251,6 +251,10 @@ class MainView(View):
         flag = flags & CefServer.Flags.READY_TO_CLEAR_DATA == 0
         logger.info("Ready to clean changed: %s" % (not flag))
         self._as_setReadyToClearData(wid, not flag)
+        
+      if isChanged(CefServer.Flags.USE_SNIPER_MODE):
+        flag = flags & CefServer.Flags.USE_SNIPER_MODE != 0
+        logger.info("Use sniper mode changed: %s" % flag)
       
   def setInterfaceScale(self, scale=None):
     if not scale:

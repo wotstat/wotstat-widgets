@@ -26,7 +26,8 @@ function wotstatWidgetSetup() {
 
     wotstatWidgetOnFeatureFlagsChange({
       autoHeight: getMeta('auto-height', false, t => t !== 'false'),
-      readyToClearData: getMeta('ready-to-clear-data', false, t => t !== 'false')
+      readyToClearData: getMeta('ready-to-clear-data', false, t => t !== 'false'),
+      useSniperMode: getMeta('use-sniper-mode', false, t => t !== 'false'),
     })
   }
 

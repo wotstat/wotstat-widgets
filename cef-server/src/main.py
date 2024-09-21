@@ -119,12 +119,14 @@ class Widget(object):
   class Flags:
     AUTO_HEIGHT = 1 << 0
     READY_TO_CLEAR_DATA = 1 << 1
+    USE_SNIPER_MODE = 1 << 2
   
 
   def __init__(self, url, browser, zoom, width, height, sendFrame):
     
     self.autoHeight = False
     self.readyToClearData = False
+    self.useSniperMode = False
     self.lastBodyHeight = 0
     self.suspensed = False
     
@@ -186,6 +188,7 @@ class Widget(object):
 
     if self.autoHeight: flags |= self.Flags.AUTO_HEIGHT
     if self.readyToClearData: flags |= self.Flags.READY_TO_CLEAR_DATA
+    if self.useSniperMode: flags |= self.Flags.USE_SNIPER_MODE
 
     return flags
   
@@ -209,6 +212,9 @@ class Widget(object):
     
     readyToClearData = flags.get('readyToClearData', None)
     if readyToClearData is not None: self.readyToClearData = readyToClearData
+    
+    useSniperMode = flags.get('useSniperMode', None)
+    if useSniperMode is not None: self.useSniperMode = useSniperMode
     
     self.resizeByHeight()
     self.redraw()
