@@ -52,6 +52,7 @@ class CefServer(object):
 
   class Flags:
     AUTO_HEIGHT = 1 << 0
+    READY_TO_CLEAR_DATA = 1 << 1
 
   killNow = threading.Event()
   socket = None

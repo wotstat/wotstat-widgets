@@ -44,7 +44,8 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
     self.isInResizing = bool(ctx.isInResizing)
     self.isLocked = bool(ctx.isLocked)
     self.isInBattle = bool(ctx.isInBattle)
-    self.controlsVisible = bool(ctx.controlsVisible)
+    self.isControlsAlwaysHidden = bool(ctx.isControlsAlwaysHidden)
+    self.isReadyToClearData = bool(ctx.isReadyToClearData)
     
   @staticmethod
   def register():
@@ -62,11 +63,12 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
     options.append(self._makeItem(BUTTONS.CHANGE_URL, 'Изменить URL'))
     options.append(self._makeItem(BUTTONS.RELOAD, 'Перезагрузить'))
     
-    if not self.isInBattle and not self.controlsVisible:
-      options.insert(0, self._makeItem(BUTTONS.SHOW_CONTROLS, 'Показать элементы управления', GREEN_TEXT))
-    else: options.append(self._makeItem(BUTTONS.HIDE_CONTROLS, 'Скрыть элементы управления'))
+    if self.isControlsAlwaysHidden: options.insert(0, self._makeItem(BUTTONS.SHOW_CONTROLS, 'Показать элементы управления', GREEN_TEXT)) 
+    else: options.append(self._makeItem(BUTTONS.HIDE_CONTROLS, 'Скрыть элементы управления')) 
     
-    options.append(self._makeItem(BUTTONS.CLEAR_DATA, 'Очистить данные', RED_TEXT))
+    if self.isReadyToClearData:
+      options.append(self._makeItem(BUTTONS.CLEAR_DATA, 'Очистить данные', RED_TEXT))
+
     options.append(self._makeItem(BUTTONS.REMOVE, 'Удалить виджет', RED_TEXT))
       
     return options

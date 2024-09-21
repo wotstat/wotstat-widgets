@@ -118,11 +118,13 @@ class Widget(object):
 
   class Flags:
     AUTO_HEIGHT = 1 << 0
+    READY_TO_CLEAR_DATA = 1 << 1
   
 
   def __init__(self, url, browser, zoom, width, height, sendFrame):
     
     self.autoHeight = False
+    self.readyToClearData = False
     self.lastBodyHeight = 0
     self.suspensed = False
     
@@ -183,6 +185,7 @@ class Widget(object):
     flags = 0
 
     if self.autoHeight: flags |= self.Flags.AUTO_HEIGHT
+    if self.readyToClearData: flags |= self.Flags.READY_TO_CLEAR_DATA
 
     return flags
   
@@ -191,7 +194,9 @@ class Widget(object):
   
   def resume(self):
     self.suspensed = False
-    
+  
+  def sendWidgetCommand(self, command):
+    self.browser.ExecuteJavascript("window.dispatchEvent(new CustomEvent('wotstat-widget-command', { detail: '%s' }))" % command)
 
   # JS Bindings
   def onBodyResize(self, height):
@@ -199,7 +204,12 @@ class Widget(object):
     self.resizeByHeight()
 
   def onFeatureFlagsChange(self, flags):
-    self.autoHeight = flags.get('autoHeight', False)
+    autoHeight = flags.get('autoHeight', None)
+    if autoHeight is not None: self.autoHeight = autoHeight
+    
+    readyToClearData = flags.get('readyToClearData', None)
+    if readyToClearData is not None: self.readyToClearData = readyToClearData
+    
     self.resizeByHeight()
     self.redraw()
     self.browser.WasResized()
@@ -344,6 +354,12 @@ class CEFServer(object):
     if not widget: return
 
     widget.resume()
+    
+  def sendWidgetCommand(self, wid, command):
+    widget = self.widgets.get(wid, None)
+    if not widget: return
+
+    widget.sendWidgetCommand(command)
 
 class Commands:
   OPEN_NEW_WIDGET = 'OPEN_NEW_WIDGET'
@@ -354,6 +370,7 @@ class Commands:
   SET_INTERFACE_SCALE = 'SET_INTERFACE_SCALE'
   SUSPENSE_WIDGET = 'SUSPENSE_WIDGET'
   RESUME_WIDGET = 'RESUME_WIDGET'
+  WIDGET_COMMAND = 'WIDGET_COMMAND'
   TERMINATE = 'TERMINATE'
 
 class Main(object):
@@ -476,6 +493,18 @@ class Main(object):
       wid = int(parts[0])
       log(f"Resuming widget: {wid}")
       self.server.resumeWidget(wid)
+      return
+    
+    if command.startswith(Commands.WIDGET_COMMAND):
+      parts = command.split(' ', 2)
+      if len(parts) != 3:
+        log(f"Invalid command: {command}")
+        return
+
+      _, wid, command = parts
+      wid = int(wid)
+      log(f"Sending widget command: {command} to {wid}")
+      self.server.sendWidgetCommand(wid, command)
       return
     
     log(f"Unknown command: {command}")

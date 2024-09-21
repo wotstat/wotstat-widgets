@@ -25,7 +25,8 @@ function wotstatWidgetSetup() {
     const getMeta = (key, defaultValue, proc) => proc && metaMap.get(key) ? proc(metaMap.get(key)) : (metaMap.get(key) ?? defaultValue)
 
     wotstatWidgetOnFeatureFlagsChange({
-      autoHeight: getMeta('auto-height', false, t => t !== 'false')
+      autoHeight: getMeta('auto-height', false, t => t !== 'false'),
+      readyToClearData: getMeta('ready-to-clear-data', false, t => t !== 'false')
     })
   }
 

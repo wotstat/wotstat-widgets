@@ -49,6 +49,8 @@ package wotstat.widgets {
     private var hideShowButtonDownPosition:Point = null;
     private var isDragging:Boolean = false;
     private var isContentHidden:Boolean = false;
+    private var isReadyToClearData:Boolean = false;
+    private var isControlsAlwaysHidden:Boolean = false;
     private var _isLocked:Boolean = false;
 
     // CONTENT == Browser Image in readl PIXELS
@@ -71,7 +73,11 @@ package wotstat.widgets {
       return isContentHidden;
     }
 
-    public function DraggableWidget(wid:int, width:int, height:int, x:int, y:int, isHidden:Boolean, isLocked:Boolean, isInBattle:Boolean) {
+    public function DraggableWidget(wid:int, width:int, height:int, x:int, y:int,
+        isHidden:Boolean,
+        isLocked:Boolean,
+        isControlsAlwaysHidden:Boolean,
+        isInBattle:Boolean) {
       super();
       _wid = wid;
       this.isInBattle = isInBattle;
@@ -117,6 +123,8 @@ package wotstat.widgets {
 
       setHidden(isHidden);
       setLocked(isLocked);
+      setControlsAlwaysHidden(isControlsAlwaysHidden);
+      updateControlsVisibility();
     }
 
     public function dispose():void {
@@ -158,12 +166,10 @@ package wotstat.widgets {
       resizeControl.fullResize = full;
     }
 
-    public function setControlsVisible(isVisible:Boolean):void {
-      controlPanel.visible = isVisible;
-      controlPanel.mouseEnabled = isVisible;
-      controlPanel.mouseChildren = isVisible;
+    public function setBattleInteractiveMode(isVisible:Boolean):void {
       setResizing(false);
       allowInteraction = isVisible;
+      updateControlsVisibility();
 
       if (!isVisible) {
         stopDrag();
@@ -201,14 +207,14 @@ package wotstat.widgets {
       updateButtonsVisibility();
     }
 
-    public function setControlsHiddenInHangar(value:Boolean):void {
-      if (isInBattle)
-        return;
+    public function setReadyToClearData(value:Boolean):void {
+      isReadyToClearData = value;
+    }
 
+    public function setControlsAlwaysHidden(value:Boolean):void {
       setResizing(false);
-      controlPanel.visible = !value;
-      controlPanel.mouseEnabled = !value;
-      controlPanel.mouseChildren = !value;
+      isControlsAlwaysHidden = value;
+      updateControlsVisibility();
     }
 
     private function setHidden(value:Boolean):void {
@@ -220,7 +226,7 @@ package wotstat.widgets {
       content.visible = !value;
 
       setResizing(false);
-      setControlsHiddenInHangar(false);
+      setControlsAlwaysHidden(false);
 
       updateButtonsVisibility();
     }
@@ -272,9 +278,10 @@ package wotstat.widgets {
           'wid': _wid,
           'isLocked': _isLocked,
           'isInResizing': resizeControl.active,
+          'isReadyToClearData': isReadyToClearData,
           'isHidden': isContentHidden,
           'isInBattle': isInBattle,
-          'controlsVisible': controlPanel.visible
+          'isControlsAlwaysHidden': isControlsAlwaysHidden
         };
 
       App.contextMenuMgr.show('WOTSTAT_WIDGET_CONTEXT_MENU', null, ctx);
@@ -294,7 +301,13 @@ package wotstat.widgets {
     }
 
     private function onAppMouseDown(event:MouseEvent):void {
-      if (event.buttonDown || !isLocked || isInBattle)
+      if (event.buttonDown)
+        return;
+
+      if (isInBattle && !(allowInteraction && isControlsAlwaysHidden))
+        return;
+
+      if (!isInBattle && !isLocked)
         return;
 
       var stageX:Number = event.stageX / App.appScale;
@@ -371,6 +384,14 @@ package wotstat.widgets {
 
       lockBtn.visible = !isContentHidden;
       controlPanel.layout();
+    }
+
+    private function updateControlsVisibility():void {
+      var visible:Boolean = !isControlsAlwaysHidden && (allowInteraction || !isInBattle);
+
+      controlPanel.visible = visible;
+      controlPanel.mouseEnabled = visible;
+      controlPanel.mouseChildren = visible;
     }
 
     private function onResizeControlChange(event:ResizeEvent):void {

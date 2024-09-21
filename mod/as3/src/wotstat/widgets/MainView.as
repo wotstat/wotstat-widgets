@@ -88,7 +88,6 @@ package wotstat.widgets {
     private function setupWidgets():void {
       for each (var widget:DraggableWidget in activeWidgets) {
         targetView.addChild(widget);
-        widget.setControlsVisible(!isInBattle);
         widget.isInBattle = isInBattle;
         widget.visible = isGlovalVisible;
       }
@@ -103,10 +102,15 @@ package wotstat.widgets {
       }
     }
 
-    public function as_createWidget(wid:int, url:String, width:int, height:int, x:int, y:int, isHidden:Boolean, isLocked:Boolean, isInBattle:Boolean):void {
-      _log("as_createWidget [" + wid + "]: " + url + " " + width + "x" + height + " (" + x + ";" + y + ")" + " hidden: " + isHidden + " locked: " + isLocked, "INFO");
+    public function as_createWidget(wid:int, url:String, width:int, height:int, x:int, y:int,
+        isHidden:Boolean,
+        isLocked:Boolean,
+        isControlsAlwaysHidden:Boolean,
+        isInBattle:Boolean):void {
+      _log("as_createWidget [" + wid + "]: " + url + " " + width + "x" + height + " (" + x + ";" + y + ")" +
+          " hidden: " + isHidden + " locked: " + isLocked + " controls: " + isControlsAlwaysHidden + " battle: " + isInBattle);
 
-      var widget:DraggableWidget = new DraggableWidget(wid, width, height, x, y, isHidden, isLocked, isInBattle);
+      var widget:DraggableWidget = new DraggableWidget(wid, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle);
       widget.addEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
       widget.addEventListener(DraggableWidget.MOVE_WIDGET, onWidgetMove);
       widget.addEventListener(DraggableWidget.LOCK_WIDGET, onWidgetLockUnlock);
@@ -117,7 +121,6 @@ package wotstat.widgets {
 
       activeWidgets.push(widget);
       activeWidgetsByWid[wid] = widget;
-      widget.setControlsVisible(!isInBattle);
       if (targetView)
         targetView.addChild(widget);
     }
@@ -150,7 +153,7 @@ package wotstat.widgets {
         return;
 
       for each (var widget:DraggableWidget in activeWidgets) {
-        widget.setControlsVisible(isPress);
+        widget.setBattleInteractiveMode(isPress);
       }
     }
 
@@ -196,11 +199,18 @@ package wotstat.widgets {
       widget.setLocked(locked);
     }
 
-    public function as_setControlsHiddenInHangar(wid:int, enabled:Boolean):void {
+    public function as_setReadyToClearData(wid:int, enabled:Boolean):void {
       var widget:DraggableWidget = activeWidgetsByWid[wid];
       if (widget == null)
         return;
-      widget.setControlsHiddenInHangar(enabled);
+      widget.setReadyToClearData(enabled);
+    }
+
+    public function as_setControlsAlwaysHidden(wid:int, enabled:Boolean):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+      if (widget == null)
+        return;
+      widget.setControlsAlwaysHidden(enabled);
     }
 
     // widget events

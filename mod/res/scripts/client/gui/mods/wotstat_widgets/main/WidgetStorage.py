@@ -27,6 +27,7 @@ class WidgetInfo(object):
       self.y = 0
       self.isHidden = False
       self.isLocked = False
+      self.isControlsAlwaysHidden = False
     
   def __init__(self):
     self.uuid = ""
@@ -46,7 +47,8 @@ class WidgetInfo(object):
         "x": self.hangar.x,
         "y": self.hangar.y,
         "isHidden": self.hangar.isHidden,
-        "isLocked": self.hangar.isLocked
+        "isLocked": self.hangar.isLocked,
+        "isControlsAlwaysHidden": self.hangar.isControlsAlwaysHidden
       },
       "battle": {
         "width": self.battle.width,
@@ -54,7 +56,8 @@ class WidgetInfo(object):
         "x": self.battle.x,
         "y": self.battle.y,
         "isHidden": self.battle.isHidden,
-        "isLocked": self.battle.isLocked
+        "isLocked": self.battle.isLocked,
+        "isControlsAlwaysHidden": self.battle.isControlsAlwaysHidden
       },
     }
   
@@ -72,6 +75,7 @@ class WidgetInfo(object):
     w.hangar.y = hangar.get("y", 0)
     w.hangar.isHidden = hangar.get("isHidden", False)
     w.hangar.isLocked = hangar.get("isLocked", False)
+    w.hangar.isControlsAlwaysHidden = hangar.get("isControlsAlwaysHidden", False)
     
     battle = data.get("battle", {})
     w.battle.width = battle.get("width", 0)
@@ -80,6 +84,7 @@ class WidgetInfo(object):
     w.battle.y = battle.get("y", 0)
     w.battle.isHidden = battle.get("isHidden", False)
     w.battle.isLocked = battle.get("isLocked", False)
+    w.battle.isControlsAlwaysHidden = battle.get("isControlsAlwaysHidden", False)
     
     return w
 
@@ -103,7 +108,7 @@ class WidgetStorage(Singleton):
   def getAllWidgets(self):
     return self._widgets.values()
   
-  def addWidget(self, wid, url, width=100, height=100, x=-1, y=-1, isHidden=False, isLocked=False):
+  def addWidget(self, wid, url, width=100, height=100, x=-1, y=-1, isHidden=False, isLocked=False, isControlsAlwaysHidden=False):
     uuid = str(uuid4())
     
     widget = WidgetInfo()
@@ -117,6 +122,7 @@ class WidgetStorage(Singleton):
     widget.battle.y = y
     widget.battle.isHidden = isHidden
     widget.battle.isLocked = isLocked
+    widget.battle.isControlsAlwaysHidden = isControlsAlwaysHidden
     
     widget.hangar.width = width
     widget.hangar.height = height
@@ -124,6 +130,7 @@ class WidgetStorage(Singleton):
     widget.hangar.y = y
     widget.hangar.isHidden = isHidden
     widget.hangar.isLocked = isLocked
+    widget.hangar.isControlsAlwaysHidden = isControlsAlwaysHidden
     
     self._widgets[uuid] = widget
     self._widgetsByWid[wid] = widget
@@ -140,7 +147,7 @@ class WidgetStorage(Singleton):
 
     self._isChanged = True
       
-  def updateWidget(self, wid, fromBattle, url=None, width=None, height=None, x=None, y=None, isHidden=None, isLocked=None, flags=None):
+  def updateWidget(self, wid, fromBattle, url=None, width=None, height=None, x=None, y=None, isHidden=None, isLocked=None, isControlsAlwaysHidden=None, flags=None):
     widget = self._widgetsByWid.get(wid, None)
     if widget is None: return
 
@@ -164,6 +171,7 @@ class WidgetStorage(Singleton):
     update("y", y)
     update("isHidden", isHidden)
     update("isLocked", isLocked)
+    update("isControlsAlwaysHidden", isControlsAlwaysHidden)
 
   def setWidgetWid(self, uuid, wid):
     widget = self._widgets.get(uuid, None)

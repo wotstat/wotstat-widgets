@@ -70,16 +70,16 @@ class MainView(View):
     
   def addWidgets(self):
     for widget in storage.getAllWidgets():
-      pos = widget.battle if lastLoadIsBattle else widget.hangar
+      state = widget.battle if lastLoadIsBattle else widget.hangar
       
-      self._addWidget(widget.uuid, widget.wid, widget.url, pos.width, pos.height, pos.x, pos.y, widget.flags, pos.isHidden, pos.isLocked)
-      if pos.isHidden:
+      self._addWidget(widget.uuid, widget.wid, widget.url, state.width, state.height, state.x, state.y, widget.flags, state.isHidden, state.isLocked, state.isControlsAlwaysHidden)
+      if state.isHidden:
         server.suspenseWidget(widget.wid)
       else:
         server.resumeWidget(widget.wid)
         
       server.redrawWidget(widget.wid)
-      server.resizeWidget(widget.wid, pos.width, pos.height)
+      server.resizeWidget(widget.wid, state.width, state.height)
     
   def _dispose(self):
     manager.createWidget -= self._createWidget
@@ -138,7 +138,9 @@ class MainView(View):
       pass
       
     elif eventName == CE.HIDE_CONTROLS or eventName == CE.SHOW_CONTROLS:
-      self._as_setControlsHiddenInHangar(wid, eventName == CE.HIDE_CONTROLS)
+      target = eventName == CE.HIDE_CONTROLS
+      storage.updateWidget(wid, lastLoadIsBattle, isControlsAlwaysHidden=target)
+      self._as_setControlsAlwaysHidden(wid, target)
       
     elif eventName == CE.CLEAR_DATA:
       server.sendWidgetCommand(wid, "CLEAR_DATA")
@@ -184,17 +186,22 @@ class MainView(View):
     logger.info("Server error. Hide MainView: %s" % error)
     self._dispose()
 
-  def _addWidget(self, uuid, wid, url, width=100, height=100, x=-1, y=-1, flags=0, isHidden=False, isLocked=False):
+  def _addWidget(self, uuid, wid, url, width=100, height=100, x=-1, y=-1, flags=0, isHidden=False, isLocked=False, isControlsAlwaysHidden=False):
+    
+    def create(wid):
+      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, lastLoadIsBattle)
+      
     if wid:
-      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, lastLoadIsBattle)
+      create(wid)
     else:
       wid = self.getNextWidgetId()
       storage.setWidgetWid(uuid, wid)
 
       server.createNewWidget(wid, url, width, height)
-      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, lastLoadIsBattle)
+      create(wid)
 
     self._as_setResizeMode(wid, flags & CefServer.Flags.AUTO_HEIGHT == 0)
+    self._as_setReadyToClearData(wid, not (flags & CefServer.Flags.READY_TO_CLEAR_DATA == 0))
 
   def _createWidget(self, url, width, height=-1):
     if not server.isReady:
@@ -236,8 +243,14 @@ class MainView(View):
         return oldFlags is None or (oldFlags & flag) != (flags & flag)
 
       if isChanged(CefServer.Flags.AUTO_HEIGHT):
-        logger.info("Resize mode changed: %s" % (flags & CefServer.Flags.AUTO_HEIGHT == 0))
-        self._as_setResizeMode(wid, flags & CefServer.Flags.AUTO_HEIGHT == 0)
+        flag = flags & CefServer.Flags.AUTO_HEIGHT == 0
+        logger.info("Resize mode changed: %s" % flag)
+        self._as_setResizeMode(wid, flag)
+        
+      if isChanged(CefServer.Flags.READY_TO_CLEAR_DATA):
+        flag = flags & CefServer.Flags.READY_TO_CLEAR_DATA == 0
+        logger.info("Ready to clean changed: %s" % (not flag))
+        self._as_setReadyToClearData(wid, not flag)
       
   def setInterfaceScale(self, scale=None):
     if not scale:
@@ -247,8 +260,9 @@ class MainView(View):
   def _as_onFrame(self, wid, width, height, data, shift):
     self.flashObject.as_onFrame(wid, width, height, data, shift)
 
-  def _as_createWidget(self, wid, url, width, height, x=-1, y=-1, isHidden=False, isLocked=False, isInBattle=False):
-    self.flashObject.as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isInBattle)
+  def _as_createWidget(self, wid, url, width, height, x=-1, y=-1,
+                       isHidden=False, isLocked=False, isControlsAlwaysHidden=False, isInBattle=False):
+    self.flashObject.as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle)
 
   def _as_setResizeMode(self, wid, mode):
     self.flashObject.as_setResizeMode(wid, mode)
@@ -258,9 +272,12 @@ class MainView(View):
     
   def _as_setLocked(self, wid, locked):
     self.flashObject.as_setLocked(wid, locked)
+    
+  def _as_setReadyToClearData(self, wid, ready):
+    self.flashObject.as_setReadyToClearData(wid, ready)
 
-  def _as_setControlsHiddenInHangar(self, wid, hidden):
-    self.flashObject.as_setControlsHiddenInHangar(wid, hidden)
+  def _as_setControlsAlwaysHidden(self, wid, hidden):
+    self.flashObject.as_setControlsAlwaysHidden(wid, hidden)
 
   def _as_setInterfaceScale(self, scale):
     self.flashObject.as_setInterfaceScale(scale)
