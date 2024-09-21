@@ -56,6 +56,10 @@ class PlayerFeedbackProvider(object):
       BATTLE_EVENT_TYPE.EQUIPMENT_TIMER_EXPIRED: None,
     }
     
+    # WG
+    try: self.battleEventProcessors[BATTLE_EVENT_TYPE.VEHICLE_HEALTH_ADDED] = self.processExtraAsValue('vehicleHealthAdded', 'health')
+    except: pass
+    
   @withExceptionHandling(logger)
   def __onBattleSessionStart(self):
     self.sessionProvider.shared.feedback.onPlayerFeedbackReceived += self.__onPlayerFeedbackReceived
