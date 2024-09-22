@@ -72,6 +72,10 @@ class MainView(View):
     
   def addWidgets(self):
     for widget in storage.getAllWidgets():
+      if lastLoadIsBattle and widget.flags & CefServer.Flags.HANGAR_ONLY != 0:
+        server.suspenseWidget(widget.wid)
+        continue
+      
       state = widget.battle if lastLoadIsBattle else widget.hangar
       
       self._addWidget(widget.uuid, widget.wid, widget.url, state.width, state.height, state.x, state.y, widget.flags, state.isHidden, state.isLocked, state.isControlsAlwaysHidden)
