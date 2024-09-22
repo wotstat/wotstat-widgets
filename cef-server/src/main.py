@@ -120,6 +120,7 @@ class Widget(object):
     AUTO_HEIGHT = 1 << 0
     READY_TO_CLEAR_DATA = 1 << 1
     USE_SNIPER_MODE = 1 << 2
+    HANGAR_ONLY = 1 << 3
   
 
   def __init__(self, url, browser, zoom, width, height, sendFrame):
@@ -127,6 +128,7 @@ class Widget(object):
     self.autoHeight = False
     self.readyToClearData = False
     self.useSniperMode = False
+    self.hangarOnly = False
     self.lastBodyHeight = 0
     self.suspensed = False
     
@@ -189,6 +191,7 @@ class Widget(object):
     if self.autoHeight: flags |= self.Flags.AUTO_HEIGHT
     if self.readyToClearData: flags |= self.Flags.READY_TO_CLEAR_DATA
     if self.useSniperMode: flags |= self.Flags.USE_SNIPER_MODE
+    if self.hangarOnly: flags |= self.Flags.HANGAR_ONLY
 
     return flags
   
@@ -197,6 +200,10 @@ class Widget(object):
   
   def resume(self):
     self.suspensed = False
+  
+  def changeUrl(self, url):
+    self.url = url
+    self.browser.LoadUrl(url)
   
   def sendWidgetCommand(self, command):
     self.browser.ExecuteJavascript("window.dispatchEvent(new CustomEvent('wotstat-widget-command', { detail: '%s' }))" % command)
@@ -215,6 +222,9 @@ class Widget(object):
     
     useSniperMode = flags.get('useSniperMode', None)
     if useSniperMode is not None: self.useSniperMode = useSniperMode
+    
+    hangarOnly = flags.get('hangarOnly', None)
+    if hangarOnly is not None: self.hangarOnly = hangarOnly
     
     self.resizeByHeight()
     self.redraw()
@@ -361,6 +371,12 @@ class CEFServer(object):
 
     widget.resume()
     
+  def changeUrl(self, wid, url):
+    widget = self.widgets.get(wid, None)
+    if not widget: return
+
+    widget.changeUrl(url)
+    
   def sendWidgetCommand(self, wid, command):
     widget = self.widgets.get(wid, None)
     if not widget: return
@@ -372,12 +388,13 @@ class Commands:
   RESIZE_WIDGET = 'RESIZE_WIDGET'
   RELOAD_WIDGET = 'RELOAD_WIDGET'
   CLOSE_WIDGET = 'CLOSE_WIDGET'
-  REDRAW_WIDGET = 'REDRAW_WIDGET'
   SET_INTERFACE_SCALE = 'SET_INTERFACE_SCALE'
+  REDRAW_WIDGET = 'REDRAW_WIDGET'
   SUSPENSE_WIDGET = 'SUSPENSE_WIDGET'
   RESUME_WIDGET = 'RESUME_WIDGET'
-  WIDGET_COMMAND = 'WIDGET_COMMAND'
+  CHANGE_URL = 'CHANGE_URL'
   TERMINATE = 'TERMINATE'
+  WIDGET_COMMAND = 'WIDGET_COMMAND'
 
 class Main(object):
   killNow = threading.Event()
@@ -499,6 +516,16 @@ class Main(object):
       wid = int(parts[0])
       log(f"Resuming widget: {wid}")
       self.server.resumeWidget(wid)
+      return
+    
+    if command.startswith(Commands.CHANGE_URL):
+      parts = getCommandParts(command, 2)
+      if not parts: return
+
+      wid, url = parts
+      wid = int(wid)
+      log(f"Changing URL for widget {wid} to: {url}")
+      self.server.changeUrl(wid, url)
       return
     
     if command.startswith(Commands.WIDGET_COMMAND):

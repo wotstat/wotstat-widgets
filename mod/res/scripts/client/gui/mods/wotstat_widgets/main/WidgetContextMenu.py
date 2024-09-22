@@ -60,7 +60,9 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
     if self.isInResizing: options.insert(0, self._makeItem(BUTTONS.END_RESIZE, 'Применить размер', GREEN_TEXT))
     else: options.append(self._makeItem(BUTTONS.RESIZE, 'Изменить размер'))
     
-    options.append(self._makeItem(BUTTONS.CHANGE_URL, 'Изменить URL'))
+    if not self.isInBattle:
+      options.append(self._makeItem(BUTTONS.CHANGE_URL, 'Изменить URL'))
+      
     options.append(self._makeItem(BUTTONS.RELOAD, 'Перезагрузить'))
     
     if self.isControlsAlwaysHidden: options.insert(0, self._makeItem(BUTTONS.SHOW_CONTROLS, 'Показать элементы управления', GREEN_TEXT)) 

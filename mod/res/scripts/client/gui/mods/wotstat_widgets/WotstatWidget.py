@@ -11,9 +11,9 @@ from .CefArchive import cefArchive
 from .common.ServerLoggerBackend import ServerLoggerBackend
 from .common.Logger import Logger, SimpleLoggerBackend
 from .common.Config import Config
-from .common.utils import copyFile
 from .main.MainView import setup as mainViewSetup
 from .main.SettingsWindow import setup as settingsWindowSetup, show as showSettingsWindow
+from .main.ChangeUrlWindow import setup as changeUrlWindowSetup
 from .main.CefServer import server
 from .main.WebSocketInterface import WebSocketInterface
 from .common.Notifier import Notifier
@@ -55,6 +55,7 @@ class WotstatWidget(object):
     cefArchive.setup(CEF_SERVER_CHECKSUM)
     mainViewSetup()
     settingsWindowSetup()
+    changeUrlWindowSetup()
     
     self.setupModListApi()
     self.checkAndUpdate(version)

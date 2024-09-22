@@ -44,6 +44,7 @@ class Commands:
   REDRAW_WIDGET = 'REDRAW_WIDGET'
   SUSPENSE_WIDGET = 'SUSPENSE_WIDGET'
   RESUME_WIDGET = 'RESUME_WIDGET'
+  CHANGE_URL = 'CHANGE_URL'
   TERMINATE = 'TERMINATE'
   WIDGET_COMMAND = 'WIDGET_COMMAND'
 
@@ -54,6 +55,7 @@ class CefServer(object):
     AUTO_HEIGHT = 1 << 0
     READY_TO_CLEAR_DATA = 1 << 1
     USE_SNIPER_MODE = 1 << 2
+    HANGAR_ONLY = 1 << 3
 
   killNow = threading.Event()
   socket = None
@@ -161,6 +163,10 @@ class CefServer(object):
 
   def createNewWidget(self, wid, url, width, height):
     self._sendCommand(Commands.OPEN_NEW_WIDGET, wid, url, width, height)
+
+  def changeWidgetUrl(self, wid, url):
+    logger.debug("Change widget URL: %s to %s" % (wid, url))
+    self._sendCommand(Commands.CHANGE_URL, wid, url)
 
   def resizeWidget(self, wid, width, height):
     logger.debug("Resize widget: %s to %sx%s" % (wid, width, height))

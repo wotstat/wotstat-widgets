@@ -108,6 +108,9 @@ class WidgetStorage(Singleton):
   def getAllWidgets(self):
     return self._widgets.values()
   
+  def getWidgetByWid(self, wid):
+    return self._widgetsByWid.get(wid, None)
+  
   def addWidget(self, wid, url, width=100, height=100, x=-1, y=-1, isHidden=False, isLocked=False, isControlsAlwaysHidden=False):
     uuid = str(uuid4())
     

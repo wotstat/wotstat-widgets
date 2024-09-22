@@ -140,7 +140,7 @@ def setup():
     CEF_SETTINGS_WINDOW,
     SettingsWindow,
     "wotstat.widgets.settings.swf",
-    WindowLayer.WINDOW,
+    WindowLayer.TOP_WINDOW,
     None,
     ScopeTemplates.VIEW_SCOPE,
   )

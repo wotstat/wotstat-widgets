@@ -20,6 +20,7 @@ import Keys
 from ..common.Logger import Logger
 from .CefServer import CefServer, server
 from .EventsManager import manager
+from .ChangeUrlWindow import show as showChangeUrlWindow
 from .WidgetStorage import WidgetStorage
 
 CEF_MAIN_VIEW = "WOTSTAT_CEF_MAIN_VIEW"
@@ -41,6 +42,7 @@ class MainView(View):
     super(MainView, self)._populate()
     logger.info("MainView populated")
     manager.createWidget += self._createWidget
+    manager.changeUrl += self._changeUrl
     server.onFrame += self._onFrame
     server.onProcessError += self._onServerError
 
@@ -135,7 +137,11 @@ class MainView(View):
       self.closeWidget(wid)
       
     elif eventName == CE.CHANGE_URL:
-      pass
+      widget = storage.getWidgetByWid(wid)
+      if widget:
+        showChangeUrlWindow(wid, widget.url)
+      else:
+        logger.error("Widget [%s] not found" % str(wid))
       
     elif eventName == CE.HIDE_CONTROLS or eventName == CE.SHOW_CONTROLS:
       target = eventName == CE.HIDE_CONTROLS
@@ -214,6 +220,10 @@ class MainView(View):
     self._as_createWidget(wid, url, width, height, isInBattle=lastLoadIsBattle)
     self._as_setResizeMode(wid, True)
 
+  def _changeUrl(self, wid, url):
+    storage.updateWidget(wid, lastLoadIsBattle, url=url)
+    server.changeWidgetUrl(wid, url)
+
   def bytesToIntArray(self, data):
     # type: (bytes) -> list[int]
 
@@ -255,6 +265,10 @@ class MainView(View):
       if isChanged(CefServer.Flags.USE_SNIPER_MODE):
         flag = flags & CefServer.Flags.USE_SNIPER_MODE != 0
         logger.info("Use sniper mode changed: %s" % flag)
+        
+      if isChanged(CefServer.Flags.HANGAR_ONLY):
+        flag = flags & CefServer.Flags.HANGAR_ONLY != 0
+        logger.info("Hangar only changed: %s" % flag)
       
   def setInterfaceScale(self, scale=None):
     if not scale:

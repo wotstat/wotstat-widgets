@@ -81,6 +81,7 @@ package wotstat.widgets {
       super();
       _wid = wid;
       this.isInBattle = isInBattle;
+      allowInteraction = !isInBattle;
 
       addChild(content);
       content.addChild(loader);
@@ -307,7 +308,7 @@ package wotstat.widgets {
       if (isInBattle && !(allowInteraction && isControlsAlwaysHidden))
         return;
 
-      if (!isInBattle && !isLocked)
+      if (!isInBattle && !(isLocked && !isHidden))
         return;
 
       var stageX:Number = event.stageX / App.appScale;

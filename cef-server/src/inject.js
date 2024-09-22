@@ -28,6 +28,7 @@ function wotstatWidgetSetup() {
       autoHeight: getMeta('auto-height', false, t => t !== 'false'),
       readyToClearData: getMeta('ready-to-clear-data', false, t => t !== 'false'),
       useSniperMode: getMeta('use-sniper-mode', false, t => t !== 'false'),
+      hangarOnly: getMeta('hangar-only', false, t => t !== 'false'),
     })
   }
 
