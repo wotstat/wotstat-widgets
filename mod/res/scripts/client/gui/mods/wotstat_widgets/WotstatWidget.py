@@ -17,6 +17,7 @@ from .main.ChangeUrlWindow import setup as changeUrlWindowSetup
 from .main.CefServer import server
 from .main.WebSocketInterface import WebSocketInterface
 from .common.Notifier import Notifier
+from .main.WhatsNewNotifier import WhatsNewNotifier
 from .common.i18n import t
 from .common.ModUpdater import ModUpdater
 from .dataProvider import setup as setupDataProvider
@@ -59,6 +60,7 @@ class WotstatWidget(object):
     
     self.setupModListApi()
     self.checkAndUpdate(version)
+    WhatsNewNotifier.instance().showModNews(version)
     
     self.wsInterface = WebSocketInterface()
     self.wsInterface.setup()

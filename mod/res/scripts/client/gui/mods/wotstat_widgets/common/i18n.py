@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from helpers import getClientLanguage
+from typing import List
 
 RU = {
   'modslist.title': 'Добавить виджет',
@@ -26,6 +27,7 @@ RU = {
   'changeUrl.urlPlaceholder': 'Введите URL',
   'changeUrl.apply': 'Применить',
   'changeUrl.cancel': 'Отмена',
+  'whatsNew.title': 'Мод <b>WotStat Widgets</b> успешно обновлён до версии <b>%s</b>\n\nИзменения:',
 }
 
 EN = {
@@ -53,18 +55,33 @@ EN = {
   'changeUrl.urlPlaceholder': 'Enter URL',
   'changeUrl.apply': 'Apply',
   'changeUrl.cancel': 'Cancel',
+  'whatsNew.title': 'The <b>WotStat Widgets</b> mod has been successfully updated to version <b>%s</b>\n\nChanges:',
 }
 
 language = getClientLanguage()
-current_localizations = RU
+currentLocalizations = RU
 
 if language == 'ru':
-  current_localizations = RU
+  currentLocalizations = RU
 else:
-  current_localizations = EN
+  currentLocalizations = EN
 
 
 def t(key):
-  if key in current_localizations:
-    return current_localizations[key]
+  if key in currentLocalizations:
+    return currentLocalizations[key]
   return key
+
+def getPreferredLanguage(values):
+  # type: (List[str]) -> str
+  
+  if not values or len(values) == 0:
+    return language
+  
+  if language in values:
+    return language
+  
+  if 'ru' in values:
+    return 'ru'
+  
+  return values[0]
