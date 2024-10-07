@@ -28,6 +28,30 @@ class WidgetInfo(object):
       self.isHidden = False
       self.isLocked = False
       self.isControlsAlwaysHidden = False
+      self.isTouched = False
+      
+    def toDict(self):
+      return {
+        "width": self.width,
+        "height": self.height,
+        "x": self.x,
+        "y": self.y,
+        "isHidden": self.isHidden,
+        "isLocked": self.isLocked,
+        "isControlsAlwaysHidden": self.isControlsAlwaysHidden,
+        "isTouched": self.isTouched
+      }
+      
+    def fromDict(self, data):
+      self.width = data.get("width", 0)
+      self.height = data.get("height", 0)
+      self.x = data.get("x", 0)
+      self.y = data.get("y", 0)
+      self.isHidden = data.get("isHidden", False)
+      self.isLocked = data.get("isLocked", False)
+      self.isControlsAlwaysHidden = data.get("isControlsAlwaysHidden", False)
+      self.isTouched = data.get("isTouched", False)
+      
     
   def __init__(self):
     self.uuid = ""
@@ -36,29 +60,13 @@ class WidgetInfo(object):
     self.hangar = WidgetInfo.PositionState()
     self.battle = WidgetInfo.PositionState()
     self.flags = 0
-
+    
   def toSerializable(self):
     return {
       "uuid": self.uuid,
       "url": self.url,
-      "hangar": {
-        "width": self.hangar.width,
-        "height": self.hangar.height,
-        "x": self.hangar.x,
-        "y": self.hangar.y,
-        "isHidden": self.hangar.isHidden,
-        "isLocked": self.hangar.isLocked,
-        "isControlsAlwaysHidden": self.hangar.isControlsAlwaysHidden
-      },
-      "battle": {
-        "width": self.battle.width,
-        "height": self.battle.height,
-        "x": self.battle.x,
-        "y": self.battle.y,
-        "isHidden": self.battle.isHidden,
-        "isLocked": self.battle.isLocked,
-        "isControlsAlwaysHidden": self.battle.isControlsAlwaysHidden
-      },
+      "hangar": self.hangar.toDict(),
+      "battle": self.battle.toDict(),
     }
   
   @staticmethod
@@ -69,22 +77,10 @@ class WidgetInfo(object):
     w.url = data["url"]
     
     hangar = data.get("hangar", {})
-    w.hangar.width = hangar.get("width", 0)
-    w.hangar.height = hangar.get("height", 0)
-    w.hangar.x = hangar.get("x", 0)
-    w.hangar.y = hangar.get("y", 0)
-    w.hangar.isHidden = hangar.get("isHidden", False)
-    w.hangar.isLocked = hangar.get("isLocked", False)
-    w.hangar.isControlsAlwaysHidden = hangar.get("isControlsAlwaysHidden", False)
+    w.hangar.fromDict(hangar)
     
     battle = data.get("battle", {})
-    w.battle.width = battle.get("width", 0)
-    w.battle.height = battle.get("height", 0)
-    w.battle.x = battle.get("x", 0)
-    w.battle.y = battle.get("y", 0)
-    w.battle.isHidden = battle.get("isHidden", False)
-    w.battle.isLocked = battle.get("isLocked", False)
-    w.battle.isControlsAlwaysHidden = battle.get("isControlsAlwaysHidden", False)
+    w.battle.fromDict(battle)
     
     return w
 
@@ -157,11 +153,19 @@ class WidgetStorage(Singleton):
     def update(param, value, fromBattle=fromBattle):
       if param is not None and value is not None:
         target = widget
-
+        
         if fromBattle == True: target = widget.battle
         elif fromBattle == False: target = widget.hangar
         
-        if getattr(target, param) != value:
+        if hasattr(target, param) and getattr(target, param) != value:
+          if param in ['width', 'height', 'x', 'y'] and not target.isTouched:
+            target.isTouched = True
+            opposite = widget.hangar if fromBattle else widget.battle
+            target.width = opposite.width
+            target.height = opposite.height
+            target.x = opposite.x
+            target.y = opposite.y
+          
           setattr(target, param, value)
           self._isChanged = True
   

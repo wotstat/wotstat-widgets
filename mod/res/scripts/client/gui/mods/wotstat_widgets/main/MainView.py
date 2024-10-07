@@ -77,15 +77,17 @@ class MainView(View):
         continue
       
       state = widget.battle if lastLoadIsBattle else widget.hangar
+      oppositeState = widget.hangar if lastLoadIsBattle else widget.battle
+      positionState = oppositeState if oppositeState.isTouched and not state.isTouched else state
       
-      self._addWidget(widget.uuid, widget.wid, widget.url, state.width, state.height, state.x, state.y, widget.flags, state.isHidden, state.isLocked, state.isControlsAlwaysHidden)
+      self._addWidget(widget.uuid, widget.wid, widget.url, positionState.width, positionState.height, positionState.x, positionState.y, widget.flags, state.isHidden, state.isLocked, state.isControlsAlwaysHidden)
       if state.isHidden:
         server.suspenseWidget(widget.wid)
       else:
         server.resumeWidget(widget.wid)
         
       server.redrawWidget(widget.wid)
-      server.resizeWidget(widget.wid, state.width, state.height)
+      server.resizeWidget(widget.wid, positionState.width, positionState.height)
     
   def _dispose(self):
     manager.createWidgetEvent -= self._createWidget
