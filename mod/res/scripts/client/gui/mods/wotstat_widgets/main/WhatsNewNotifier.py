@@ -1,3 +1,4 @@
+import os
 import BigWorld
 import json
 from Singleton import Singleton
@@ -7,7 +8,9 @@ from ..common.Logger import Logger
 from ..common.Notifier import Notifier
 from ..common.PlayerPrefs import PlayerPrefs
 from ..common.ExceptionHandling import withExceptionHandling
-from ..constants import WIDGETS_COLLECTION_URL
+from ..constants import WIDGETS_COLLECTION_URL, ACTIVE_WIDGETS_PATH
+from .SettingsWindow import show as showSettingsWindow
+from .EventsManager import manager
 
 logger = Logger.instance()
 notifier = Notifier.instance()
@@ -15,13 +18,19 @@ notifier = Notifier.instance()
 LAST_SHOWED_RELEASE_NOTES_INDEX = 'LAST_SHOWED_RELEASE_NOTES_INDEX'
 LAST_SHOWED_SERVER_NEWS_INDEX = 'LAST_SHOWED_SERVER_NEWS_INDEX'
 
+class EventKeys():
+  OPEN_SETTINGS = 'WOTSTAT_WIDGETS_EVENT_NEWS_OPEN_SETTINGS'
+  ADD_WIDGET = 'WOTSTAT_WIDGETS_EVENT_NEWS_ADD_WIDGET:'
+  OPEN_URL = 'WOTSTAT_WIDGETS_EVENT_NEWS_OPEN_URL:'
+  
+
 MOD_RELEASE_NOTES = [
   {
     'ru': 
       '<b>• Новое контекстное меню на ПКМ</b>\n'
       '    - Изменяйте URL\n'
       '    - Сбрасывайте данные\n'
-      '    - Скрывайте элементы управления в ангаре\n'
+      '    - Скрывайте элементы управления\n'
       '• Ангарные виджеты больше не отображаются в бою\n'
       '• Новые виджеты в бою по умолчанию отображаются в том месте, где вы их разместили в ангаре\n'
       '• Новая иконка замочка с переключением состояния открыт/закрыт',
@@ -41,20 +50,42 @@ class WhatsNewNotifier(Singleton):
   def instance():
     return WhatsNewNotifier()
   
+  def _singleton_init(self):
+    super(WhatsNewNotifier, self)._singleton_init()
+    notifier.onEvent += self.onEvent
+    
+  def onEvent(self, event):
+    # type: (str) -> None
+    
+    if event == EventKeys.OPEN_SETTINGS:
+      showSettingsWindow()
+    elif event.startswith(EventKeys.OPEN_URL):
+      target = event.split(EventKeys.OPEN_URL)[1]
+      logger.info('Opening browser from server news %s' % target)
+      BigWorld.wg_openWebBrowser(target)
+    elif event.startswith(EventKeys.ADD_WIDGET):
+      target = event.split(EventKeys.ADD_WIDGET)[1]
+      logger.info('Opening widget from server news %s' % target)
+      manager.createWidget(target, 300, -1)
+      
+  
   def showModNews(self, version):
     msg = t('whatsNew.title') % version
     
     lastVisible = PlayerPrefs.getInt(LAST_SHOWED_RELEASE_NOTES_INDEX, -1)
+    PlayerPrefs.set(LAST_SHOWED_RELEASE_NOTES_INDEX, len(MOD_RELEASE_NOTES) - 1)
     
     if lastVisible >= len(MOD_RELEASE_NOTES) - 1:
       return
     
+    if lastVisible == -1:
+      if not os.path.exists(ACTIVE_WIDGETS_PATH):
+        return
+    
     for i in range(lastVisible + 1, len(MOD_RELEASE_NOTES)):
       msg += '\n' + MOD_RELEASE_NOTES[i].get(getPreferredLanguage(MOD_RELEASE_NOTES[i].keys()), '')
       
-    PlayerPrefs.set(LAST_SHOWED_RELEASE_NOTES_INDEX, len(MOD_RELEASE_NOTES) - 1)
-    
-    notifier.showNotification(msg)
+    notifier.showNotification(msg, priority='high')
   
   def showServerNews(self):
     def collectNews(notes):
@@ -65,6 +96,10 @@ class WhatsNewNotifier(Singleton):
       
       if lastVisibleNote is None:
         logger.info('Never showed server news before. Skip to \'%s\'' % lastId)
+        return
+      
+      if lastVisibleNote == str(lastId):
+        logger.info('Already showed the latest server news. Skip')
         return
       
       lastVisibleIndex = -1
@@ -82,9 +117,13 @@ class WhatsNewNotifier(Singleton):
         targetLocalization = getPreferredLanguage(list(filter(lambda t: t != 'id', notes[i].keys())))
         lines.append(notes[i][targetLocalization])
         
+      if len(lines) == 0:
+        logger.info('No new server news to show')
+        return
+        
       msg = t('whatsNew.serverTitle') + '\n'
       msg += '\n'.join(lines)
-      notifier.showNotification(msg)
+      notifier.showNotification(msg, priority='high')
     
     @withExceptionHandling(logger)
     def onResponse(response):

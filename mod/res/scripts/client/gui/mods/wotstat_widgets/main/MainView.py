@@ -41,8 +41,8 @@ class MainView(View):
   def _populate(self):
     super(MainView, self)._populate()
     logger.info("MainView populated")
-    manager.createWidget += self._createWidget
-    manager.changeUrl += self._changeUrl
+    manager.createWidgetEvent += self._createWidget
+    manager.changeUrlEvent += self._changeUrl
     server.onFrame += self._onFrame
     server.onProcessError += self._onServerError
 
@@ -88,7 +88,7 @@ class MainView(View):
       server.resizeWidget(widget.wid, state.width, state.height)
     
   def _dispose(self):
-    manager.createWidget -= self._createWidget
+    manager.createWidgetEvent -= self._createWidget
     server.onFrame -= self._onFrame
     self.settingsCore.interfaceScale.onScaleChanged -= self.setInterfaceScale
     

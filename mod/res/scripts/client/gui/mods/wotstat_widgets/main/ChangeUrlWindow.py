@@ -30,7 +30,7 @@ class ChangeUrlWindow(AbstractWindowView):
     logger.info('ChangeUrlWindow.py: py_changeUrl: url: %s' % url)
     wid = self.ctx.get('wid', None)
     if wid is not None:
-      manager.changeUrl(wid, url)
+      manager.changeUrlEvent(wid, url)
     self.destroy()
     
   def py_cancel(self):
