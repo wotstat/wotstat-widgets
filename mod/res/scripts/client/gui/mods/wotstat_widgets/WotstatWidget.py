@@ -77,7 +77,11 @@ class WotstatWidget(object):
 
   def onCefArchiveReady(self):
     cefArchive.onReady -= self.onCefArchiveReady
-    server.enable(self.config.get('devtools'))
+    port = None
+    try: port = int(self.config.get('cefServerPort'))
+    except: pass
+      
+    server.enable(self.config.get('devtools'), port)
 
   def fini(self):
     logger.info("Stopping WotStatWidget")

@@ -11,6 +11,7 @@ class Config:
   config = {}
   defaultParams = {
     'lokiURL': 'https://loki.wotstat.info/loki/api/v1/push',
+    'cefServerPort': None,
     'devtools': False,
   }
 

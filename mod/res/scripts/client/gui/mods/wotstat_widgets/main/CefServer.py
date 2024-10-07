@@ -76,25 +76,33 @@ class CefServer(object):
     self.process = None
 
   @withExceptionHandling()
-  def enable(self, devtools=False):
+  def enable(self, devtools=False, port=None):
     self.killNow.clear()
 
-    try:
-      self._startServer(devtools)
-    except Exception as e:
-      logger.critical("Error starting CEF server: %s" % e)
-      if self.process and self.process.poll() is None:
-        self.process.terminate()
-      self.killNow.set()
-      self.hasProcessError = True
-      self.onProcessError(str(e))
-      
-  def _startServer(self, devtools):
-    port = 33100
-    for _ in range(100):
-      if isPortAvailable(port): break
-      port += 1
+    targetProt = port
+    if not targetProt:
+      targetProt = 33100
+      while not isPortAvailable(targetProt):
+        targetProt += 1
+        
+      logger.info("Use auto port: %s" % str(targetProt))
+    else:
+      logger.info("Use config specified port: %s" % str(targetProt))
 
+    def start():
+      try:
+        self._startServer(devtools, targetProt)
+      except Exception as e:
+        logger.critical("Error starting CEF server: %s" % e)
+        if self.process and self.process.poll() is None:
+          self.process.terminate()
+        self.killNow.set()
+        self.hasProcessError = True
+        self.onProcessError(str(e))
+        
+    BigWorld.callback(0.1, start)
+      
+  def _startServer(self, devtools, port):
     startupInfo = subprocess.STARTUPINFO()
     if not devtools:
       startupInfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
