@@ -123,6 +123,7 @@ class HangarProvider(object):
     }
   
     currentSteps = [t for t in item.postProgression.iterOrderedSteps() if t.action.actionType == ACTION_TYPES.PAIR_MODIFICATION]
+    modificationsName = [[m.getTechName() for m in t.action.modifications] for t in currentSteps]
     purchased = [t.action.getPurchasedModification() for t in currentSteps]
     unlockedModificationsName = [None if t.isLocked() else t.action.getTechName() for t in currentSteps]
     selectedModificationsName = [t.getTechName() if t else None for t in purchased]
@@ -132,6 +133,7 @@ class HangarProvider(object):
       'features': features,
       'unlockedModifications': unlockedModificationsName,
       'selectedModifications': selectedModificationsName,
+      'modifications': modificationsName,
     })
     
     self.xp.setValue(item.xp)
