@@ -1,6 +1,3 @@
-import os
-import zipfile
-
 import BigWorld
 from gui import SystemMessages
 from helpers import dependency
@@ -60,7 +57,9 @@ class WotstatWidget(object):
     
     self.setupModListApi()
     self.checkAndUpdate(version)
-    WhatsNewNotifier.instance().showModNews(version)
+    whatsNewNotifier = WhatsNewNotifier.instance()
+    whatsNewNotifier.showModNews(version)
+    whatsNewNotifier.showServerNews()
     
     self.wsInterface = WebSocketInterface()
     self.wsInterface.setup()

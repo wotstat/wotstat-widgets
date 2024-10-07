@@ -69,7 +69,7 @@ class ModUpdater(object):
     def onEndDownload(latestVersion, data):
       # type: (str, BigWorld.WGUrlResponse) -> None
       if data.responseCode != 200:
-        logger.error('GH Update. Download response status is not 200: %s' % data.status)
+        logger.error('GH Update. Download response status is not 200: %s' % data.responseCode)
         return onCompleteInvoke(UpdateStatus.NOT_OK_RESPONSE)
         
     

@@ -28,6 +28,7 @@ RU = {
   'changeUrl.apply': 'Применить',
   'changeUrl.cancel': 'Отмена',
   'whatsNew.title': 'Мод <b>WotStat Widgets</b> успешно обновлён до версии <b>%s</b>\n\nИзменения:',
+  'whatsNew.serverTitle': 'Новости мода <b>WotStat Widgets</b>\n\nЧто нового:',
 }
 
 EN = {
@@ -56,6 +57,7 @@ EN = {
   'changeUrl.apply': 'Apply',
   'changeUrl.cancel': 'Cancel',
   'whatsNew.title': 'The <b>WotStat Widgets</b> mod has been successfully updated to version <b>%s</b>\n\nChanges:',
+  'whatsNew.serverTitle': '<b>WotStat Widgets</b> mod news\n\nWhat\'s new:',
 }
 
 language = getClientLanguage()

@@ -12,7 +12,7 @@ from .EventsManager import manager
 from .CefServer import server
 from ..CefArchive import cefArchive
 from ..common.Notifier import Notifier
-from ..constants import WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS
+from ..constants import WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS, WIDGETS_COLLECTION_URL
 from ..common.i18n import t
 
 CEF_SETTINGS_WINDOW = "WOTSTAT_CEF_SETTINGS_WINDOW"
@@ -25,18 +25,18 @@ class SettingsWindow(AbstractWindowView):
     self.destroy()
     
   def py_openWidgetsCollection(self):
-    BigWorld.wg_openWebBrowser("https://wotstat.info/widgets")
+    BigWorld.wg_openWebBrowser('https://wotstat.info/widgets')
 
   def py_openWidget(self, url):
     manager.createWidget(url, 300, -1)
     self.destroy()
 
   def py_openDemoWidget(self):
-    manager.createWidget('https://widgets.wotstat.info/demo-widget', 300, -1)
+    manager.createWidget(WIDGETS_COLLECTION_URL + '/demo-widget', 300, -1)
     self.destroy()
     
   def py_openUnpackError(self):
-    BigWorld.wg_openWebBrowser("https://widgets.wotstat.info/manual-install")
+    BigWorld.wg_openWebBrowser(WIDGETS_COLLECTION_URL + '/manual-install')
     
   def py_t(self, key):
     return t(key)
