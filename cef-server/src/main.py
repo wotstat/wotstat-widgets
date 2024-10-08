@@ -119,7 +119,7 @@ class Widget(object):
   class Flags:
     AUTO_HEIGHT = 1 << 0
     READY_TO_CLEAR_DATA = 1 << 1
-    USE_SNIPER_MODE = 1 << 2
+    USE_SNIPER_MODE = 1 << 2 # Currently not used
     HANGAR_ONLY = 1 << 3
   
 
