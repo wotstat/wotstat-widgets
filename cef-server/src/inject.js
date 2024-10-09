@@ -1,6 +1,24 @@
 
 function wotstatWidgetSetup() {
 
+  async function wotstatWidgetOnBodyResizeWrapper(height) {
+    for (let i = 0; i < 3; i++) {
+      if ('wotstatWidgetOnBodyResize' in window && typeof window.wotstatWidgetOnBodyResize === 'function') return window.wotstatWidgetOnBodyResize(height)
+      await new Promise(r => setTimeout(r, 100))
+      console.warn(`wotstatWidgetOnBodyResize is not defined, retrying ${i + 1}`)
+    }
+    console.error('wotstatWidgetOnBodyResize is not defined after 3 attempts')
+  }
+
+  async function wotstatWidgetOnFeatureFlagsChangeWrapper(flags) {
+    for (let i = 0; i < 3; i++) {
+      if ('wotstatWidgetOnFeatureFlagsChange' in window && typeof window.wotstatWidgetOnFeatureFlagsChange === 'function') return window.wotstatWidgetOnFeatureFlagsChange(flags)
+      await new Promise(r => setTimeout(r, 100))
+      console.warn(`wotstatWidgetOnFeatureFlagsChange is not defined, retrying ${i + 1}`)
+    }
+    console.error('wotstatWidgetOnFeatureFlagsChange is not defined after 3 attempts')
+  }
+
   function setup() {
     const style = document.createElement('style')
     style.textContent = `
@@ -15,7 +33,7 @@ function wotstatWidgetSetup() {
 
     function onResize() {
       const realHeight = Math.ceil(document.body.clientHeight * devicePixelRatio);
-      wotstatWidgetOnBodyResize?.(realHeight)
+      wotstatWidgetOnBodyResizeWrapper(realHeight)
     }
 
     function onHeadMutate() {
@@ -26,7 +44,7 @@ function wotstatWidgetSetup() {
       const metaMap = new Map(wotstatMeta)
       const getMeta = (key, defaultValue, proc) => proc && metaMap.get(key) ? proc(metaMap.get(key)) : (metaMap.get(key) ?? defaultValue)
 
-      wotstatWidgetOnFeatureFlagsChange?.({
+      wotstatWidgetOnFeatureFlagsChangeWrapper({
         autoHeight: getMeta('auto-height', false, t => t !== 'false'),
         readyToClearData: getMeta('ready-to-clear-data', false, t => t !== 'false'),
         useSniperMode: getMeta('use-sniper-mode', false, t => t !== 'false'),
