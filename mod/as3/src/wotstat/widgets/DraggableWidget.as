@@ -18,6 +18,7 @@ package wotstat.widgets {
   import flash.display.PixelSnapping;
   import wotstat.widgets.common.MoveEvent;
   import wotstat.widgets.controls.Points;
+  import flash.display.DisplayObject;
 
   public class DraggableWidget extends Sprite {
     public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";
@@ -79,6 +80,11 @@ package wotstat.widgets {
         isControlsAlwaysHidden:Boolean,
         isInBattle:Boolean) {
       super();
+      name = "DraggableWidget_" + wid;
+      content.name = "Content_" + wid;
+      controlPanel.name = "ControlPanel_" + wid;
+      loader.name = "WidgetContentLoader_" + wid;
+
       _wid = wid;
       this.isInBattle = isInBattle;
       allowInteraction = !isInBattle;
@@ -313,10 +319,19 @@ package wotstat.widgets {
 
       var stageX:Number = event.stageX / App.appScale;
       var stageY:Number = event.stageY / App.appScale;
+      if (!content.getBounds(App.instance.stage).contains(stageX, stageY))
+        return;
 
-      if (content.getBounds(App.instance.stage).contains(stageX, stageY)) {
+      var clickPoint:Point = new Point(event.stageX, event.stageY);
+      var objectsUnderPoint:Array = stage.getObjectsUnderPoint(clickPoint);
+
+      if (objectsUnderPoint.length == 0)
+        return;
+
+      var topMostObject:DisplayObject = objectsUnderPoint[objectsUnderPoint.length - 1];
+      if (topMostObject == this || this.contains(topMostObject))
         showContextMenu(event);
-      }
+
     }
 
     private function onAppMouseMove(event:MouseEvent):void {
