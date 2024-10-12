@@ -106,6 +106,6 @@ class ServerLoggerBackend(ILoggerBackend):
     player = BigWorld.player()
 
     if not player: return 'unknown_player'
-    if not player.name: return 'unknown_name'
+    if not hasattr(player, 'name') or not player.name: return 'unknown_name'
     return player.name
 

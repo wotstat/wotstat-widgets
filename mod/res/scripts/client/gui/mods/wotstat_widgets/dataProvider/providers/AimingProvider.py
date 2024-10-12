@@ -28,17 +28,19 @@ class AimingProvider(object):
     self.idealDispersion = sdk.createState(['battle', 'aiming', 'idealDispersion'])
     self.serverDispersion = sdk.createState(['battle', 'aiming', 'serverDispersion'])
     self.clientDispersion = sdk.createState(['battle', 'aiming', 'clientDispersion'])
+    self.aimingTime = sdk.createState(['battle', 'aiming', 'aimingTime'])
     
     self.sessionProvider.onBattleSessionStart += self.__onBattleSessionStart
     self.settingsCore.onSettingsChanged += self.__applySettings
     
-    global onUpdateGunMarker, onSetShotPosition, onEnableServerAim, onAutoAim, onEnterWorld, onVehicleGunRotatorStart
+    global onUpdateGunMarker, onSetShotPosition, onEnableServerAim, onAutoAim, onEnterWorld, onVehicleGunRotatorStart, onUpdateTargetingInfo
     onUpdateGunMarker += self.__onUpdateGunMarker
     onSetShotPosition += self.__onSetShotPosition
     onEnableServerAim += self.__onEnableServerAim
     onVehicleGunRotatorStart += self.__onVehicleGunRotatorStart
     onAutoAim += self.__autoAim
     onEnterWorld += self.__onEnterWorld
+    onUpdateTargetingInfo += self.__onUpdateTargetingInfo
     
   @withExceptionHandling(logger)
   def __onBattleSessionStart(self, *args, **kwargs):
@@ -85,6 +87,15 @@ class AimingProvider(object):
     
     player = BigWorld.player() # type: PlayerAvatar
     self.idealDispersion.setValue(player.vehicleTypeDescriptor.gun.shotDispersionAngle)
+  
+  @withExceptionHandling(logger)
+  def __onUpdateTargetingInfo(self, obj, entityId, turretYaw, gunPitch, maxTurretRotationSpeed, maxGunRotationSpeed,
+                              shotDispMultiplierFactor, gunShotDispersionFactorsTurretRotation, chassisShotDispersionFactorsMovement, 
+                              chassisShotDispersionFactorsRotation, aimingTime):
+    if entityId != obj.playerVehicleID:
+      return
+    
+    self.aimingTime.setValue(aimingTime)
     
   @withExceptionHandling(logger)
   def __onEnableServerAim(self, *args, **kwargs):
@@ -107,6 +118,7 @@ onVehicleGunRotatorStart = Event()
 onUpdateGunMarker = Event()
 onSetShotPosition = Event()
 onEnableServerAim = Event()
+onUpdateTargetingInfo = Event()
 onEnterWorld = Event()
 onAutoAim = Event()
 
@@ -133,3 +145,9 @@ def autoAim(self, *a, **k):
 @registerEvent(PlayerAvatar, 'onEnterWorld')
 def enterWorld(self, *a, **k):
   onEnterWorld(self, *a, **k)
+  
+@registerEvent(PlayerAvatar, 'updateTargetingInfo')
+def updateTargetingInfo(self, *a, **k):
+  onUpdateTargetingInfo(self, *a, **k)
+
+
