@@ -189,7 +189,7 @@ class BattleProvider(TriggersManager.ITriggerListener):
       'target': self.typeInfoToVehicleInfo(targetVehicle) if targetVehicle else None,
       'attacker': self.typeInfoToVehicleInfo(attackerVehicle) if attackerVehicle else None,
       'damage': max(0, oldHealth) - max(0, newHealth),
-      'health': max(0, newHealth),
+      'health': newHealth,
       'reason': ATTACK_REASONS[attackReasonID]
     })
 
