@@ -3,6 +3,7 @@ import BigWorld
 from Event import Event
 from VehicleGunRotator import VehicleGunRotator
 from skeletons.account_helpers.settings_core import ISettingsCore
+from account_helpers.settings_core import settings_constants
 from skeletons.gui.battle_session import IBattleSessionProvider
 from skeletons.gui.game_control import IGameSessionController
 from skeletons.gui.shared import IItemsCache
@@ -46,11 +47,11 @@ class AimingProvider(object):
   def __onBattleSessionStart(self, *args, **kwargs):
     self.isAutoAim.setValue(False)
     BigWorld.player().enableServerAim(True)
-    self.isServerAim.setValue(bool(self.settingsCore.getSetting('useServerAim')))
+    self.isServerAim.setValue(self.isEnableServerAim())
     
   @withExceptionHandling(logger)
   def __onEnterWorld(self, *args, **kwargs):
-    self.isServerAim.setValue(bool(self.settingsCore.getSetting('useServerAim')))
+    self.isServerAim.setValue(self.isEnableServerAim())
     
     player = BigWorld.player() # type: PlayerAvatar
     if hasattr(player.vehicleTypeDescriptor, 'gun'):
@@ -73,9 +74,6 @@ class AimingProvider(object):
     self.markerClientDispersion = obj._VehicleGunRotator__dispersionAngles[0]
     self.clientDispersion.setValue(self.markerClientDispersion)
     
-    player = BigWorld.player() # type: PlayerAvatar
-    self.idealDispersion.setValue(player.vehicleTypeDescriptor.gun.shotDispersionAngle)
-    
   # set server
   @withExceptionHandling(logger)
   def __onSetShotPosition(self, obj, vehicleID, shotPos, shotVec, dispersionAngle, *args, **kwargs):
@@ -84,22 +82,25 @@ class AimingProvider(object):
 
     self.markerServerDispersion = dispersionAngle
     self.serverDispersion.setValue(dispersionAngle)
-    
-    player = BigWorld.player() # type: PlayerAvatar
-    self.idealDispersion.setValue(player.vehicleTypeDescriptor.gun.shotDispersionAngle)
   
   @withExceptionHandling(logger)
-  def __onUpdateTargetingInfo(self, obj, entityId, turretYaw, gunPitch, maxTurretRotationSpeed, maxGunRotationSpeed,
-                              shotDispMultiplierFactor, gunShotDispersionFactorsTurretRotation, chassisShotDispersionFactorsMovement, 
-                              chassisShotDispersionFactorsRotation, aimingTime):
-    if entityId != obj.playerVehicleID:
-      return
+  def __onUpdateTargetingInfo(self, obj, entityId, *a, **k):
+    # type: (PlayerAvatar, int) -> None
+    if entityId != obj.playerVehicleID: return
     
+    dispersionInfo = obj._PlayerAvatar__dispersionInfo
+    if not dispersionInfo or len(dispersionInfo) < 4: return logger.warn('AimingProvider -> dispersionInfo is invalid')
+    shotDispMultiplierFactor = dispersionInfo[0]
+    aimingTime = dispersionInfo[4]
+    
+    idealDispersion = obj.vehicleTypeDescriptor.gun.shotDispersionAngle * shotDispMultiplierFactor
+    
+    self.idealDispersion.setValue(idealDispersion)
     self.aimingTime.setValue(aimingTime)
     
   @withExceptionHandling(logger)
   def __onEnableServerAim(self, *args, **kwargs):
-    self.isServerAim.setValue(bool(self.settingsCore.getSetting('useServerAim')))
+    self.isServerAim.setValue(self.isEnableServerAim())
     
   @withExceptionHandling(logger)
   def __autoAim(self, *args, **kwargs):
@@ -107,11 +108,14 @@ class AimingProvider(object):
 
   @withExceptionHandling(logger)
   def __onVehicleGunRotatorStart(self, *args, **kwargs):
-    self.isServerAim.setValue(bool(self.settingsCore.getSetting('useServerAim')))
+    self.isServerAim.setValue(self.isEnableServerAim())
     
   def __applySettings(self, diff):
-    if 'useServerAim' in diff:
-      self.isServerAim.setValue(bool(diff['useServerAim']))
+    if settings_constants.GAME.ENABLE_SERVER_AIM in diff:
+      self.isServerAim.setValue(True if diff[settings_constants.GAME.ENABLE_SERVER_AIM] else False)
+      
+  def isEnableServerAim(self):
+    return True if self.settingsCore.getSetting(settings_constants.GAME.ENABLE_SERVER_AIM) else False
   
 
 onVehicleGunRotatorStart = Event()
