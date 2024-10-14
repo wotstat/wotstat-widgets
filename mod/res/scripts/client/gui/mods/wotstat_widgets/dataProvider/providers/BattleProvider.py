@@ -247,10 +247,12 @@ class BattleProvider(TriggersManager.ITriggerListener):
 
   @withExceptionHandling(logger)
   def __updateLoop(self):
-    if self.started:
+    player = BigWorld.player()
+    
+    if self.started or not hasattr(player, 'playerVehicleID'):
       self.battleLoopCallbackHandler = BigWorld.callback(0.1, self.__updateLoop)
     
-    vehicle = BigWorld.entity(BigWorld.player().playerVehicleID) # type: Vehicle
+    vehicle = BigWorld.entity(player.playerVehicleID) # type: Vehicle
     if vehicle:
       self.position.setValue([vehicle.position.x, vehicle.position.y, vehicle.position.z])
       self.rotation.setValue([vehicle.pitch, vehicle.yaw, vehicle.roll])
@@ -267,9 +269,7 @@ class BattleProvider(TriggersManager.ITriggerListener):
         self.turretYaw.setValue(turretYaw)
         self.gunPitch.setValue(gunPitch)
         
-    
-    player = BigWorld.player()
-    if player.gunRotator:
+    if hasattr(player, 'gunRotator') and player.gunRotator:
       self.turretRotationSpeed.setValue(player.gunRotator.turretRotationSpeed)
     else:
       self.turretRotationSpeed.setValue(0.0)
