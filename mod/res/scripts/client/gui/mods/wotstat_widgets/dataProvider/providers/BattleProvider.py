@@ -78,6 +78,10 @@ class BattleProvider(TriggersManager.ITriggerListener):
       'length': arena.periodLength,
     })
     
+    player = BigWorld.player()
+    if player and player.consistentMatrices:
+      player.consistentMatrices.onVehicleMatrixBindingChanged += self.__onVehicleChanged
+    
     self.started = True
     self.__updateLoop()
   
@@ -88,6 +92,11 @@ class BattleProvider(TriggersManager.ITriggerListener):
     arena.onVehicleUpdated -= self.__onVehicleUpdated
     arena.onPeriodChange -= self.__onArenaPeriodChange
     arena.onTeamBasePointsUpdate -= self.__onTeamBasePointsUpdate
+    
+    player = BigWorld.player()
+    if player and player.consistentMatrices:
+      player.consistentMatrices.onVehicleMatrixBindingChanged -= self.__onVehicleChanged
+    
     self.arena.setValue(None)
     self.arenaId.setValue(None)
     self.vehicle.setValue(None)
@@ -159,7 +168,7 @@ class BattleProvider(TriggersManager.ITriggerListener):
     }
     
   @withExceptionHandling(logger)
-  def __onVehicleChanged(self, obj, *a, **k):
+  def __onVehicleChanged(self, *a, **k):
     vid = BigWorld.player().playerVehicleID
     vehicle = BigWorld.entity(vid) # type: Vehicle
     if not vehicle:

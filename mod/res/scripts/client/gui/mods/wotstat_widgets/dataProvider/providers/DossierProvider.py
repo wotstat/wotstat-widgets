@@ -3,7 +3,6 @@ import BigWorld
 from Event import Event
 from Vehicle import Vehicle
 from CurrentVehicle import g_currentVehicle
-import account_helpers
 from dossiers2.ui.achievements import ACHIEVEMENT_BLOCK
 from skeletons.gui.shared import IItemsCache
 from helpers import dependency
@@ -98,7 +97,6 @@ class DossierProvider(object):
       if not vehicle: return
       intCd = vehicle.typeDescriptor.type.compactDescr
       target = self.dossierCache.get(intCd)
-      logger.info('Dossier from cache: %s' % str(target))
       self.current.setValue(target)
   
   @withExceptionHandling(logger)

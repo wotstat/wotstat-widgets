@@ -21,8 +21,14 @@ class TotalEfficiencyProvider(object):
     self.sessionProvider.onBattleSessionStart += self.__onBattleSessionStart
     self.sessionProvider.onBattleSessionStop += self.__onBattleSessionStop
     
+    self.vehicleState = None
+    self.arenaDP = None
+    
   @withExceptionHandling(logger)
   def __onBattleSessionStart(self):
+    self.vehicleState = self.sessionProvider.shared.vehicleState
+    self.arenaDP = self.sessionProvider.getArenaDP()
+    
     if self.sessionProvider.shared.personalEfficiencyCtrl:
       self.sessionProvider.shared.personalEfficiencyCtrl.onTotalEfficiencyUpdated += self.__onTotalEfficiencyReceived
     self.damage.setValue(0)
@@ -42,6 +48,9 @@ class TotalEfficiencyProvider(object):
 
   @withExceptionHandling(logger)
   def __onTotalEfficiencyReceived(self, diff):
+    if not self.vehicleState or not self.arenaDP: return
+    if self.vehicleState.getControllingVehicleID() != self.arenaDP.getPlayerVehicleID(): return
+    
     if PERSONAL_EFFICIENCY_TYPE.DAMAGE in diff:
       self.damage.setValue(diff[PERSONAL_EFFICIENCY_TYPE.DAMAGE])
       
