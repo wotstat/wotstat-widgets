@@ -14,6 +14,7 @@ from .WidgetContextMenu import WidgetContextMenuHandler, BUTTONS as CE
 from skeletons.gui.impl import IGuiLoader
 from skeletons.account_helpers.settings_core import ISettingsCore
 from Avatar import PlayerAvatar
+from AvatarInputHandler import AvatarInputHandler
 import struct
 import Keys
 
@@ -53,8 +54,9 @@ class MainView(View):
     g_eventBus.addListener(events.GameEvent.FULL_STATS_QUEST_PROGRESS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     g_eventBus.addListener(events.GameEvent.FULL_STATS_PERSONAL_RESERVES, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     
-    global onStartGUI
+    global onStartGUI, onControlModeChanged
     onStartGUI += self._onStartGUI
+    onControlModeChanged += self._onControlModeChanged
 
     self.settingsCore.interfaceScale.onScaleChanged += self.setInterfaceScale
     self.setInterfaceScale()
@@ -104,8 +106,9 @@ class MainView(View):
     if self.isOnSetupSubscribed:
       server.onSetupComplete -= self.onSetupComplete
 
-    global onStartGUI
+    global onStartGUI, onControlModeChanged
     onStartGUI -= self._onStartGUI
+    onControlModeChanged -= self._onControlModeChanged
 
     logger.info("MainView disposed")
     super(MainView, self)._dispose()
@@ -123,6 +126,16 @@ class MainView(View):
     
   def _onStartGUI(self, *a, **k):
     self._as_setGlobalVisible(True)
+
+  def _onControlModeChanged(self, *a, **k):
+    player = BigWorld.player()
+    if player is None: return
+    if not hasattr(player, 'inputHandler'): return
+    if not hasattr(player.inputHandler, 'ctrlModeName'): return
+    
+    ctrlModeName = player.inputHandler.ctrlModeName
+    
+    logger.info("Control mode changed: " + str(ctrlModeName))
 
   def _onWidgetContextEvent(self, event):
     eventName, wid = event
@@ -157,6 +170,9 @@ class MainView(View):
     elif eventName == CE.CLEAR_DATA:
       server.sendWidgetCommand(wid, "CLEAR_DATA")
     
+    elif eventName == CE.SEND_TO_TOP_LAYER:
+      self._as_sendToTopLayer(wid)
+  
     else:
       logger.error("Unknown context event: %s" % eventName)
       
@@ -303,6 +319,9 @@ class MainView(View):
   def _as_setControlsAlwaysHidden(self, wid, hidden):
     self.flashObject.as_setControlsAlwaysHidden(wid, hidden)
 
+  def _as_sendToTopLayer(self, wid):
+    self.flashObject.as_sendToTopLayer(wid)
+
   def _as_setInterfaceScale(self, scale):
     self.flashObject.as_setInterfaceScale(scale)
 
@@ -316,6 +335,7 @@ class MainView(View):
     self.flashObject.as_closeWidget(wid)
 
 onStartGUI = Event()
+onControlModeChanged = Event()
 
 oldStartGUI = PlayerAvatar._PlayerAvatar__startGUI
 def startGUI(*a, **k):
@@ -325,9 +345,18 @@ def startGUI(*a, **k):
     onStartGUI(*a, **k)
   except Exception as e:
     logger.error("Failed to start GUI")
-    
+
 PlayerAvatar._PlayerAvatar__startGUI = startGUI
-    
+
+oldOnControlModeChanged = AvatarInputHandler.onControlModeChanged
+def controlModeChanged(*a, **k):
+  oldOnControlModeChanged(*a, **k)
+  try:
+    onControlModeChanged(*a, **k)
+  except Exception as e:
+    logger.error("Failed to handle control mode change")
+
+AvatarInputHandler.onControlModeChanged = controlModeChanged
 
 def setup():
   WidgetContextMenuHandler.register()

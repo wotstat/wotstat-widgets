@@ -17,7 +17,7 @@ package wotstat.widgets.controls {
     private const CONTROL_HEIGHT:int = 40;
     private const FULL_CONTROL_SIZE:int = 15;
     private const MAX_WIDTH:int = 400;
-    private const MIN_WIDTH:int = 110;
+    private const MIN_WIDTH:int = 60;
 
     private var _active:Boolean = false;
 

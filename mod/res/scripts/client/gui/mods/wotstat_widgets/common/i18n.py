@@ -29,6 +29,18 @@ RU = {
   'changeUrl.cancel': 'Отмена',
   'whatsNew.title': 'Мод <b>WotStat Widgets</b> успешно обновлён до версии <b>%s</b>\n\nИзменения:',
   'whatsNew.serverTitle': 'Новости мода <b>WotStat Widgets</b>\n\nЧто нового:',
+  'context.lock': 'Заблокировать перемещение',
+  'context.unlock': 'Разблокировать перемещение',
+  'context.resize': 'Изменить размер',
+  'context.endResize': 'Применить размер',
+  'context.changeUrl': 'Изменить URL',
+  'context.reload': 'Перезагрузить',
+  'context.hideControls': 'Скрыть элементы управления',
+  'context.showControls': 'Показать элементы управления',
+  'context.clearData': 'Очистить данные',
+  'context.remove': 'Удалить виджет',
+  'context.sendToTopLayer': 'На передний план',
+  
 }
 
 EN = {
@@ -58,6 +70,17 @@ EN = {
   'changeUrl.cancel': 'Cancel',
   'whatsNew.title': 'The <b>WotStat Widgets</b> mod has been successfully updated to version <b>%s</b>\n\nChanges:',
   'whatsNew.serverTitle': '<b>WotStat Widgets</b> mod news\n\nWhat\'s new:',
+  'context.lock': 'Lock movement',
+  'context.unlock': 'Unlock movement',
+  'context.resize': 'Resize',
+  'context.endResize': 'Apply size',
+  'context.changeUrl': 'Change URL',
+  'context.reload': 'Reload',
+  'context.hideControls': 'Hide controls',
+  'context.showControls': 'Show controls',
+  'context.clearData': 'Clear data',
+  'context.remove': 'Remove widget',
+  'context.sendToTopLayer': 'Bring to front',
 }
 
 language = getClientLanguage()

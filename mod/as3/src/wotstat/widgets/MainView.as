@@ -91,6 +91,17 @@ package wotstat.widgets {
         widget.isInBattle = isInBattle;
         widget.visible = isGlovalVisible;
       }
+      updateTopLayerInfo();
+    }
+
+    private function updateTopLayerInfo():void {
+      for each (var widget:DraggableWidget in activeWidgets) {
+        widget.setTopLayer(false);
+      }
+
+      if (activeWidgets.length > 0) {
+        activeWidgets[activeWidgets.length - 1].setTopLayer(true);
+      }
     }
 
     private function _log(msg:String, level:String = "INFO"):void {
@@ -121,8 +132,10 @@ package wotstat.widgets {
 
       activeWidgets.push(widget);
       activeWidgetsByWid[wid] = widget;
-      if (targetView)
+      if (targetView) {
         targetView.addChild(widget);
+        updateTopLayerInfo();
+      }
     }
 
     public function as_setInterfaceScale(scale:Number):void {
@@ -211,6 +224,28 @@ package wotstat.widgets {
       if (widget == null)
         return;
       widget.setControlsAlwaysHidden(enabled);
+    }
+
+    public function as_sendToTopLayer(wid:int):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+      if (widget == null)
+        return;
+
+      var idx:int = activeWidgets.indexOf(widget);
+      if (idx >= 0) {
+        activeWidgets.splice(idx, 1);
+        activeWidgets.push(widget);
+      }
+
+      if (!targetView)
+        return;
+
+      if (targetView.contains(widget)) {
+        targetView.removeChild(widget);
+      }
+
+      targetView.addChild(widget);
+      updateTopLayerInfo();
     }
 
     // widget events

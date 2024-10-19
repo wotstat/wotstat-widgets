@@ -52,6 +52,7 @@ package wotstat.widgets {
     private var isContentHidden:Boolean = false;
     private var isReadyToClearData:Boolean = false;
     private var isControlsAlwaysHidden:Boolean = false;
+    private var isTopLayer:Boolean = false;
     private var _isLocked:Boolean = false;
 
     // CONTENT == Browser Image in readl PIXELS
@@ -224,6 +225,10 @@ package wotstat.widgets {
       updateControlsVisibility();
     }
 
+    public function setTopLayer(value:Boolean):void {
+      isTopLayer = value;
+    }
+
     private function setHidden(value:Boolean):void {
       if (isContentHidden == value)
         return;
@@ -288,7 +293,8 @@ package wotstat.widgets {
           'isReadyToClearData': isReadyToClearData,
           'isHidden': isContentHidden,
           'isInBattle': isInBattle,
-          'isControlsAlwaysHidden': isControlsAlwaysHidden
+          'isControlsAlwaysHidden': isControlsAlwaysHidden,
+          'isTopLayer': isTopLayer
         };
 
       App.contextMenuMgr.show('WOTSTAT_WIDGET_CONTEXT_MENU', null, ctx);
