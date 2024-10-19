@@ -1,5 +1,6 @@
-from Avatar import PlayerAvatar
 import BigWorld
+from Avatar import PlayerAvatar
+from AvatarInputHandler import AvatarInputHandler
 from Event import Event
 from VehicleGunRotator import VehicleGunRotator
 from skeletons.account_helpers.settings_core import ISettingsCore
@@ -30,11 +31,12 @@ class AimingProvider(object):
     self.serverDispersion = sdk.createState(['battle', 'aiming', 'serverDispersion'])
     self.clientDispersion = sdk.createState(['battle', 'aiming', 'clientDispersion'])
     self.aimingTime = sdk.createState(['battle', 'aiming', 'aimingTime'])
+    self.aimingMode = sdk.createState(['battle', 'aiming', 'aimingMode'])
     
     self.sessionProvider.onBattleSessionStart += self.__onBattleSessionStart
     self.settingsCore.onSettingsChanged += self.__applySettings
     
-    global onUpdateGunMarker, onSetShotPosition, onEnableServerAim, onAutoAim, onEnterWorld, onVehicleGunRotatorStart, onUpdateTargetingInfo
+    global onUpdateGunMarker, onSetShotPosition, onEnableServerAim, onAutoAim, onEnterWorld, onVehicleGunRotatorStart, onUpdateTargetingInfo, onControlModeChanged
     onUpdateGunMarker += self.__onUpdateGunMarker
     onSetShotPosition += self.__onSetShotPosition
     onEnableServerAim += self.__onEnableServerAim
@@ -42,12 +44,14 @@ class AimingProvider(object):
     onAutoAim += self.__autoAim
     onEnterWorld += self.__onEnterWorld
     onUpdateTargetingInfo += self.__onUpdateTargetingInfo
+    onControlModeChanged += self.__onControlModeChanged
     
   @withExceptionHandling(logger)
   def __onBattleSessionStart(self, *args, **kwargs):
     self.isAutoAim.setValue(False)
     BigWorld.player().enableServerAim(True)
     self.isServerAim.setValue(self.isEnableServerAim())
+    self.aimingMode.setValue(None)
     
   @withExceptionHandling(logger)
   def __onEnterWorld(self, *args, **kwargs):
@@ -99,6 +103,18 @@ class AimingProvider(object):
     self.aimingTime.setValue(aimingTime)
     
   @withExceptionHandling(logger)
+  def __onControlModeChanged(self, obj, *args, **kwargs):
+    player = BigWorld.player()
+    if player is None or \
+      not hasattr(player, 'inputHandler') or \
+      not hasattr(player.inputHandler, 'ctrlModeName'):
+      self.aimingMode.setValue(None)
+      return
+    
+    ctrlModeName = player.inputHandler.ctrlModeName
+    self.aimingMode.setValue(ctrlModeName)
+    
+  @withExceptionHandling(logger)
   def __onEnableServerAim(self, *args, **kwargs):
     self.isServerAim.setValue(self.isEnableServerAim())
     
@@ -125,6 +141,7 @@ onEnableServerAim = Event()
 onUpdateTargetingInfo = Event()
 onEnterWorld = Event()
 onAutoAim = Event()
+onControlModeChanged = Event()
 
 @registerEvent(VehicleGunRotator, '_VehicleGunRotator__updateGunMarker')
 def updateGunMarker(self, *a, **k):
@@ -154,4 +171,6 @@ def enterWorld(self, *a, **k):
 def updateTargetingInfo(self, *a, **k):
   onUpdateTargetingInfo(self, *a, **k)
 
-
+@registerEvent(AvatarInputHandler, 'onControlModeChanged')
+def controlModeChanged(self, *a, **k):
+  onControlModeChanged(self, *a, **k)
