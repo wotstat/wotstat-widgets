@@ -141,6 +141,7 @@ class WidgetInfo(object):
     return w
 
 logger = Logger.instance()
+UNDEFINED = object()
 
 class WidgetStorage(Singleton):
 
@@ -200,22 +201,22 @@ class WidgetStorage(Singleton):
 
     self._isChanged = True
       
-  def updateWidget(self, wid, fromBattle, url=None, positionMode=None,
-                   width=None, height=None,
-                   position=None, sniperPosition=None, artyPosition=None, strategicPosition=None,
-                   isHidden=None, isLocked=None, isControlsAlwaysHidden=None, flags=None):
+  def updateWidget(self, wid, fromBattle, url=UNDEFINED, positionMode=UNDEFINED,
+                   width=UNDEFINED, height=UNDEFINED,
+                   position=UNDEFINED, sniperPosition=UNDEFINED, artyPosition=UNDEFINED, strategicPosition=UNDEFINED,
+                   isHidden=UNDEFINED, isLocked=UNDEFINED, isControlsAlwaysHidden=UNDEFINED, flags=UNDEFINED):
     widget = self._widgetsByWid.get(wid, None)
     if widget is None: return
 
     def update(param, value, fromBattle=fromBattle):
-      if param is not None and value is not None:
+      if param is not None and value is not UNDEFINED:
         target = widget
         
         if fromBattle == True: target = widget.battle
         elif fromBattle == False: target = widget.hangar
         
         if hasattr(target, param) and getattr(target, param) != value:
-          if param in ['width', 'height', 'x', 'y'] and not target.isTouched:
+          if param in ['width', 'height', 'position', 'sniperPosition', 'artyPosition', 'strategicPosition'] and not target.isTouched:
             target.isTouched = True
             opposite = widget.hangar if fromBattle else widget.battle
             target.width = opposite.width
