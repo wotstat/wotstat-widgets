@@ -49,6 +49,14 @@ class Commands:
   WIDGET_COMMAND = 'WIDGET_COMMAND'
 
 
+def prepareString(obj):
+  if isinstance(obj, str):
+    try:
+      obj.decode('utf-8')
+    except UnicodeDecodeError:
+      return base64.b64encode(obj)
+  return obj
+
 class CefServer(object):
 
   class Flags:
@@ -93,7 +101,7 @@ class CefServer(object):
       try:
         self._startServer(devtools, targetProt)
       except Exception as e:
-        logger.critical("Error starting CEF server: %s" % e)
+        logger.critical("Error starting CEF server: %s" % prepareString(e))
         if self.process and self.process.poll() is None:
           self.process.terminate()
         self.killNow.set()

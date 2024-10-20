@@ -14,7 +14,8 @@ from . import logger
 
 def formattedToInt(numberStr):
   cleanedStr = re.sub(r'[^\d]', '', numberStr)
-  return int(cleanedStr)
+  try: return int(cleanedStr)
+  except: return 0
 
 class PlatoonProvider(object):
   
