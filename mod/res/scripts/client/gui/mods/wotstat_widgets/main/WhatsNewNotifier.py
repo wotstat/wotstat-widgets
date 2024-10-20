@@ -3,7 +3,7 @@ import BigWorld
 import json
 from Singleton import Singleton
 
-from ..common.i18n import getPreferredLanguage, t
+from ..common.i18n import getPreferredLanguage, t, light
 from ..common.Logger import Logger
 from ..common.Notifier import Notifier
 from ..common.PlayerPrefs import PlayerPrefs
@@ -22,7 +22,6 @@ class EventKeys():
   OPEN_SETTINGS = 'WOTSTAT_WIDGETS_EVENT_NEWS_OPEN_SETTINGS'
   ADD_WIDGET = 'WOTSTAT_WIDGETS_EVENT_NEWS_ADD_WIDGET:'
   OPEN_URL = 'WOTSTAT_WIDGETS_EVENT_NEWS_OPEN_URL:'
-  
 
 MOD_RELEASE_NOTES = [
   {
@@ -43,6 +42,18 @@ MOD_RELEASE_NOTES = [
       '• New battle widgets are displayed by default in the same place where you placed them in the hangar\n'
       '• New lock icon with open/close state\n'
   },
+  {
+    'ru':
+      light('<b>• Раздельные позиции для аркадного и снайперского прицелов</b>') + ' – настраивается для каждого виджета ПКМ->Позиция\n' +
+      light('<b>• Меняйте порядок слоёв</b>') + ' – ПКМ->На передний план\n' +
+      light('<b>• Подтверждение сброса данных</b>\n') +
+      light('<b>• Уменьшен минимальный размер виджета</b>'),
+    'en':
+      light('<b>• Separate positions for arcade and sniper scopes</b>') + ' – configured for each widget RMB->Position\n' +
+      light('<b>• Change layers order</b>') + ' – RMB->Bring to front\n' +
+      light('<b>• Confirmation of data reset</b>\n') +
+      light('<b>• Reduced minimum widget size</b>')
+  }
 ]
 
 class WhatsNewNotifier(Singleton):

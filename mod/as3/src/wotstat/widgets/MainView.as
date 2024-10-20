@@ -117,11 +117,12 @@ package wotstat.widgets {
         isHidden:Boolean,
         isLocked:Boolean,
         isControlsAlwaysHidden:Boolean,
-        isInBattle:Boolean):void {
+        isInBattle:Boolean,
+        positionMode:String):void {
       _log("as_createWidget [" + wid + "]: " + url + " " + width + "x" + height + " (" + x + ";" + y + ")" +
-          " hidden: " + isHidden + " locked: " + isLocked + " controls: " + isControlsAlwaysHidden + " battle: " + isInBattle);
+          " hidden: " + isHidden + " locked: " + isLocked + " controls: " + isControlsAlwaysHidden + " battle: " + isInBattle + " positionMode: " + positionMode);
 
-      var widget:DraggableWidget = new DraggableWidget(wid, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle);
+      var widget:DraggableWidget = new DraggableWidget(wid, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle, positionMode);
       widget.addEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
       widget.addEventListener(DraggableWidget.MOVE_WIDGET, onWidgetMove);
       widget.addEventListener(DraggableWidget.LOCK_WIDGET, onWidgetLockUnlock);
@@ -159,6 +160,20 @@ package wotstat.widgets {
       if (widget == null)
         return;
       widget.setResizeMode(full);
+    }
+
+    public function as_setPositionMode(wid:int, mode:String):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+      if (widget == null)
+        return;
+      widget.setPositionMode(mode);
+    }
+
+    public function as_setPosition(wid:int, x:int, y:int):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+      if (widget == null)
+        return;
+      widget.setPosition(x, y);
     }
 
     public function as_setControlPressed(isPress:Boolean):void {

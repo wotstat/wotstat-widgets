@@ -1,6 +1,7 @@
 from Event import Event
 from gui.Scaleform.framework.managers import context_menu
 from gui.Scaleform.framework.managers.context_menu import AbstractContextMenuHandler
+from .WidgetStorage import POSITION_MODE
 
 from ..common.i18n import t
 
@@ -23,6 +24,9 @@ class BUTTONS(object):
   CLEAR_DATA = 'CLEAR_DATA'
   REMOVE = 'REMOVE'
   SEND_TO_TOP_LAYER = 'SEND_TO_TOP_LAYER'
+  POSITION_SAME = 'POSITION_SAME'
+  POSITION_HANGAR_BATTLE = 'POSITION_HANGAR_BATTLE'
+  POSITION_HANGAR_SNIPER_ARCADE = 'POSITION_HANGAR_SNIPER_ARCADE'
 
 class WidgetContextMenuHandler(AbstractContextMenuHandler):
   
@@ -41,6 +45,9 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
       BUTTONS.CLEAR_DATA: 'clearData',
       BUTTONS.REMOVE: 'remove',
       BUTTONS.SEND_TO_TOP_LAYER: 'sendToTopLayer',
+      BUTTONS.POSITION_SAME: 'positionSame',
+      BUTTONS.POSITION_HANGAR_BATTLE: 'positionHangarBattle',
+      BUTTONS.POSITION_HANGAR_SNIPER_ARCADE: 'positionHangarSniperArcade',
     })
     
   def _initFlashValues(self, ctx):
@@ -51,6 +58,7 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
     self.isControlsAlwaysHidden = bool(ctx.isControlsAlwaysHidden)
     self.isReadyToClearData = bool(ctx.isReadyToClearData)
     self.isTopLayer = bool(ctx.isTopLayer)
+    self.positionMode = ctx.positionMode
     
   @staticmethod
   def register():
@@ -75,8 +83,20 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
     
     if not self.isTopLayer: options.append(self._makeItem(BUTTONS.SEND_TO_TOP_LAYER, t('context.sendToTopLayer')))
     
+    currentPositionMode = t('context.position.hangarBattle')
+    if self.positionMode == POSITION_MODE.SAME: currentPositionMode = t('context.position.same')
+    elif self.positionMode == POSITION_MODE.HANGAR_SNIPER_ARCADE: currentPositionMode = t('context.position.hangarSniperArcade')
+  
+    options.append(self._makeItem('position_mode_sub', t('context.position') % currentPositionMode, optSubMenu=[
+      self._makeItem(BUTTONS.POSITION_SAME, t('context.position.same')),
+      self._makeItem(BUTTONS.POSITION_HANGAR_BATTLE, t('context.position.hangarBattle')),
+      self._makeItem(BUTTONS.POSITION_HANGAR_SNIPER_ARCADE, t('context.position.hangarSniperArcade')),
+    ]))
+    
     if self.isReadyToClearData:
-      options.append(self._makeItem(BUTTONS.CLEAR_DATA, t('context.clearData'), RED_TEXT))
+      options.append(self._makeItem('clear_data_sub', t('context.clearData'), RED_TEXT, [
+      self._makeItem(BUTTONS.CLEAR_DATA, t('context.clearData.apply'), RED_TEXT)
+    ]))
 
     options.append(self._makeItem(BUTTONS.REMOVE, t('context.remove'), RED_TEXT))
       
@@ -96,4 +116,7 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
   def clearData(self): self.callEvent(BUTTONS.CLEAR_DATA)
   def remove(self): self.callEvent(BUTTONS.REMOVE)
   def sendToTopLayer(self): self.callEvent(BUTTONS.SEND_TO_TOP_LAYER)
+  def positionSame(self): self.callEvent(BUTTONS.POSITION_SAME)
+  def positionHangarBattle(self): self.callEvent(BUTTONS.POSITION_HANGAR_BATTLE)
+  def positionHangarSniperArcade(self): self.callEvent(BUTTONS.POSITION_HANGAR_SNIPER_ARCADE)
     

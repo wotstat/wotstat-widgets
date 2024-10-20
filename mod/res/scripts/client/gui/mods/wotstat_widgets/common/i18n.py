@@ -2,6 +2,10 @@
 from helpers import getClientLanguage
 from typing import List
 
+
+def light(text):
+  return '<font color="#c8c8b7">%s</font>' % text
+
 RU = {
   'modslist.title': 'Добавить виджет',
   'modslist.description': 'Открыть меню добавления виджетов для мода WotStat',
@@ -27,8 +31,8 @@ RU = {
   'changeUrl.urlPlaceholder': 'Введите URL',
   'changeUrl.apply': 'Применить',
   'changeUrl.cancel': 'Отмена',
-  'whatsNew.title': 'Мод <b>WotStat Widgets</b> успешно обновлён до версии <b>%s</b>\n\nИзменения:',
-  'whatsNew.serverTitle': 'Новости мода <b>WotStat Widgets</b>\n\nЧто нового:',
+  'whatsNew.title': light('Мод <b>WotStat Widgets</b> успешно обновлён до версии <b>%s</b>') + '\n\nИзменения:',
+  'whatsNew.serverTitle': light('Новости мода <b>WotStat Widgets</b>') + '\n\nЧто нового:',
   'context.lock': 'Заблокировать перемещение',
   'context.unlock': 'Разблокировать перемещение',
   'context.resize': 'Изменить размер',
@@ -38,9 +42,13 @@ RU = {
   'context.hideControls': 'Скрыть элементы управления',
   'context.showControls': 'Показать элементы управления',
   'context.clearData': 'Очистить данные',
+  'context.clearData.apply': 'Подтвердить',
   'context.remove': 'Удалить виджет',
   'context.sendToTopLayer': 'На передний план',
-  
+  'context.position': 'Позиция: %s',
+  'context.position.same': 'Одинаковая везде',
+  'context.position.hangarBattle': 'Ангар/Бой',
+  'context.position.hangarSniperArcade': 'Ангар/Снайп./Аркад.',
 }
 
 EN = {
@@ -68,8 +76,8 @@ EN = {
   'changeUrl.urlPlaceholder': 'Enter URL',
   'changeUrl.apply': 'Apply',
   'changeUrl.cancel': 'Cancel',
-  'whatsNew.title': 'The <b>WotStat Widgets</b> mod has been successfully updated to version <b>%s</b>\n\nChanges:',
-  'whatsNew.serverTitle': '<b>WotStat Widgets</b> mod news\n\nWhat\'s new:',
+  'whatsNew.title': light('The <b>WotStat Widgets</b> mod has been successfully updated to version <b>%s</b>') + '\n\nChanges:',
+  'whatsNew.serverTitle': light('<b>WotStat Widgets</b> mod news') + '\n\nWhat\'s new:',
   'context.lock': 'Lock movement',
   'context.unlock': 'Unlock movement',
   'context.resize': 'Resize',
@@ -79,8 +87,13 @@ EN = {
   'context.hideControls': 'Hide controls',
   'context.showControls': 'Show controls',
   'context.clearData': 'Clear data',
+  'context.clearData.apply': 'Confirm',
   'context.remove': 'Remove widget',
   'context.sendToTopLayer': 'Bring to front',
+  'context.position': 'Position: %s',
+  'context.position.same': 'Same everywhere',
+  'context.position.hangarBattle': 'Hangar/Battle',
+  'context.position.hangarSniperArcade': 'Hangar/Sniper/Arcade',
 }
 
 language = getClientLanguage()

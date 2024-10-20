@@ -1,5 +1,6 @@
 import BigWorld
 from Event import Event
+from aih_constants import CTRL_MODE_NAME
 from gui.Scaleform.framework import g_entitiesFactories, ScopeTemplates, ViewSettings
 from gui.Scaleform.framework.entities.View import View
 from gui.Scaleform.framework.application import AppEntry
@@ -10,7 +11,6 @@ from gui.app_loader.settings import APP_NAME_SPACE
 from gui import InputHandler
 from frameworks.wulf import WindowLayer
 from helpers import dependency
-from .WidgetContextMenu import WidgetContextMenuHandler, BUTTONS as CE
 from skeletons.gui.impl import IGuiLoader
 from skeletons.account_helpers.settings_core import ISettingsCore
 from Avatar import PlayerAvatar
@@ -22,7 +22,8 @@ from ..common.Logger import Logger
 from .CefServer import CefServer, server
 from .EventsManager import manager
 from .ChangeUrlWindow import show as showChangeUrlWindow
-from .WidgetStorage import WidgetStorage
+from .WidgetStorage import WidgetStorage, POSITION_MODE
+from .WidgetContextMenu import WidgetContextMenuHandler, BUTTONS as CE
 
 CEF_MAIN_VIEW = "WOTSTAT_CEF_MAIN_VIEW"
 
@@ -35,6 +36,7 @@ class MainView(View):
   settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
   controlPressed = False
   isOnSetupSubscribed = False
+  ctrlModeName = None
 
   def __init__(self, *args, **kwargs):
     super(MainView, self).__init__(*args, **kwargs)
@@ -82,7 +84,14 @@ class MainView(View):
       oppositeState = widget.hangar if lastLoadIsBattle else widget.battle
       positionState = oppositeState if oppositeState.isTouched and not state.isTouched else state
       
-      self._addWidget(widget.uuid, widget.wid, widget.url, positionState.width, positionState.height, positionState.x, positionState.y, widget.flags, state.isHidden, state.isLocked, state.isControlsAlwaysHidden)
+      positionMode = widget.positionMode
+      
+      x, y = widget.getPreferredPosition(lastLoadIsBattle, self.ctrlModeName)
+      
+      self._addWidget(widget.uuid, widget.wid, widget.url,
+                      positionState.width, positionState.height, 
+                      x, y,
+                      widget.flags, state.isHidden, state.isLocked, state.isControlsAlwaysHidden, positionMode)
       if state.isHidden:
         server.suspenseWidget(widget.wid)
       else:
@@ -133,9 +142,11 @@ class MainView(View):
     if not hasattr(player, 'inputHandler'): return
     if not hasattr(player.inputHandler, 'ctrlModeName'): return
     
-    ctrlModeName = player.inputHandler.ctrlModeName
+    self.ctrlModeName = player.inputHandler.ctrlModeName
     
-    logger.info("Control mode changed: " + str(ctrlModeName))
+    for widget in storage.getAllWidgets():
+      x, y = widget.getPreferredPosition(lastLoadIsBattle, self.ctrlModeName)
+      self._as_setPosition(widget.wid, x, y)
 
   def _onWidgetContextEvent(self, event):
     eventName, wid = event
@@ -172,6 +183,32 @@ class MainView(View):
     
     elif eventName == CE.SEND_TO_TOP_LAYER:
       self._as_sendToTopLayer(wid)
+
+    elif eventName in [CE.POSITION_SAME, CE.POSITION_HANGAR_BATTLE, CE.POSITION_HANGAR_SNIPER_ARCADE]:
+      currentPosition = storage.getWidgetByWid(wid).getPreferredPosition(lastLoadIsBattle, self.ctrlModeName)
+      
+      modeByEvent = {
+        CE.POSITION_SAME: POSITION_MODE.SAME,
+        CE.POSITION_HANGAR_BATTLE: POSITION_MODE.HANGAR_BATTLE,
+        CE.POSITION_HANGAR_SNIPER_ARCADE: POSITION_MODE.HANGAR_SNIPER_ARCADE
+      }
+      
+      targetMode = modeByEvent[eventName]
+      
+      storage.updateWidget(wid, lastLoadIsBattle, positionMode=targetMode)
+      self._as_setPositionMode(wid, targetMode)
+      
+      if eventName in [CE.POSITION_SAME, CE.POSITION_HANGAR_BATTLE]:
+        storage.updateWidget(wid, lastLoadIsBattle, position=currentPosition, sniperPosition=None, artyPosition=None, strategicPosition=None)
+      else:
+        if self.ctrlModeName == CTRL_MODE_NAME.SNIPER:
+          storage.updateWidget(wid, lastLoadIsBattle, sniperPosition=currentPosition, artyPosition=None, strategicPosition=None)
+        elif self.ctrlModeName == CTRL_MODE_NAME.STRATEGIC:
+          storage.updateWidget(wid, lastLoadIsBattle, strategicPosition=currentPosition, artyPosition=None, sniperPosition=None)
+        elif self.ctrlModeName == CTRL_MODE_NAME.ARTY:
+          storage.updateWidget(wid, lastLoadIsBattle, artyPosition=currentPosition, strategicPosition=None, sniperPosition=None)
+        else:
+          storage.updateWidget(wid, lastLoadIsBattle, position=currentPosition, sniperPosition=None, artyPosition=None, strategicPosition=None)
   
     else:
       logger.error("Unknown context event: %s" % eventName)
@@ -188,7 +225,17 @@ class MainView(View):
     logger.printLog(level, msg)
 
   def py_moveWidget(self, wid, x, y):
-    storage.updateWidget(wid, lastLoadIsBattle, x=x, y=y)
+    widget = storage.getWidgetByWid(wid)
+    if widget is None: return
+    
+    if widget.positionMode == POSITION_MODE.HANGAR_SNIPER_ARCADE:
+      if self.ctrlModeName == CTRL_MODE_NAME.SNIPER: storage.updateWidget(wid, lastLoadIsBattle, sniperPosition=(x, y))
+      elif self.ctrlModeName == CTRL_MODE_NAME.STRATEGIC: storage.updateWidget(wid, lastLoadIsBattle, strategicPosition=(x, y))
+      elif self.ctrlModeName == CTRL_MODE_NAME.ARTY: storage.updateWidget(wid, lastLoadIsBattle, artyPosition=(x, y))
+      else: storage.updateWidget(wid, lastLoadIsBattle, position=(x, y))
+      
+    else:
+      storage.updateWidget(wid, lastLoadIsBattle, position=(x, y))
 
   def py_lockUnlockWidget(self, wid, isLocked):
     storage.updateWidget(wid, lastLoadIsBattle, isLocked=isLocked)
@@ -214,10 +261,14 @@ class MainView(View):
     logger.info("Server error. Hide MainView: %s" % error)
     self._dispose()
 
-  def _addWidget(self, uuid, wid, url, width=100, height=100, x=-1, y=-1, flags=0, isHidden=False, isLocked=False, isControlsAlwaysHidden=False):
+  def _addWidget(self, uuid, wid, url,
+                 width=100, height=100,
+                 x=-1, y=-1, flags=0,
+                 isHidden=False, isLocked=False,
+                 isControlsAlwaysHidden=False, positionMode=POSITION_MODE.NOT_SET):
     
     def create(wid):
-      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, lastLoadIsBattle)
+      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, lastLoadIsBattle, positionMode)
       
     if wid:
       create(wid)
@@ -286,6 +337,13 @@ class MainView(View):
         
       if isChanged(CefServer.Flags.USE_SNIPER_MODE):
         flag = flags & CefServer.Flags.USE_SNIPER_MODE != 0
+        
+        widget = storage.getWidgetByWid(wid)
+        if widget and widget.positionMode == POSITION_MODE.NOT_SET:
+          positionMode = POSITION_MODE.HANGAR_SNIPER_ARCADE if flag else POSITION_MODE.HANGAR_BATTLE
+          storage.updateWidget(wid, lastLoadIsBattle, positionMode=positionMode)
+          self._as_setPositionMode(wid, positionMode)
+        
         logger.info("Use sniper mode changed: %s" % flag)
         
       if isChanged(CefServer.Flags.HANGAR_ONLY):
@@ -301,8 +359,14 @@ class MainView(View):
     self.flashObject.as_onFrame(wid, width, height, data, shift)
 
   def _as_createWidget(self, wid, url, width, height, x=-1, y=-1,
-                       isHidden=False, isLocked=False, isControlsAlwaysHidden=False, isInBattle=False):
-    self.flashObject.as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle)
+                       isHidden=False, isLocked=False, isControlsAlwaysHidden=False, isInBattle=False, positionMode=POSITION_MODE.NOT_SET):
+    self.flashObject.as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle, positionMode)
+
+  def _as_setPositionMode(self, wid, mode):
+    self.flashObject.as_setPositionMode(wid, mode)
+
+  def _as_setPosition(self, wid, x, y):
+    self.flashObject.as_setPosition(wid, x, y)
 
   def _as_setResizeMode(self, wid, mode):
     self.flashObject.as_setResizeMode(wid, mode)

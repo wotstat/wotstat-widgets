@@ -27,6 +27,9 @@ package wotstat.widgets {
     public static const UNLOCK_WIDGET:String = "UNLOCK_WIDGET";
     public static const HIDE_WIDGET:String = "HIDE_WIDGET";
     public static const SHOW_WIDGET:String = "SHOW_WIDGET";
+    public static const POSITION_MODE_SAME:String = "SAME";
+    public static const POSITION_MODE_HANGAR_BATTLE:String = "HANGAR_BATTLE";
+    public static const POSITION_MODE_HANGAR_SNIPER_ARCADE:String = "HANGAR_SNIPER_ARCADE";
 
     private const HANGAR_TOP_OFFSET:int = 0;
     private const HANGAR_BOTTOM_OFFSET:int = 90;
@@ -53,6 +56,7 @@ package wotstat.widgets {
     private var isReadyToClearData:Boolean = false;
     private var isControlsAlwaysHidden:Boolean = false;
     private var isTopLayer:Boolean = false;
+    private var positionMode:String = DraggableWidget.POSITION_MODE_SAME;
     private var _isLocked:Boolean = false;
 
     // CONTENT == Browser Image in readl PIXELS
@@ -79,12 +83,14 @@ package wotstat.widgets {
         isHidden:Boolean,
         isLocked:Boolean,
         isControlsAlwaysHidden:Boolean,
-        isInBattle:Boolean) {
+        isInBattle:Boolean,
+        positionMode:String) {
       super();
       name = "DraggableWidget_" + wid;
       content.name = "Content_" + wid;
       controlPanel.name = "ControlPanel_" + wid;
       loader.name = "WidgetContentLoader_" + wid;
+      this.positionMode = positionMode;
 
       _wid = wid;
       this.isInBattle = isInBattle;
@@ -229,6 +235,16 @@ package wotstat.widgets {
       isTopLayer = value;
     }
 
+    public function setPositionMode(mode:String):void {
+      positionMode = mode;
+    }
+
+    public function setPosition(x:int, y:int):void {
+      this.x = x;
+      this.y = y;
+      fixPosition();
+    }
+
     private function setHidden(value:Boolean):void {
       if (isContentHidden == value)
         return;
@@ -294,7 +310,8 @@ package wotstat.widgets {
           'isHidden': isContentHidden,
           'isInBattle': isInBattle,
           'isControlsAlwaysHidden': isControlsAlwaysHidden,
-          'isTopLayer': isTopLayer
+          'isTopLayer': isTopLayer,
+          'positionMode': positionMode
         };
 
       App.contextMenuMgr.show('WOTSTAT_WIDGET_CONTEXT_MENU', null, ctx);
