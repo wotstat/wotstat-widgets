@@ -7,6 +7,7 @@ from PlayerEvents import g_playerEvents
 from helpers import dependency
 from skeletons.gui.game_control import IPlatoonController
 from items import vehicles as vehiclesUtils
+from skeletons.gui.shared.utils import IHangarSpace
 
 from ..ExceptionHandling import withExceptionHandling
 
@@ -20,6 +21,7 @@ def formattedToInt(numberStr):
 class PlatoonProvider(object):
   
   platoon = dependency.descriptor(IPlatoonController) # type: IPlatoonController
+  hangarSpace = dependency.descriptor(IHangarSpace) # type: IHangarSpace
 
   def __init__(self, sdk):
     # type: (DataProviderSDK) -> None
@@ -28,18 +30,34 @@ class PlatoonProvider(object):
     self.maxSlots = sdk.createState(['platoon', 'maxSlots'], 0)
     self.commander = sdk.createState(['platoon', 'commander'])
     self.slots = sdk.createState(['platoon', 'slots'], [])
+    self.enabled = True
     
+    g_playerEvents.onAccountBecomePlayer += self.__onAccountBecomePlayer
+    g_playerEvents.onAccountBecomeNonPlayer += self.__onAccountBecomeNonPlayer
+    self.hangarSpace.onSpaceCreate += self.__onHangarSpaceCreate
+    
+    self.platoon.onMembersUpdate += self.__onPlatoonUpdated
     self.platoon.onPlatoonTankVisualizationChanged += self.__onPlatoonUpdated
     self.platoon.onPlatoonTankUpdated += self.__onPlatoonUpdated
     self.platoon.onPlatoonTankRemove += self.__onPlatoonUpdated
-    g_playerEvents.onAccountBecomePlayer += self.__onPlatoonUpdated
     
   @withExceptionHandling(logger)
-  def __onPlatoonUpdated(self, *args, **kwargs):
+  def __onPlatoonUpdated(self, *a, **k):
+    BigWorld.callback(0, self.__updateStats)
+    
+  def __onAccountBecomeNonPlayer(self, *a, **k):
+    self.enabled = False
+    
+  def __onAccountBecomePlayer(self, *a, **k):
+    self.enabled = True
+    
+  def __onHangarSpaceCreate(self, *a, **k):
     BigWorld.callback(0, self.__updateStats)
 
   @withExceptionHandling(logger)  
   def __updateStats(self):
+    if not self.enabled: return
+    
     self.isInPlatoon.setValue(self.platoon.isInPlatoon())
     self.maxSlots.setValue(self.platoon.getMaxSlotCount())
     
