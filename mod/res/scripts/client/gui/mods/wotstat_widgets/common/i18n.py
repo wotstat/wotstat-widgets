@@ -4,7 +4,7 @@ from typing import List
 
 
 def light(text):
-  return '<font color="#c8c8b7">%s</font>' % text
+  return '<font color="#e6e1c1">%s</font>' % text
 
 RU = {
   'modslist.title': 'Добавить виджет',

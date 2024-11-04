@@ -53,6 +53,10 @@ MOD_RELEASE_NOTES = [
       light('<b>• Change layers order</b>') + ' – RMB->Bring to front\n' +
       light('<b>• Confirmation of data reset</b>\n') +
       light('<b>• Reduced minimum widget size</b>')
+  },
+  {
+    'ru': '• Исправлена ошибка определения взводов. Теперь взводные виджеты работают корректно',
+    'en': '• Fixed platoon detection bug. Now platoon widgets work correctly'
   }
 ]
 
