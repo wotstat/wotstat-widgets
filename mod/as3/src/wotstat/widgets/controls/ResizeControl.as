@@ -155,9 +155,9 @@ package wotstat.widgets.controls {
 
       isDragging = true;
       if (_fullResize)
-        fullControl.startDrag(true, new Rectangle(MIN_WIDTH, 50, 500, 500));
+        fullControl.startDrag(true, new Rectangle(0, 0, App.appWidth, App.appHeight));
       else
-        verticalControl.startDrag(true, new Rectangle(MIN_WIDTH - CONTROL_WIDTH / 2 + 1, verticalControl.y, MAX_WIDTH - MIN_WIDTH, 0));
+        verticalControl.startDrag(true, new Rectangle(MIN_WIDTH - CONTROL_WIDTH / 2 + 1, verticalControl.y, App.appWidth - MIN_WIDTH, 0));
     }
 
     private function onMouseUpHandler():void {
@@ -196,7 +196,7 @@ package wotstat.widgets.controls {
         if (!_fullResize) {
           verticalControl.stopDrag();
           verticalControl.y = _contentHeight / 2 - controlHeight / 2;
-          verticalControl.startDrag(true, new Rectangle(MIN_WIDTH - CONTROL_WIDTH / 2 + 1, verticalControl.y, MAX_WIDTH - MIN_WIDTH, 0));
+          verticalControl.startDrag(true, new Rectangle(MIN_WIDTH - CONTROL_WIDTH / 2 + 1, verticalControl.y, App.appWidth - MIN_WIDTH, 0));
         }
       }
       else {

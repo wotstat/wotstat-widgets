@@ -32,8 +32,8 @@ package wotstat.widgets {
     public static const POSITION_MODE_HANGAR_SNIPER_ARCADE:String = "HANGAR_SNIPER_ARCADE";
 
     private const HANGAR_TOP_OFFSET:int = 0;
-    private const HANGAR_BOTTOM_OFFSET:int = 90;
-    private const HANGAR_HEADER_MINIFIED_HEIGHT:int = 35;
+    private const HANGAR_BOTTOM_OFFSET:int = 0;
+    private const HANGAR_HEADER_MINIFIED_HEIGHT:int = 0;
 
     private var _wid:int = 0;
 

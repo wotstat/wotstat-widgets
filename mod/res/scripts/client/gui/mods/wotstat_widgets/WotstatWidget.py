@@ -56,7 +56,7 @@ class WotstatWidget(object):
     changeUrlWindowSetup()
     
     self.setupModListApi()
-    self.checkAndUpdate(version)
+    # self.checkAndUpdate(version)
     whatsNewNotifier = WhatsNewNotifier.instance()
     whatsNewNotifier.showModNews(version)
     whatsNewNotifier.showServerNews()

@@ -86,6 +86,10 @@ package wotstat.widgets {
     }
 
     private function setupWidgets():void {
+      var viewContainer:MainViewContainer = App.containerMgr.getContainer(LAYER_NAMES.LAYER_ORDER.indexOf(LAYER_NAMES.VIEWS)) as MainViewContainer;
+
+      targetView = viewContainer.getChildAt(viewContainer.numChildren - 1) as IView;
+
       for each (var widget:DraggableWidget in activeWidgets) {
         targetView.addChild(widget);
         widget.isInBattle = isInBattle;
