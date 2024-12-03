@@ -137,7 +137,7 @@ package wotstat.widgets {
       App.instance.addEventListener(MouseEvent.MOUSE_MOVE, onAppMouseMove);
       App.instance.addEventListener(Event.RESIZE, onAppResize);
       resizeControl.addEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
-      resizeControl.addEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
+      resizeControl.addEventListener(ResizeControl.RESIZE_END, onResizeControlEnd);
       loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onLoaderComplete);
       hideShowBtn.addEventListener(MouseEvent.MOUSE_DOWN, onHideShowButtonMouseDown);
 
@@ -155,7 +155,7 @@ package wotstat.widgets {
       App.instance.removeEventListener(MouseEvent.MOUSE_UP, onAppMouseUp);
       App.instance.removeEventListener(MouseEvent.MOUSE_MOVE, onAppMouseMove);
       resizeControl.removeEventListener(ResizeControl.RESIZE_MOVE, onResizeControlChange);
-      resizeControl.removeEventListener(ResizeControl.RESIZE_END, onReziseControlEnd);
+      resizeControl.removeEventListener(ResizeControl.RESIZE_END, onResizeControlEnd);
       loader.contentLoaderInfo.removeEventListener(Event.COMPLETE, onLoaderComplete);
       hideShowBtn.removeEventListener(MouseEvent.MOUSE_DOWN, onHideShowButtonMouseDown);
 
@@ -284,7 +284,7 @@ package wotstat.widgets {
       (loader.content as Bitmap).smoothing = false;
     }
 
-    private function getDraggingRectange(full:Boolean, battle:Boolean = false):Rectangle {
+    private function getDraggingRectangle(full:Boolean, battle:Boolean = false):Rectangle {
       if (full && !battle)
         return new Rectangle(
             0,
@@ -349,7 +349,7 @@ package wotstat.widgets {
       }
 
       isDragging = true;
-      startDrag(false, getDraggingRectange(!isHidden, isInBattle));
+      startDrag(false, getDraggingRectangle(!isHidden, isInBattle));
     }
 
     private function onAppMouseDown(event:MouseEvent):void {
@@ -392,7 +392,7 @@ package wotstat.widgets {
           isDragging = true;
           x += dx;
           y += dy;
-          startDrag(false, getDraggingRectange(!isHidden, isInBattle));
+          startDrag(false, getDraggingRectangle(!isHidden, isInBattle));
         }
       }
     }
@@ -463,7 +463,7 @@ package wotstat.widgets {
       updateResizeControl();
     }
 
-    private function onReziseControlEnd(event:Event):void {
+    private function onResizeControlEnd(event:Event):void {
       targetWidth = Math.round(targetWidth);
       targetHeight = Math.round(targetHeight);
       trace("[DW] Resize control end " + targetWidth + "x" + targetHeight);
@@ -479,7 +479,7 @@ package wotstat.widgets {
       x = Math.round(x);
       y = Math.round(y);
 
-      var rect:Rectangle = getDraggingRectange(!isHidden, isInBattle);
+      var rect:Rectangle = getDraggingRectangle(!isHidden, isInBattle);
       if (x < rect.x)
         x = rect.x;
       if (y < rect.y)
