@@ -12,6 +12,7 @@ package wotstat.widgets {
   import net.wg.gui.battle.views.BaseBattlePage;
   import flash.display.DisplayObject;
   import wotstat.widgets.common.MoveEvent;
+  import flash.display.Sprite;
 
   public class MainView extends AbstractView {
 
@@ -22,12 +23,14 @@ package wotstat.widgets {
     public var py_hideShowWidget:Function;
 
 
-    private var targetView:IView = null;
+    private var defaultLayerView:Sprite = null;
+    private var topLayerView:Sprite = null;
+
     private var activeWidgets:Vector.<DraggableWidget> = new Vector.<DraggableWidget>();
     private var activeWidgetsByWid:Object = new Object();
 
     private var isInBattle:Boolean = false;
-    private var isGlovalVisible:Boolean = true;
+    private var isGlobalVisible:Boolean = true;
 
     public function MainView() {
       super();
@@ -36,8 +39,11 @@ package wotstat.widgets {
     override protected function configUI():void {
       super.configUI();
 
+      topLayerView = new Sprite();
+      addChild(topLayerView);
+
       var viewContainer:MainViewContainer = App.containerMgr.getContainer(LAYER_NAMES.LAYER_ORDER.indexOf(LAYER_NAMES.VIEWS)) as MainViewContainer;
-      if (viewContainer != null) {
+      if (viewContainer != null && defaultLayerView == null) {
 
         for (var i:int = 0; i < viewContainer.numChildren; ++i) {
           var child:DisplayObject = viewContainer.getChildAt(i);
@@ -49,7 +55,8 @@ package wotstat.widgets {
             }
 
             if (viewContainer.getChildAt(i) is BaseBattlePage) {
-              targetView = viewContainer.getChildAt(i) as IView;
+              defaultLayerView = new Sprite();
+              (viewContainer.getChildAt(i) as IView).addChild(defaultLayerView);
               isInBattle = true;
               as_setGlobalVisible(false);
               setupWidgets();
@@ -79,28 +86,41 @@ package wotstat.widgets {
         return;
 
       if (view.as_config.alias == Aliases.LOBBY_HANGAR) {
-        targetView = view;
         isInBattle = false;
-        setupWidgets();
+
+        if (defaultLayerView == null) {
+          defaultLayerView = new Sprite();
+          view.addChild(defaultLayerView);
+          setupWidgets();
+        }
+        else {
+          if (defaultLayerView.parent)
+            defaultLayerView.parent.removeChild(defaultLayerView);
+          view.addChild(defaultLayerView);
+        }
       }
     }
 
     private function setupWidgets():void {
       for each (var widget:DraggableWidget in activeWidgets) {
-        targetView.addChild(widget);
+        if (widget.getLayer() == DraggableWidget.LAYER_TOP)
+          topLayerView.addChild(widget);
+        else
+          defaultLayerView.addChild(widget);
+
         widget.isInBattle = isInBattle;
-        widget.visible = isGlovalVisible;
+        widget.visible = isGlobalVisible;
       }
       updateTopLayerInfo();
     }
 
     private function updateTopLayerInfo():void {
       for each (var widget:DraggableWidget in activeWidgets) {
-        widget.setTopLayer(false);
+        widget.setTopPlan(false);
       }
 
       if (activeWidgets.length > 0) {
-        activeWidgets[activeWidgets.length - 1].setTopLayer(true);
+        activeWidgets[activeWidgets.length - 1].setTopPlan(true);
       }
     }
 
@@ -118,11 +138,13 @@ package wotstat.widgets {
         isLocked:Boolean,
         isControlsAlwaysHidden:Boolean,
         isInBattle:Boolean,
-        positionMode:String):void {
+        positionMode:String,
+        layer:String):void {
       _log("as_createWidget [" + wid + "]: " + url + " " + width + "x" + height + " (" + x + ";" + y + ")" +
-          " hidden: " + isHidden + " locked: " + isLocked + " controls: " + isControlsAlwaysHidden + " battle: " + isInBattle + " positionMode: " + positionMode);
+          " hidden: " + isHidden + " locked: " + isLocked + " controls: " + isControlsAlwaysHidden + " battle: " +
+          isInBattle + " positionMode: " + positionMode + " layer: " + layer);
 
-      var widget:DraggableWidget = new DraggableWidget(wid, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle, positionMode);
+      var widget:DraggableWidget = new DraggableWidget(wid, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle, positionMode, layer);
       widget.addEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
       widget.addEventListener(DraggableWidget.MOVE_WIDGET, onWidgetMove);
       widget.addEventListener(DraggableWidget.LOCK_WIDGET, onWidgetLockUnlock);
@@ -133,8 +155,8 @@ package wotstat.widgets {
 
       activeWidgets.push(widget);
       activeWidgetsByWid[wid] = widget;
-      if (targetView) {
-        targetView.addChild(widget);
+      if (defaultLayerView) {
+        defaultLayerView.addChild(widget);
         updateTopLayerInfo();
       }
     }
@@ -162,6 +184,13 @@ package wotstat.widgets {
       widget.setResizeMode(full);
     }
 
+    public function as_setHangarOnly(wid:int, enabled:Boolean):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+      if (widget == null)
+        return;
+      widget.setHangarOnly(enabled);
+    }
+
     public function as_setPositionMode(wid:int, mode:String):void {
       var widget:DraggableWidget = activeWidgetsByWid[wid];
       if (widget == null)
@@ -186,7 +215,7 @@ package wotstat.widgets {
     }
 
     public function as_setGlobalVisible(visible:Boolean):void {
-      isGlovalVisible = visible;
+      isGlobalVisible = visible;
       for each (var widget:DraggableWidget in activeWidgets) {
         widget.visible = visible;
       }
@@ -202,7 +231,7 @@ package wotstat.widgets {
 
       activeWidgetsByWid[widget.wid] = null;
 
-      targetView.removeChild(widget);
+      defaultLayerView.removeChild(widget);
       widget.dispose();
       widget.removeEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
       widget.removeEventListener(DraggableWidget.MOVE_WIDGET, onWidgetMove);
@@ -241,7 +270,7 @@ package wotstat.widgets {
       widget.setControlsAlwaysHidden(enabled);
     }
 
-    public function as_sendToTopLayer(wid:int):void {
+    public function as_sendToTopPlan(wid:int):void {
       var widget:DraggableWidget = activeWidgetsByWid[wid];
       if (widget == null)
         return;
@@ -252,15 +281,35 @@ package wotstat.widgets {
         activeWidgets.push(widget);
       }
 
-      if (!targetView)
+      if (!defaultLayerView)
         return;
 
-      if (targetView.contains(widget)) {
-        targetView.removeChild(widget);
+      if (defaultLayerView.contains(widget)) {
+        defaultLayerView.removeChild(widget);
       }
 
-      targetView.addChild(widget);
+      defaultLayerView.addChild(widget);
       updateTopLayerInfo();
+    }
+
+    public function as_setLayer(wid:int, mode:String):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+      if (widget == null)
+        return;
+
+      widget.setLayer(mode);
+      if (mode == DraggableWidget.LAYER_TOP) {
+        if (defaultLayerView.contains(widget))
+          defaultLayerView.removeChild(widget);
+        if (!topLayerView.contains(widget))
+          topLayerView.addChild(widget);
+      }
+      else {
+        if (topLayerView.contains(widget))
+          topLayerView.removeChild(widget);
+        if (!defaultLayerView.contains(widget))
+          defaultLayerView.addChild(widget);
+      }
     }
 
     // widget events

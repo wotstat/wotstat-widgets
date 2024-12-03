@@ -27,9 +27,13 @@ package wotstat.widgets {
     public static const UNLOCK_WIDGET:String = "UNLOCK_WIDGET";
     public static const HIDE_WIDGET:String = "HIDE_WIDGET";
     public static const SHOW_WIDGET:String = "SHOW_WIDGET";
+
     public static const POSITION_MODE_SAME:String = "SAME";
     public static const POSITION_MODE_HANGAR_BATTLE:String = "HANGAR_BATTLE";
     public static const POSITION_MODE_HANGAR_SNIPER_ARCADE:String = "HANGAR_SNIPER_ARCADE";
+
+    public static const LAYER_TOP:String = "TOP";
+    public static const LAYER_DEFAULT:String = "DEFAULT";
 
     private const HANGAR_TOP_OFFSET:int = 0;
     private const HANGAR_BOTTOM_OFFSET:int = 90;
@@ -55,7 +59,9 @@ package wotstat.widgets {
     private var isContentHidden:Boolean = false;
     private var isReadyToClearData:Boolean = false;
     private var isControlsAlwaysHidden:Boolean = false;
-    private var isTopLayer:Boolean = false;
+    private var isTopPlan:Boolean = false;
+    private var hangarOnly:Boolean = false;
+    private var layer:String = DraggableWidget.LAYER_DEFAULT;
     private var positionMode:String = DraggableWidget.POSITION_MODE_SAME;
     private var _isLocked:Boolean = false;
 
@@ -84,13 +90,15 @@ package wotstat.widgets {
         isLocked:Boolean,
         isControlsAlwaysHidden:Boolean,
         isInBattle:Boolean,
-        positionMode:String) {
+        positionMode:String,
+        layer:String):void {
       super();
       name = "DraggableWidget_" + wid;
       content.name = "Content_" + wid;
       controlPanel.name = "ControlPanel_" + wid;
       loader.name = "WidgetContentLoader_" + wid;
       this.positionMode = positionMode;
+      this.layer = layer;
 
       _wid = wid;
       this.isInBattle = isInBattle;
@@ -180,6 +188,10 @@ package wotstat.widgets {
       resizeControl.fullResize = full;
     }
 
+    public function setHangarOnly(value:Boolean):void {
+      hangarOnly = value;
+    }
+
     public function setBattleInteractiveMode(isVisible:Boolean):void {
       setResizing(false);
       allowInteraction = isVisible;
@@ -231,8 +243,16 @@ package wotstat.widgets {
       updateControlsVisibility();
     }
 
-    public function setTopLayer(value:Boolean):void {
-      isTopLayer = value;
+    public function setTopPlan(value:Boolean):void {
+      isTopPlan = value;
+    }
+
+    public function setLayer(value:String):void {
+      layer = value;
+    }
+
+    public function getLayer():String {
+      return layer;
     }
 
     public function setPositionMode(mode:String):void {
@@ -310,8 +330,10 @@ package wotstat.widgets {
           'isHidden': isContentHidden,
           'isInBattle': isInBattle,
           'isControlsAlwaysHidden': isControlsAlwaysHidden,
-          'isTopLayer': isTopLayer,
-          'positionMode': positionMode
+          'isTopPlan': isTopPlan,
+          'layer': layer,
+          'positionMode': positionMode,
+          'hangarOnly': hangarOnly
         };
 
       App.contextMenuMgr.show('WOTSTAT_WIDGET_CONTEXT_MENU', null, ctx);

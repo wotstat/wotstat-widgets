@@ -1,7 +1,7 @@
 from Event import Event
 from gui.Scaleform.framework.managers import context_menu
 from gui.Scaleform.framework.managers.context_menu import AbstractContextMenuHandler
-from .WidgetStorage import POSITION_MODE
+from .WidgetStorage import POSITION_MODE, LAYER
 
 from ..common.i18n import t
 
@@ -23,10 +23,12 @@ class BUTTONS(object):
   SHOW_CONTROLS = 'SHOW_CONTROLS'
   CLEAR_DATA = 'CLEAR_DATA'
   REMOVE = 'REMOVE'
-  SEND_TO_TOP_LAYER = 'SEND_TO_TOP_LAYER'
+  SEND_TO_TOP_PLAN = 'SEND_TO_TOP_PLAN'
   POSITION_SAME = 'POSITION_SAME'
   POSITION_HANGAR_BATTLE = 'POSITION_HANGAR_BATTLE'
   POSITION_HANGAR_SNIPER_ARCADE = 'POSITION_HANGAR_SNIPER_ARCADE'
+  LAYER_DEFAULT = 'LAYER_DEFAULT'
+  LAYER_TOP = 'LAYER_TOP'
 
 class WidgetContextMenuHandler(AbstractContextMenuHandler):
   
@@ -44,10 +46,12 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
       BUTTONS.SHOW_CONTROLS: 'showControls',
       BUTTONS.CLEAR_DATA: 'clearData',
       BUTTONS.REMOVE: 'remove',
-      BUTTONS.SEND_TO_TOP_LAYER: 'sendToTopLayer',
+      BUTTONS.SEND_TO_TOP_PLAN: 'sendToTopPlan',
       BUTTONS.POSITION_SAME: 'positionSame',
       BUTTONS.POSITION_HANGAR_BATTLE: 'positionHangarBattle',
       BUTTONS.POSITION_HANGAR_SNIPER_ARCADE: 'positionHangarSniperArcade',
+      BUTTONS.LAYER_DEFAULT: 'layerDefault',
+      BUTTONS.LAYER_TOP: 'layerTop',
     })
     
   def _initFlashValues(self, ctx):
@@ -57,7 +61,9 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
     self.isInBattle = bool(ctx.isInBattle)
     self.isControlsAlwaysHidden = bool(ctx.isControlsAlwaysHidden)
     self.isReadyToClearData = bool(ctx.isReadyToClearData)
-    self.isTopLayer = bool(ctx.isTopLayer)
+    self.isTopPlan = bool(ctx.isTopPlan)
+    self.hangarOnly = bool(ctx.hangarOnly)
+    self.layer = ctx.layer
     self.positionMode = ctx.positionMode
     
   @staticmethod
@@ -81,16 +87,24 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
     if self.isControlsAlwaysHidden: options.insert(0, self._makeItem(BUTTONS.SHOW_CONTROLS, t('context.showControls'), GREEN_TEXT)) 
     else: options.append(self._makeItem(BUTTONS.HIDE_CONTROLS, t('context.hideControls')))
     
-    if not self.isTopLayer: options.append(self._makeItem(BUTTONS.SEND_TO_TOP_LAYER, t('context.sendToTopLayer')))
+    if not self.isTopPlan: options.append(self._makeItem(BUTTONS.SEND_TO_TOP_PLAN, t('context.sendToTopPlan')))
     
-    currentPositionMode = t('context.position.hangarBattle')
-    if self.positionMode == POSITION_MODE.SAME: currentPositionMode = t('context.position.same')
-    elif self.positionMode == POSITION_MODE.HANGAR_SNIPER_ARCADE: currentPositionMode = t('context.position.hangarSniperArcade')
-  
-    options.append(self._makeItem('position_mode_sub', t('context.position') % currentPositionMode, optSubMenu=[
-      self._makeItem(BUTTONS.POSITION_SAME, t('context.position.same')),
-      self._makeItem(BUTTONS.POSITION_HANGAR_BATTLE, t('context.position.hangarBattle')),
-      self._makeItem(BUTTONS.POSITION_HANGAR_SNIPER_ARCADE, t('context.position.hangarSniperArcade')),
+    if not self.hangarOnly:
+      currentPositionMode = t('context.position.hangarBattle')
+      if self.positionMode == POSITION_MODE.SAME: currentPositionMode = t('context.position.same')
+      elif self.positionMode == POSITION_MODE.HANGAR_SNIPER_ARCADE: currentPositionMode = t('context.position.hangarSniperArcade')
+    
+      options.append(self._makeItem('position_mode_sub', t('context.position') % currentPositionMode, optSubMenu=[
+        self._makeItem(BUTTONS.POSITION_SAME, t('context.position.same')),
+        self._makeItem(BUTTONS.POSITION_HANGAR_BATTLE, t('context.position.hangarBattle')),
+        self._makeItem(BUTTONS.POSITION_HANGAR_SNIPER_ARCADE, t('context.position.hangarSniperArcade')),
+      ]))
+    
+    currentLayer = t('context.layer.default')
+    if self.layer == LAYER.LAYER_TOP: currentLayer = t('context.layer.top')
+    options.append(self._makeItem('layer_sub', t('context.layer') % currentLayer, optSubMenu=[
+      self._makeItem(BUTTONS.LAYER_DEFAULT, t('context.layer.default')),
+      self._makeItem(BUTTONS.LAYER_TOP, t('context.layer.top')),
     ]))
     
     if self.isReadyToClearData:
@@ -115,8 +129,10 @@ class WidgetContextMenuHandler(AbstractContextMenuHandler):
   def showControls(self): self.callEvent(BUTTONS.SHOW_CONTROLS)
   def clearData(self): self.callEvent(BUTTONS.CLEAR_DATA)
   def remove(self): self.callEvent(BUTTONS.REMOVE)
-  def sendToTopLayer(self): self.callEvent(BUTTONS.SEND_TO_TOP_LAYER)
+  def sendToTopPlan(self): self.callEvent(BUTTONS.SEND_TO_TOP_PLAN)
   def positionSame(self): self.callEvent(BUTTONS.POSITION_SAME)
   def positionHangarBattle(self): self.callEvent(BUTTONS.POSITION_HANGAR_BATTLE)
   def positionHangarSniperArcade(self): self.callEvent(BUTTONS.POSITION_HANGAR_SNIPER_ARCADE)
+  def layerDefault(self): self.callEvent(BUTTONS.LAYER_DEFAULT)
+  def layerTop(self): self.callEvent(BUTTONS.LAYER_TOP)
     

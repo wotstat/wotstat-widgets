@@ -44,11 +44,14 @@ RU = {
   'context.clearData': 'Очистить данные',
   'context.clearData.apply': 'Подтвердить',
   'context.remove': 'Удалить виджет',
-  'context.sendToTopLayer': 'На передний план',
+  'context.sendToTopPlan': 'На передний план',
   'context.position': 'Позиция: %s',
   'context.position.same': 'Одинаковая везде',
   'context.position.hangarBattle': 'Ангар/Бой',
   'context.position.hangarSniperArcade': 'Ангар/Снайп./Аркад.',
+  'context.layer': 'Слой: %s',
+  'context.layer.default': 'Обычный',
+  'context.layer.top': 'Поверх всех',
 }
 
 EN = {
@@ -89,11 +92,14 @@ EN = {
   'context.clearData': 'Clear data',
   'context.clearData.apply': 'Confirm',
   'context.remove': 'Remove widget',
-  'context.sendToTopLayer': 'Bring to front',
+  'context.sendToTopPlan': 'Bring to front',
   'context.position': 'Position: %s',
   'context.position.same': 'Same everywhere',
   'context.position.hangarBattle': 'Hangar/Battle',
   'context.position.hangarSniperArcade': 'Hangar/Sniper/Arcade',
+  'context.layer': 'Layer: %s',
+  'context.layer.default': 'Default',
+  'context.layer.top': 'Top layer',
 }
 
 language = getClientLanguage()

@@ -22,7 +22,7 @@ from ..common.Logger import Logger
 from .CefServer import CefServer, server
 from .EventsManager import manager
 from .ChangeUrlWindow import show as showChangeUrlWindow
-from .WidgetStorage import WidgetStorage, POSITION_MODE
+from .WidgetStorage import LAYER, WidgetStorage, POSITION_MODE
 from .WidgetContextMenu import WidgetContextMenuHandler, BUTTONS as CE
 
 CEF_MAIN_VIEW = "WOTSTAT_CEF_MAIN_VIEW"
@@ -43,7 +43,6 @@ class MainView(View):
 
   def _populate(self):
     super(MainView, self)._populate()
-    logger.info("MainView populated")
     manager.createWidgetEvent += self._createWidget
     manager.changeUrlEvent += self._changeUrl
     server.onFrame += self._onFrame
@@ -85,13 +84,15 @@ class MainView(View):
       positionState = oppositeState if oppositeState.isTouched and not state.isTouched else state
       
       positionMode = widget.positionMode
+      layer = widget.layer
       
       x, y = widget.getPreferredPosition(lastLoadIsBattle, self.ctrlModeName)
       
       self._addWidget(widget.uuid, widget.wid, widget.url,
-                      positionState.width, positionState.height, 
+                      positionState.width, positionState.height,
                       x, y,
-                      widget.flags, state.isHidden, state.isLocked, state.isControlsAlwaysHidden, positionMode)
+                      widget.flags, state.isHidden, state.isLocked, state.isControlsAlwaysHidden,
+                      positionMode, layer)
       if state.isHidden:
         server.suspenseWidget(widget.wid)
       else:
@@ -119,7 +120,6 @@ class MainView(View):
     onStartGUI -= self._onStartGUI
     onControlModeChanged -= self._onControlModeChanged
 
-    logger.info("MainView disposed")
     super(MainView, self)._dispose()
 
   def _onKey(self, event):
@@ -181,8 +181,9 @@ class MainView(View):
     elif eventName == CE.CLEAR_DATA:
       server.sendWidgetCommand(wid, "CLEAR_DATA")
     
-    elif eventName == CE.SEND_TO_TOP_LAYER:
-      self._as_sendToTopLayer(wid)
+    elif eventName == CE.SEND_TO_TOP_PLAN:
+      self._as_sendToTopPlan(wid)
+      storage.sendToTopPlan(wid)
 
     elif eventName in [CE.POSITION_SAME, CE.POSITION_HANGAR_BATTLE, CE.POSITION_HANGAR_SNIPER_ARCADE]:
       currentPosition = storage.getWidgetByWid(wid).getPreferredPosition(lastLoadIsBattle, self.ctrlModeName)
@@ -209,6 +210,11 @@ class MainView(View):
           storage.updateWidget(wid, lastLoadIsBattle, artyPosition=currentPosition, strategicPosition=None, sniperPosition=None)
         else:
           storage.updateWidget(wid, lastLoadIsBattle, position=currentPosition, sniperPosition=None, artyPosition=None, strategicPosition=None)
+  
+    elif eventName in [CE.LAYER_DEFAULT, CE.LAYER_TOP]:
+      layer = LAYER.LAYER_DEFAULT if eventName == CE.LAYER_DEFAULT else LAYER.LAYER_TOP
+      storage.updateWidget(wid, lastLoadIsBattle, layer=layer)
+      self._as_setLayer(wid, layer)
   
     else:
       logger.error("Unknown context event: %s" % eventName)
@@ -265,10 +271,10 @@ class MainView(View):
                  width=100, height=100,
                  x=-1, y=-1, flags=0,
                  isHidden=False, isLocked=False,
-                 isControlsAlwaysHidden=False, positionMode=POSITION_MODE.NOT_SET):
+                 isControlsAlwaysHidden=False, positionMode=POSITION_MODE.NOT_SET, layer=LAYER.LAYER_DEFAULT):
     
     def create(wid):
-      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, lastLoadIsBattle, positionMode)
+      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, lastLoadIsBattle, positionMode, layer)
       
     if wid:
       create(wid)
@@ -281,6 +287,7 @@ class MainView(View):
 
     self._as_setResizeMode(wid, flags & CefServer.Flags.AUTO_HEIGHT == 0)
     self._as_setReadyToClearData(wid, not (flags & CefServer.Flags.READY_TO_CLEAR_DATA == 0))
+    self._as_setHangarOnly(wid, not (flags & CefServer.Flags.HANGAR_ONLY == 0))
 
   def _createWidget(self, url, width, height=-1):
     if not server.isReady:
@@ -292,6 +299,7 @@ class MainView(View):
     server.createNewWidget(wid, url, width, height)
     self._as_createWidget(wid, url, width, height, isInBattle=lastLoadIsBattle)
     self._as_setResizeMode(wid, True)
+    self._as_setHangarOnly(wid, False)
 
   def _changeUrl(self, wid, url):
     storage.updateWidget(wid, lastLoadIsBattle, url=url)
@@ -349,6 +357,7 @@ class MainView(View):
       if isChanged(CefServer.Flags.HANGAR_ONLY):
         flag = flags & CefServer.Flags.HANGAR_ONLY != 0
         logger.info("Hangar only changed: %s" % flag)
+        self._as_setHangarOnly(wid, flag)
       
   def setInterfaceScale(self, scale=None):
     if not scale:
@@ -359,17 +368,23 @@ class MainView(View):
     self.flashObject.as_onFrame(wid, width, height, data, shift)
 
   def _as_createWidget(self, wid, url, width, height, x=-1, y=-1,
-                       isHidden=False, isLocked=False, isControlsAlwaysHidden=False, isInBattle=False, positionMode=POSITION_MODE.NOT_SET):
-    self.flashObject.as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle, positionMode)
+                       isHidden=False, isLocked=False, isControlsAlwaysHidden=False, isInBattle=False, positionMode=POSITION_MODE.NOT_SET, layer=LAYER.LAYER_DEFAULT):
+    self.flashObject.as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle, positionMode, layer)
 
   def _as_setPositionMode(self, wid, mode):
     self.flashObject.as_setPositionMode(wid, mode)
+
+  def _as_setLayer(self, wid, layer):
+    self.flashObject.as_setLayer(wid, layer)
 
   def _as_setPosition(self, wid, x, y):
     self.flashObject.as_setPosition(wid, x, y)
 
   def _as_setResizeMode(self, wid, mode):
     self.flashObject.as_setResizeMode(wid, mode)
+    
+  def _as_setHangarOnly(self, wid, hangarOnly):
+    self.flashObject.as_setHangarOnly(wid, hangarOnly)
     
   def _as_setResizing(self, wid, enabled):
     self.flashObject.as_setResizing(wid, enabled)
@@ -383,8 +398,8 @@ class MainView(View):
   def _as_setControlsAlwaysHidden(self, wid, hidden):
     self.flashObject.as_setControlsAlwaysHidden(wid, hidden)
 
-  def _as_sendToTopLayer(self, wid):
-    self.flashObject.as_sendToTopLayer(wid)
+  def _as_sendToTopPlan(self, wid):
+    self.flashObject.as_sendToTopPlan(wid)
 
   def _as_setInterfaceScale(self, scale):
     self.flashObject.as_setInterfaceScale(scale)
@@ -429,7 +444,7 @@ def setup():
     CEF_MAIN_VIEW,
     MainView,
     "wotstat.widgets.swf",
-    WindowLayer.WINDOW,
+    WindowLayer.SERVICE_LAYOUT,
     None,
     ScopeTemplates.GLOBAL_SCOPE,
   )

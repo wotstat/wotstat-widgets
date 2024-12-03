@@ -249,6 +249,7 @@ class CefServer(object):
 
       line = output.decode('utf-8', errors='replace').strip()
       if not line: continue
+      if 'Third-party cookie will be blocked.' in line: continue
 
       if line.startswith('[LOG]'):
         line = line[5:]

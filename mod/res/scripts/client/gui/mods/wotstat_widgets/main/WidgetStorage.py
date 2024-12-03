@@ -25,6 +25,10 @@ class POSITION_MODE(object):
   SAME = 'SAME'
   HANGAR_BATTLE = 'HANGAR_BATTLE'
   HANGAR_SNIPER_ARCADE = 'HANGAR_SNIPER_ARCADE'
+  
+class LAYER(object):
+  LAYER_TOP = 'TOP'
+  LAYER_DEFAULT = 'DEFAULT'
 
 class WidgetInfo(object):
   
@@ -84,8 +88,10 @@ class WidgetInfo(object):
     self.url = ""
     self.hangar = WidgetInfo.PositionState()
     self.battle = WidgetInfo.PositionBattleState()
+    self.order = 0
     self.flags = 0
     self.positionMode = POSITION_MODE.NOT_SET
+    self.layer = LAYER.LAYER_DEFAULT
   
   def getPreferredPosition(self, battle, mode=None):
   # type: (bool, str) -> List[int]
@@ -120,8 +126,10 @@ class WidgetInfo(object):
       "uuid": self.uuid,
       "url": self.url,
       "positionMode": self.positionMode,
+      "layer": self.layer,
       "hangar": self.hangar.toDict(),
       "battle": self.battle.toDict(),
+      "order": self.order,
     }
   
   @staticmethod
@@ -131,6 +139,8 @@ class WidgetInfo(object):
     w.uuid = data["uuid"]
     w.url = data["url"]
     w.positionMode = data.get("positionMode", POSITION_MODE.NOT_SET)
+    w.layer = data.get("layer", LAYER.LAYER_DEFAULT)
+    w.order = data.get("order", 0)
     
     hangar = data.get("hangar", {})
     w.hangar.fromDict(hangar)
@@ -159,7 +169,7 @@ class WidgetStorage(Singleton):
     self._saveLoop()
   
   def getAllWidgets(self):
-    return self._widgets.values()
+    return sorted(self._widgets.values(), key=lambda x: x.order)
   
   def getWidgetByWid(self, wid):
     return self._widgetsByWid.get(wid, None)
@@ -188,6 +198,9 @@ class WidgetStorage(Singleton):
     
     self._widgets[uuid] = widget
     self._widgetsByWid[wid] = widget
+    
+    maxOrder = max([w.order for w in self._widgets.values()])
+    widget.order = maxOrder + 1
 
     self._isChanged = True
 
@@ -201,7 +214,7 @@ class WidgetStorage(Singleton):
 
     self._isChanged = True
       
-  def updateWidget(self, wid, fromBattle, url=UNDEFINED, positionMode=UNDEFINED,
+  def updateWidget(self, wid, fromBattle, url=UNDEFINED, positionMode=UNDEFINED, layer=UNDEFINED,
                    width=UNDEFINED, height=UNDEFINED,
                    position=UNDEFINED, sniperPosition=UNDEFINED, artyPosition=UNDEFINED, strategicPosition=UNDEFINED,
                    isHidden=UNDEFINED, isLocked=UNDEFINED, isControlsAlwaysHidden=UNDEFINED, flags=UNDEFINED):
@@ -216,7 +229,7 @@ class WidgetStorage(Singleton):
         elif fromBattle == False: target = widget.hangar
         
         if hasattr(target, param) and getattr(target, param) != value:
-          if param in ['width', 'height', 'position', 'sniperPosition', 'artyPosition', 'strategicPosition'] and not target.isTouched:
+          if fromBattle is not None and param in ['width', 'height', 'position', 'sniperPosition', 'artyPosition', 'strategicPosition'] and not target.isTouched:
             target.isTouched = True
             opposite = widget.hangar if fromBattle else widget.battle
             target.width = opposite.width
@@ -230,6 +243,7 @@ class WidgetStorage(Singleton):
     update("url", url, None)
     update("flags", flags, None)
     update("positionMode", positionMode, None)
+    update("layer", layer, None)
     update("width", width)
     update("height", height)
     update("position", position)
@@ -239,6 +253,15 @@ class WidgetStorage(Singleton):
     update("isHidden", isHidden)
     update("isLocked", isLocked)
     update("isControlsAlwaysHidden", isControlsAlwaysHidden)
+  
+  def sendToTopPlan(self, wid):
+    widget = self._widgetsByWid.get(wid, None)
+    if widget is None: return
+    
+    maxOrder = max([w.order for w in self._widgets.values()])
+    widget.order = maxOrder + 1
+    
+    self._isChanged = True
     
 
   def setWidgetWid(self, uuid, wid):
