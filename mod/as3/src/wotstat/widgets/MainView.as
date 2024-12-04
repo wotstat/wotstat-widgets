@@ -31,7 +31,6 @@ package wotstat.widgets {
     private var activeWidgetsByWid:Object = new Object();
 
     private var isInBattle:Boolean = false;
-    private var isGlobalVisible:Boolean = true;
 
     public function MainView() {
       super();
@@ -59,7 +58,7 @@ package wotstat.widgets {
               defaultLayerView = new Sprite();
               (viewContainer.getChildAt(i) as IView).addChild(defaultLayerView);
               isInBattle = true;
-              as_setGlobalVisible(false);
+              as_setGlobalVisible(false, LAYER.DEFAULT);
               setupWidgets();
             }
           }
@@ -110,7 +109,6 @@ package wotstat.widgets {
           defaultLayerView.addChild(widget);
 
         widget.isInBattle = isInBattle;
-        widget.visible = isGlobalVisible;
       }
       updateTopLayerInfo();
     }
@@ -224,7 +222,7 @@ package wotstat.widgets {
       widget.setPosition(x, y);
     }
 
-    public function as_setControlPressed(isPress:Boolean):void {
+    public function as_setControlsVisible(isPress:Boolean):void {
       if (!isInBattle)
         return;
 
@@ -233,10 +231,18 @@ package wotstat.widgets {
       }
     }
 
-    public function as_setGlobalVisible(visible:Boolean):void {
-      isGlobalVisible = visible;
-      for each (var widget:DraggableWidget in activeWidgets) {
-        widget.visible = visible;
+    public function as_setGlobalVisible(visible:Boolean, layer:String):void {
+      if (layer == LAYER.TOP && topLayerView)
+        topLayerView.visible = visible;
+      else if (layer == LAYER.DEFAULT && defaultLayerView)
+        defaultLayerView.visible = visible;
+      else if (layer == 'ALL') {
+        if (topLayerView)
+          topLayerView.visible = visible;
+
+        if (defaultLayerView)
+          defaultLayerView.visible = visible;
+
       }
     }
 

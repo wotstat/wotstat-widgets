@@ -104,7 +104,6 @@ package wotstat.widgets {
 
       _wid = wid;
       this.isInBattle = isInBattle;
-      allowInteraction = !isInBattle;
 
       addChild(content);
       content.addChild(loader);

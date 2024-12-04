@@ -8,7 +8,6 @@ from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from gui.shared import events, EVENT_BUS_SCOPE, g_eventBus
 from gui.shared.personality import ServicesLocator
 from gui.app_loader.settings import APP_NAME_SPACE
-from gui import InputHandler
 from frameworks.wulf import WindowLayer
 from helpers import dependency
 from skeletons.gui.impl import IGuiLoader
@@ -16,7 +15,6 @@ from skeletons.account_helpers.settings_core import ISettingsCore
 from Avatar import PlayerAvatar
 from AvatarInputHandler import AvatarInputHandler
 import struct
-import Keys
 
 from ..common.Logger import Logger
 from .CefServer import CefServer, server
@@ -34,7 +32,6 @@ lastLoadIsBattle = False
 
 class MainView(View):
   settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
-  controlPressed = False
   isOnSetupSubscribed = False
   ctrlModeName = None
 
@@ -48,12 +45,12 @@ class MainView(View):
     server.onFrame += self._onFrame
     server.onProcessError += self._onServerError
 
-    InputHandler.g_instance.onKeyDown += self._onKey
-    InputHandler.g_instance.onKeyUp += self._onKey
     WidgetContextMenuHandler.onEvent += self._onWidgetContextEvent
     g_eventBus.addListener(events.GameEvent.FULL_STATS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     g_eventBus.addListener(events.GameEvent.FULL_STATS_QUEST_PROGRESS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     g_eventBus.addListener(events.GameEvent.FULL_STATS_PERSONAL_RESERVES, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
+    g_eventBus.addListener(events.GameEvent.SHOW_CURSOR, self._handleCursorShow, scope=EVENT_BUS_SCOPE.GLOBAL)
+    g_eventBus.addListener(events.GameEvent.HIDE_CURSOR, self._handleCursorHide, scope=EVENT_BUS_SCOPE.GLOBAL)
     
     global onStartGUI, onControlModeChanged
     onStartGUI += self._onStartGUI
@@ -106,12 +103,12 @@ class MainView(View):
     server.onFrame -= self._onFrame
     self.settingsCore.interfaceScale.onScaleChanged -= self.setInterfaceScale
     
-    InputHandler.g_instance.onKeyDown -= self._onKey
-    InputHandler.g_instance.onKeyUp -= self._onKey
     WidgetContextMenuHandler.onEvent -= self._onWidgetContextEvent
     g_eventBus.removeListener(events.GameEvent.FULL_STATS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     g_eventBus.removeListener(events.GameEvent.FULL_STATS_QUEST_PROGRESS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     g_eventBus.removeListener(events.GameEvent.FULL_STATS_PERSONAL_RESERVES, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
+    g_eventBus.removeListener(events.GameEvent.SHOW_CURSOR, self._handleCursorShow, scope=EVENT_BUS_SCOPE.GLOBAL)
+    g_eventBus.removeListener(events.GameEvent.HIDE_CURSOR, self._handleCursorHide, scope=EVENT_BUS_SCOPE.GLOBAL)
     
     if self.isOnSetupSubscribed:
       server.onSetupComplete -= self.onSetupComplete
@@ -122,19 +119,17 @@ class MainView(View):
 
     super(MainView, self)._dispose()
 
-  def _onKey(self, event):
-    # type: (BigWorld.KeyEvent) -> None
-
-    if event.key in (Keys.KEY_LCONTROL, Keys.KEY_RCONTROL):
-      if self.controlPressed != event.isKeyDown():
-        self.controlPressed = event.isKeyDown()
-        self._as_setControlPressed(self.controlPressed)
+  def _handleCursorHide(self, event):
+    self._as_setControlsVisible(False)
+  
+  def _handleCursorShow(self, event):
+    self._as_setControlsVisible(True)
     
   def _handleToggleFullStats(self, event):
-    self._as_setGlobalVisible(not event.ctx.get('isDown', False))
+    self._as_setGlobalVisible(not event.ctx.get('isDown', False), LAYER.LAYER_DEFAULT)
     
   def _onStartGUI(self, *a, **k):
-    self._as_setGlobalVisible(True)
+    self._as_setGlobalVisible(True, 'ALL')
 
   def _onControlModeChanged(self, *a, **k):
     player = BigWorld.player()
@@ -427,11 +422,11 @@ class MainView(View):
   def _as_setInterfaceScale(self, scale):
     self.flashObject.as_setInterfaceScale(scale)
 
-  def _as_setControlPressed(self, pressed):
-    self.flashObject.as_setControlPressed(pressed)
+  def _as_setControlsVisible(self, pressed):
+    self.flashObject.as_setControlsVisible(pressed)
     
-  def _as_setGlobalVisible(self, visible):
-    self.flashObject.as_setGlobalVisible(visible)
+  def _as_setGlobalVisible(self, visible, layer):
+    self.flashObject.as_setGlobalVisible(visible, layer)
 
   def _as_closeWidget(self, wid):
     self.flashObject.as_closeWidget(wid)
