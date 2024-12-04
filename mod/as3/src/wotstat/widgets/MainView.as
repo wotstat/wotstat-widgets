@@ -6,13 +6,14 @@ package wotstat.widgets {
   import net.wg.infrastructure.managers.impl.ContainerManagerBase;
   import net.wg.data.constants.generated.LAYER_NAMES;
   import net.wg.gui.components.containers.MainViewContainer;
+  import net.wg.gui.battle.views.BaseBattlePage;
   import scaleform.clik.events.ResizeEvent;
   import flash.events.Event;
   import flash.utils.ByteArray;
-  import net.wg.gui.battle.views.BaseBattlePage;
   import flash.display.DisplayObject;
-  import wotstat.widgets.common.MoveEvent;
   import flash.display.Sprite;
+  import wotstat.widgets.common.MoveEvent;
+  import wotstat.widgets.common.LAYER;
 
   public class MainView extends AbstractView {
 
@@ -103,7 +104,7 @@ package wotstat.widgets {
 
     private function setupWidgets():void {
       for each (var widget:DraggableWidget in activeWidgets) {
-        if (widget.getLayer() == DraggableWidget.LAYER_TOP)
+        if (widget.getLayer() == LAYER.TOP)
           topLayerView.addChild(widget);
         else
           defaultLayerView.addChild(widget);
@@ -121,6 +122,24 @@ package wotstat.widgets {
 
       if (activeWidgets.length > 0) {
         activeWidgets[activeWidgets.length - 1].setTopPlan(true);
+      }
+    }
+
+    private function setWidgetLayer(widget:DraggableWidget, layer:String):void {
+      if (!defaultLayerView || !topLayerView)
+        return;
+
+      if (layer == LAYER.TOP) {
+        if (defaultLayerView.contains(widget))
+          defaultLayerView.removeChild(widget);
+        if (!topLayerView.contains(widget))
+          topLayerView.addChild(widget);
+      }
+      else {
+        if (topLayerView.contains(widget))
+          topLayerView.removeChild(widget);
+        if (!defaultLayerView.contains(widget))
+          defaultLayerView.addChild(widget);
       }
     }
 
@@ -231,7 +250,9 @@ package wotstat.widgets {
 
       activeWidgetsByWid[widget.wid] = null;
 
-      defaultLayerView.removeChild(widget);
+      if (widget.parent)
+        widget.parent.removeChild(widget);
+
       widget.dispose();
       widget.removeEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
       widget.removeEventListener(DraggableWidget.MOVE_WIDGET, onWidgetMove);
@@ -254,6 +275,13 @@ package wotstat.widgets {
       if (widget == null)
         return;
       widget.setLocked(locked);
+    }
+
+    public function as_setUnlimitedSize(wid:int, unlimited:Boolean):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+      if (widget == null)
+        return;
+      widget.setUnlimitedSize(unlimited);
     }
 
     public function as_setReadyToClearData(wid:int, enabled:Boolean):void {
@@ -298,18 +326,7 @@ package wotstat.widgets {
         return;
 
       widget.setLayer(mode);
-      if (mode == DraggableWidget.LAYER_TOP) {
-        if (defaultLayerView.contains(widget))
-          defaultLayerView.removeChild(widget);
-        if (!topLayerView.contains(widget))
-          topLayerView.addChild(widget);
-      }
-      else {
-        if (topLayerView.contains(widget))
-          topLayerView.removeChild(widget);
-        if (!defaultLayerView.contains(widget))
-          defaultLayerView.addChild(widget);
-      }
+      setWidgetLayer(widget, mode);
     }
 
     // widget events

@@ -119,8 +119,10 @@ class Widget(object):
   class Flags:
     AUTO_HEIGHT = 1 << 0
     READY_TO_CLEAR_DATA = 1 << 1
-    USE_SNIPER_MODE = 1 << 2 # Currently not used
+    USE_SNIPER_MODE = 1 << 2
     HANGAR_ONLY = 1 << 3
+    PREFERRED_TOP_LAYER = 1 << 4
+    UNLIMITED_SIZE = 1 << 5
   
 
   def __init__(self, url, browser, zoom, width, height, sendFrame):
@@ -129,6 +131,8 @@ class Widget(object):
     self.readyToClearData = False
     self.useSniperMode = False
     self.hangarOnly = False
+    self.preferredTopLayer = False
+    self.unlimitedSize = False
     self.lastBodyHeight = 0
     self.suspensed = False
     
@@ -192,6 +196,8 @@ class Widget(object):
     if self.readyToClearData: flags |= self.Flags.READY_TO_CLEAR_DATA
     if self.useSniperMode: flags |= self.Flags.USE_SNIPER_MODE
     if self.hangarOnly: flags |= self.Flags.HANGAR_ONLY
+    if self.preferredTopLayer: flags |= self.Flags.PREFERRED_TOP_LAYER
+    if self.unlimitedSize: flags |= self.Flags.UNLIMITED_SIZE
 
     return flags
   
@@ -225,6 +231,12 @@ class Widget(object):
     
     hangarOnly = flags.get('hangarOnly', None)
     if hangarOnly is not None: self.hangarOnly = hangarOnly
+    
+    preferredTopLayer = flags.get('preferredTopLayer', None)
+    if preferredTopLayer is not None: self.preferredTopLayer = preferredTopLayer
+    
+    unlimitedSize = flags.get('unlimitedSize', None)
+    if unlimitedSize is not None: self.unlimitedSize = unlimitedSize
     
     self.resizeByHeight()
     self.redraw()

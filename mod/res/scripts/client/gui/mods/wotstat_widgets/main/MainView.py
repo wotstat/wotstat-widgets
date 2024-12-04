@@ -271,7 +271,7 @@ class MainView(View):
                  width=100, height=100,
                  x=-1, y=-1, flags=0,
                  isHidden=False, isLocked=False,
-                 isControlsAlwaysHidden=False, positionMode=POSITION_MODE.NOT_SET, layer=LAYER.LAYER_DEFAULT):
+                 isControlsAlwaysHidden=False, positionMode=POSITION_MODE.NOT_SET, layer=LAYER.NOT_SET):
     
     def create(wid):
       self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, lastLoadIsBattle, positionMode, layer)
@@ -288,6 +288,10 @@ class MainView(View):
     self._as_setResizeMode(wid, flags & CefServer.Flags.AUTO_HEIGHT == 0)
     self._as_setReadyToClearData(wid, not (flags & CefServer.Flags.READY_TO_CLEAR_DATA == 0))
     self._as_setHangarOnly(wid, not (flags & CefServer.Flags.HANGAR_ONLY == 0))
+    self._as_setUnlimitedSize(wid, not (flags & CefServer.Flags.UNLIMITED_SIZE == 0))
+    
+    if layer == LAYER.NOT_SET:
+      self._as_setLayer(wid, LAYER.LAYER_DEFAULT if flags & CefServer.Flags.PREFERRED_TOP_LAYER == 0 else LAYER.LAYER_TOP)
 
   def _createWidget(self, url, width, height=-1):
     if not server.isReady:
@@ -358,6 +362,22 @@ class MainView(View):
         flag = flags & CefServer.Flags.HANGAR_ONLY != 0
         logger.info("Hangar only changed: %s" % flag)
         self._as_setHangarOnly(wid, flag)
+        
+      if isChanged(CefServer.Flags.PREFERRED_TOP_LAYER):
+        flag = flags & CefServer.Flags.PREFERRED_TOP_LAYER != 0
+        
+        widget = storage.getWidgetByWid(wid)
+        if widget and widget.layer == LAYER.NOT_SET:
+          layer = LAYER.LAYER_TOP if flag else LAYER.LAYER_DEFAULT
+          storage.updateWidget(wid, lastLoadIsBattle, layer=layer)
+          self._as_setLayer(wid, layer)
+          
+        logger.info("Preferred top layer changed: %s" % flag)
+        
+      if isChanged(CefServer.Flags.UNLIMITED_SIZE):
+        flag = flags & CefServer.Flags.UNLIMITED_SIZE != 0
+        logger.info("Unlimited size changed: %s" % flag)
+        self._as_setUnlimitedSize(wid, flag)
       
   def setInterfaceScale(self, scale=None):
     if not scale:
@@ -368,7 +388,7 @@ class MainView(View):
     self.flashObject.as_onFrame(wid, width, height, data, shift)
 
   def _as_createWidget(self, wid, url, width, height, x=-1, y=-1,
-                       isHidden=False, isLocked=False, isControlsAlwaysHidden=False, isInBattle=False, positionMode=POSITION_MODE.NOT_SET, layer=LAYER.LAYER_DEFAULT):
+                       isHidden=False, isLocked=False, isControlsAlwaysHidden=False, isInBattle=False, positionMode=POSITION_MODE.NOT_SET, layer=LAYER.NOT_SET):
     self.flashObject.as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle, positionMode, layer)
 
   def _as_setPositionMode(self, wid, mode):
@@ -391,6 +411,9 @@ class MainView(View):
     
   def _as_setLocked(self, wid, locked):
     self.flashObject.as_setLocked(wid, locked)
+    
+  def _as_setUnlimitedSize(self, wid, unlimited):
+    self.flashObject.as_setUnlimitedSize(wid, unlimited)
     
   def _as_setReadyToClearData(self, wid, ready):
     self.flashObject.as_setReadyToClearData(wid, ready)

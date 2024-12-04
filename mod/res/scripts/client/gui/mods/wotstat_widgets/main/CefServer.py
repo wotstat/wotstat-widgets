@@ -64,6 +64,8 @@ class CefServer(object):
     READY_TO_CLEAR_DATA = 1 << 1
     USE_SNIPER_MODE = 1 << 2
     HANGAR_ONLY = 1 << 3
+    PREFERRED_TOP_LAYER = 1 << 4
+    UNLIMITED_SIZE = 1 << 5
 
   killNow = threading.Event()
   socket = None

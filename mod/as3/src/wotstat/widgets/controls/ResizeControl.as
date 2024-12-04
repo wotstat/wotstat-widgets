@@ -20,6 +20,7 @@ package wotstat.widgets.controls {
     private const MIN_WIDTH:int = 60;
 
     private var _active:Boolean = false;
+    private var _unlimitedSize:Boolean = false;
 
     private var verticalControl:Sprite = new Sprite();
     private var verticalHitArea:Sprite = new Sprite();
@@ -54,6 +55,14 @@ package wotstat.widgets.controls {
       _fullResize = value;
       verticalControl.visible = !_fullResize;
       fullControl.visible = _fullResize;
+    }
+
+    public function get unlimitedSize():Boolean {
+      return _unlimitedSize;
+    }
+
+    public function set unlimitedSize(value:Boolean):void {
+      _unlimitedSize = value;
     }
 
     public function get contentWidth():Number {
@@ -154,10 +163,15 @@ package wotstat.widgets.controls {
       }
 
       isDragging = true;
-      if (_fullResize)
+
+      if (_fullResize && !_unlimitedSize)
         fullControl.startDrag(true, new Rectangle(MIN_WIDTH, 50, 500, 500));
-      else
+      else if (!_fullResize && !_unlimitedSize)
         verticalControl.startDrag(true, new Rectangle(MIN_WIDTH - CONTROL_WIDTH / 2 + 1, verticalControl.y, MAX_WIDTH - MIN_WIDTH, 0));
+      else if (_fullResize && _unlimitedSize)
+        fullControl.startDrag(true, new Rectangle(0, 0, App.appWidth, App.appHeight));
+      else if (!_fullResize && _unlimitedSize)
+        verticalControl.startDrag(true, new Rectangle(MIN_WIDTH - CONTROL_WIDTH / 2 + 1, verticalControl.y, App.appWidth, 0));
     }
 
     private function onMouseUpHandler():void {
@@ -196,7 +210,10 @@ package wotstat.widgets.controls {
         if (!_fullResize) {
           verticalControl.stopDrag();
           verticalControl.y = _contentHeight / 2 - controlHeight / 2;
-          verticalControl.startDrag(true, new Rectangle(MIN_WIDTH - CONTROL_WIDTH / 2 + 1, verticalControl.y, MAX_WIDTH - MIN_WIDTH, 0));
+          if (!_unlimitedSize)
+            verticalControl.startDrag(true, new Rectangle(MIN_WIDTH - CONTROL_WIDTH / 2 + 1, verticalControl.y, MAX_WIDTH - MIN_WIDTH, 0));
+          else
+            verticalControl.startDrag(true, new Rectangle(MIN_WIDTH - CONTROL_WIDTH / 2 + 1, verticalControl.y, App.appWidth, 0));
         }
       }
       else {

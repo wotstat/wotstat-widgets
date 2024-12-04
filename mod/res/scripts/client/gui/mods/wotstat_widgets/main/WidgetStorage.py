@@ -27,6 +27,7 @@ class POSITION_MODE(object):
   HANGAR_SNIPER_ARCADE = 'HANGAR_SNIPER_ARCADE'
   
 class LAYER(object):
+  NOT_SET = 'NOT_SET'
   LAYER_TOP = 'TOP'
   LAYER_DEFAULT = 'DEFAULT'
 
@@ -91,7 +92,7 @@ class WidgetInfo(object):
     self.order = 0
     self.flags = 0
     self.positionMode = POSITION_MODE.NOT_SET
-    self.layer = LAYER.LAYER_DEFAULT
+    self.layer = LAYER.NOT_SET
   
   def getPreferredPosition(self, battle, mode=None):
   # type: (bool, str) -> List[int]
@@ -139,7 +140,7 @@ class WidgetInfo(object):
     w.uuid = data["uuid"]
     w.url = data["url"]
     w.positionMode = data.get("positionMode", POSITION_MODE.NOT_SET)
-    w.layer = data.get("layer", LAYER.LAYER_DEFAULT)
+    w.layer = data.get("layer", LAYER.NOT_SET)
     w.order = data.get("order", 0)
     
     hangar = data.get("hangar", {})

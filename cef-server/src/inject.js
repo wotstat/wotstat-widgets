@@ -49,6 +49,8 @@ function wotstatWidgetSetup() {
         readyToClearData: getMeta('ready-to-clear-data', false, t => t !== 'false'),
         useSniperMode: getMeta('use-sniper-mode', false, t => t !== 'false'),
         hangarOnly: getMeta('hangar-only', false, t => t !== 'false'),
+        preferredTopLayer: getMeta('preferred-top-layer', false, t => t !== 'false'),
+        unlimitedSize: getMeta('unlimited-size', false, t => t !== 'false'),
       })
     }
 

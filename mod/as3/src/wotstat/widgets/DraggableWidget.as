@@ -1,3 +1,10 @@
+class HANGAR_INSETS {
+  public static const TOP:int = 53;
+  public static const BOTTOM:int = 37;
+  public static const LEFT:int = 0;
+  public static const RIGHT:int = 0;
+}
+
 package wotstat.widgets {
 
   import flash.display.Sprite;
@@ -16,9 +23,12 @@ package wotstat.widgets {
   import flash.display.Graphics;
   import flash.display.Bitmap;
   import flash.display.PixelSnapping;
-  import wotstat.widgets.common.MoveEvent;
-  import wotstat.widgets.controls.Points;
   import flash.display.DisplayObject;
+  import wotstat.widgets.common.MoveEvent;
+  import wotstat.widgets.common.POSITION_MODE;
+  import wotstat.widgets.common.LAYER;
+  import wotstat.widgets.controls.Points;
+
 
   public class DraggableWidget extends Sprite {
     public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";
@@ -28,16 +38,7 @@ package wotstat.widgets {
     public static const HIDE_WIDGET:String = "HIDE_WIDGET";
     public static const SHOW_WIDGET:String = "SHOW_WIDGET";
 
-    public static const POSITION_MODE_SAME:String = "SAME";
-    public static const POSITION_MODE_HANGAR_BATTLE:String = "HANGAR_BATTLE";
-    public static const POSITION_MODE_HANGAR_SNIPER_ARCADE:String = "HANGAR_SNIPER_ARCADE";
-
-    public static const LAYER_TOP:String = "TOP";
-    public static const LAYER_DEFAULT:String = "DEFAULT";
-
-    private const HANGAR_TOP_OFFSET:int = 0;
-    private const HANGAR_BOTTOM_OFFSET:int = 90;
-    private const HANGAR_HEADER_MINIFIED_HEIGHT:int = 35;
+    private const HANGAR_HEADER_HEIGHT:int = 35;
 
     private var _wid:int = 0;
 
@@ -61,11 +62,12 @@ package wotstat.widgets {
     private var isControlsAlwaysHidden:Boolean = false;
     private var isTopPlan:Boolean = false;
     private var hangarOnly:Boolean = false;
-    private var layer:String = DraggableWidget.LAYER_DEFAULT;
-    private var positionMode:String = DraggableWidget.POSITION_MODE_SAME;
+    private var layer:String = LAYER.DEFAULT;
+    private var positionMode:String = POSITION_MODE.SAME;
+    private var unlimitedSize:Boolean = false;
     private var _isLocked:Boolean = false;
 
-    // CONTENT == Browser Image in readl PIXELS
+    // CONTENT == Browser Image in real PIXELS
     private var contentWidth:Number = 0;
     private var contentHeight:Number = 0;
     private var content:Sprite = new Sprite();
@@ -122,8 +124,9 @@ package wotstat.widgets {
       if (height > 0)
         targetHeight = height / App.appScale;
 
-      this.x = x >= 0 ? x : (App.appWidth - targetWidth) / 2;
-      this.y = y >= 0 ? y : (App.appHeight - height / App.appScale - 100) / 2;
+      var localPosition:Point = globalToLocalPosition(x, y);
+      this.x = x >= 0 ? localPosition.x : (App.appWidth - targetWidth) / 2;
+      this.y = y >= 0 ? localPosition.y : (App.appHeight - height / App.appScale - 100) / 2;
       contentWidth = width;
       contentHeight = height;
 
@@ -233,6 +236,11 @@ package wotstat.widgets {
       updateButtonsVisibility();
     }
 
+    public function setUnlimitedSize(value:Boolean):void {
+      this.unlimitedSize = value;
+      resizeControl.unlimitedSize = value;
+    }
+
     public function setReadyToClearData(value:Boolean):void {
       isReadyToClearData = value;
     }
@@ -248,7 +256,15 @@ package wotstat.widgets {
     }
 
     public function setLayer(value:String):void {
+      var global:Point = globalPosition();
+
       layer = value;
+
+      var localPosition:Point = globalToLocalPosition(global.x, global.y);
+      x = localPosition.x;
+      y = localPosition.y;
+
+      fixPosition();
     }
 
     public function getLayer():String {
@@ -285,38 +301,36 @@ package wotstat.widgets {
     }
 
     private function getDraggingRectangle(full:Boolean, battle:Boolean = false):Rectangle {
+
+      var isTopLayer:Boolean = layer == LAYER.TOP;
+      var controlOffset:int = controlPanel.height + 2;
+      var right:Number = App.appWidth - content.width;
+      var bottom:Number = App.appHeight - content.height;
+      var cRight:Number = App.appWidth - controlPanel.height;
+      var cBottom:Number = App.appHeight - controlPanel.height;
+
+      if (full && isTopLayer)
+        return new Rectangle(0, 0, right, bottom);
+
+      if (!full && isTopLayer)
+        return new Rectangle(0, controlOffset, cRight, cBottom);
+
       if (full && !battle)
-        return new Rectangle(
-            0,
-            HANGAR_TOP_OFFSET,
-            App.appWidth - content.width,
-            App.appHeight - content.height - HANGAR_TOP_OFFSET - HANGAR_BOTTOM_OFFSET
-          );
+        return new Rectangle(0, 0, right, bottom - HANGAR_INSETS.BOTTOM - HANGAR_INSETS.TOP);
 
       if (!full && !battle)
         return new Rectangle(
             0,
-            HANGAR_TOP_OFFSET + HANGAR_HEADER_MINIFIED_HEIGHT + controlPanel.height + 2,
-            App.appWidth - controlPanel.height,
-            App.appHeight - controlPanel.height - HANGAR_TOP_OFFSET - HANGAR_HEADER_MINIFIED_HEIGHT - HANGAR_BOTTOM_OFFSET
+            HANGAR_HEADER_HEIGHT + controlOffset,
+            cRight,
+            cBottom - HANGAR_HEADER_HEIGHT - HANGAR_INSETS.BOTTOM - HANGAR_INSETS.TOP
           );
 
       if (full && battle)
-        return new Rectangle(
-            0,
-            0,
-            App.appWidth - content.width,
-            App.appHeight - content.height
-          );
-
+        return new Rectangle(0, 0, right, bottom);
 
       if (!full && battle)
-        return new Rectangle(
-            0,
-            controlPanel.height + 2,
-            App.appWidth - controlPanel.height,
-            App.appHeight - controlPanel.height
-          );
+        return new Rectangle(0, controlOffset, cRight, cBottom);
 
       return new Rectangle(0, 0, App.appWidth, App.appHeight);
     }
@@ -417,7 +431,9 @@ package wotstat.widgets {
 
       isDragging = false;
       stopDrag();
-      dispatchEvent(new MoveEvent(MOVE_WIDGET, x, y));
+
+      var position:Point = globalPosition();
+      dispatchEvent(new MoveEvent(MOVE_WIDGET, position.x, position.y));
     }
 
     private function onHideShowButtonMouseDown(event:MouseEvent):void {
@@ -473,6 +489,28 @@ package wotstat.widgets {
       resizeControl.contentHeight = targetHeight >= 0 ? targetHeight : targetWidth * contentHeight / contentWidth;
 
       dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, targetHeight * App.appScale));
+    }
+
+    private function globalPosition():Point {
+      var position:Point = new Point(x, y);
+
+      if (layer == LAYER.DEFAULT && !isInBattle) {
+        position.x += HANGAR_INSETS.LEFT;
+        position.y += HANGAR_INSETS.TOP;
+      }
+
+      return position;
+    }
+
+    private function globalToLocalPosition(x:Number, y:Number):Point {
+      var position:Point = new Point(x, y);
+
+      if (layer == LAYER.DEFAULT && !isInBattle) {
+        position.x -= HANGAR_INSETS.LEFT;
+        position.y -= HANGAR_INSETS.TOP;
+      }
+
+      return position;
     }
 
     private function fixPosition():void {
