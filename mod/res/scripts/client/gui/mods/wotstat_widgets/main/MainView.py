@@ -1,4 +1,5 @@
 import BigWorld
+import struct
 from Event import Event
 from aih_constants import CTRL_MODE_NAME
 from gui.Scaleform.framework import g_entitiesFactories, ScopeTemplates, ViewSettings
@@ -14,7 +15,7 @@ from skeletons.gui.impl import IGuiLoader
 from skeletons.account_helpers.settings_core import ISettingsCore
 from Avatar import PlayerAvatar
 from AvatarInputHandler import AvatarInputHandler
-import struct
+from typing import Tuple
 
 from ..common.Logger import Logger
 from .CefServer import CefServer, server
@@ -319,8 +320,8 @@ class MainView(View):
 
     return (4 - mod if mod > 0 else 0, list(intArray))
   
-  def _onFrame(self, wid, flags, width, height, length, data):
-    # type: (int, int, int, int, int, bytes) -> None
+  def _onFrame(self, wid, flags, insets, width, height, length, data):
+    # type: (int, int, Tuple[float, float, float, float], int, int, int, bytes) -> None
 
     (shift, int_array) = self.bytesToIntArray(data)
     self._as_onFrame(wid, width, height, int_array, shift)
@@ -374,6 +375,12 @@ class MainView(View):
         logger.info("Unlimited size changed: %s" % flag)
         self._as_setUnlimitedSize(wid, flag)
       
+    oldInsets = storage.getWidgetInsets(wid)
+    if oldInsets != insets:
+      storage.updateWidget(wid, lastLoadIsBattle, insets=insets)
+      top, right, bottom, left = insets
+      self._as_setInsets(wid, top, right, bottom, left)
+      
   def setInterfaceScale(self, scale=None):
     if not scale:
       scale = self.settingsCore.interfaceScale.get()
@@ -409,7 +416,10 @@ class MainView(View):
     
   def _as_setUnlimitedSize(self, wid, unlimited):
     self.flashObject.as_setUnlimitedSize(wid, unlimited)
-    
+  
+  def _as_setInsets(self, wid, top, right, bottom, left):
+    self.flashObject.as_setInsets(wid, top, right, bottom, left)
+  
   def _as_setReadyToClearData(self, wid, ready):
     self.flashObject.as_setReadyToClearData(wid, ready)
 
@@ -474,7 +484,6 @@ def setup():
     logger.info("App initialized: %s" % event.ns)
 
     if event.ns == APP_NAME_SPACE.SF_LOBBY:
-      logger.info("SF_LOBBY initialized")
 
       app = ServicesLocator.appLoader.getApp(event.ns) # type: AppEntry
       if not app:
@@ -488,7 +497,6 @@ def setup():
       app.loadView(SFViewLoadParams(CEF_MAIN_VIEW, parent=parent))
 
     elif event.ns == APP_NAME_SPACE.SF_BATTLE:
-      logger.info("SF_BATTLE initialized")
 
       app = ServicesLocator.appLoader.getApp(event.ns) # type: AppEntry
       if not app:

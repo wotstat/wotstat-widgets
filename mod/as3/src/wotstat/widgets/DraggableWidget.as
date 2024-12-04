@@ -65,6 +65,12 @@ package wotstat.widgets {
     private var layer:String = LAYER.DEFAULT;
     private var positionMode:String = POSITION_MODE.SAME;
     private var unlimitedSize:Boolean = false;
+    private var insets:Object = {
+        'top': 0,
+        'right': 0,
+        'bottom': 0,
+        'left': 0
+      };
     private var _isLocked:Boolean = false;
 
     // CONTENT == Browser Image in real PIXELS
@@ -144,6 +150,7 @@ package wotstat.widgets {
       hideShowBtn.addEventListener(MouseEvent.MOUSE_DOWN, onHideShowButtonMouseDown);
 
       updateImageScale();
+      updateImagePosition();
 
       setHidden(isHidden);
       setLocked(isLocked);
@@ -238,6 +245,16 @@ package wotstat.widgets {
     public function setUnlimitedSize(value:Boolean):void {
       this.unlimitedSize = value;
       resizeControl.unlimitedSize = value;
+    }
+
+    public function setInsets(top:Number, right:Number, bottom:Number, left:Number):void {
+      this.insets = {
+          'left': left,
+          'top': top,
+          'right': right,
+          'bottom': bottom
+        };
+      updateImagePosition();
     }
 
     public function setReadyToClearData(value:Boolean):void {
@@ -533,6 +550,11 @@ package wotstat.widgets {
         isDragging = false;
       }
       fixPosition();
+    }
+
+    private function updateImagePosition():void {
+      // loader.x = -insets.left;
+      // loader.y = -insets.top;
     }
 
     private function updateImageScale():void {

@@ -290,6 +290,13 @@ package wotstat.widgets {
       widget.setUnlimitedSize(unlimited);
     }
 
+    public function as_setInsets(wid:int, top:Number, right:Number, bottom:Number, left:Number):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+      if (widget == null)
+        return;
+      widget.setInsets(top, right, bottom, left);
+    }
+
     public function as_setReadyToClearData(wid:int, enabled:Boolean):void {
       var widget:DraggableWidget = activeWidgetsByWid[wid];
       if (widget == null)

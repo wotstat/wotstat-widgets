@@ -109,8 +109,7 @@ class ClientHandler(object):
       frameBuffer = bytearray(frameBuffer)
       frameBuffer = unpremultiply_rgba(frameBuffer)
       pngBuffer = bufferToPng(frameBuffer, width, height)
-      self.widget.sendFrame(self.widget.getFlags(), width, height, pngBuffer)
-
+      self.widget.sendFrame(self.widget.getFlags(), self.widget.insets, width, height, pngBuffer)
     else:
       log("Invalid frame size: %s, %s" % (width, height), 'ERROR')
 
@@ -133,6 +132,7 @@ class Widget(object):
     self.hangarOnly = False
     self.preferredTopLayer = False
     self.unlimitedSize = False
+    self.insets = [0, 0, 0, 0]
     self.lastBodyHeight = 0
     self.suspensed = False
     
@@ -238,6 +238,9 @@ class Widget(object):
     unlimitedSize = flags.get('unlimitedSize', None)
     if unlimitedSize is not None: self.unlimitedSize = unlimitedSize
     
+    insets = flags.get('insets', None)
+    if insets is not None: self.insets = insets
+    
     self.resizeByHeight()
     self.redraw()
     self.browser.WasResized()
@@ -299,14 +302,15 @@ class CEFServer(object):
     
     log("Server closed on %s:%s" % (str(self.host), str(self.port)))
 
-  def sendFrame(self, wid, flags, width, height, frameBytes):
+  def sendFrame(self, wid, flags, insets, width, height, frameBytes):
     widBytes = struct.pack('!I', wid)
     flagsBytes = struct.pack('!I', flags)
+    insetsBytes = struct.pack('!4f', *insets)
     widthBytes = struct.pack('!I', width)
     heightBytes = struct.pack('!I', height)
     frameLength = struct.pack('!I', len(frameBytes))
 
-    frame = widBytes + flagsBytes + widthBytes + heightBytes + frameLength + frameBytes
+    frame = widBytes + flagsBytes + insetsBytes + widthBytes + heightBytes + frameLength + frameBytes
     if self.connected and self.client_socket:
       try:
         self.client_socket.sendall(frame)

@@ -302,6 +302,9 @@ class CefServer(object):
 
     flags_bytes = sock.recv(4)
     if not flags_bytes: return None
+    
+    insets_bytes = sock.recv(4 * 4)
+    if not insets_bytes: return None
 
     width_bytes = sock.recv(4)
     if not width_bytes: return None
@@ -314,6 +317,7 @@ class CefServer(object):
     
     wid = struct.unpack('!I', wid_bytes)[0]
     flags = struct.unpack('!I', flags_bytes)[0]
+    insets = struct.unpack('!4f', insets_bytes)
     width = struct.unpack('!I', width_bytes)[0]
     height = struct.unpack('!I', height_bytes)[0]
     length = struct.unpack('!I', length_bytes)[0]
@@ -330,7 +334,7 @@ class CefServer(object):
     
     if not data: return None
 
-    return wid, flags, width, height, length, data
+    return wid, flags, insets, width, height, length, data
 
   def _socketReceiverLoop(self, sock, queue):
     # type: (socket.socket, Queue) -> None
@@ -353,13 +357,13 @@ class CefServer(object):
     newFrames = {}
 
     while not self.queue.empty():
-      wid, flags, width, height, length, data = self.queue.get()
-      newFrames[wid] = (flags, width, height, length, data)
+      wid, flags, insets, width, height, length, data = self.queue.get()
+      newFrames[wid] = (flags, insets, width, height, length, data)
       
     for wid, frame in newFrames.items():
-      flags, width, height, length, data = frame
+      flags, insets, width, height, length, data = frame
       if data:
-        self.onFrame(wid, flags, width, height, length, data)
+        self.onFrame(wid, flags, insets, width, height, length, data)
 
 
 server = CefServer()

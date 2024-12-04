@@ -44,6 +44,20 @@ function wotstatWidgetSetup() {
       const metaMap = new Map(wotstatMeta)
       const getMeta = (key, defaultValue, proc) => proc && metaMap.get(key) ? proc(metaMap.get(key)) : (metaMap.get(key) ?? defaultValue)
 
+
+      let insets = [0, 0, 0, 0]
+      try {
+        insets = getMeta('insets', [0, 0, 0, 0], t => t.split(',').map(e => parseFloat(e)))
+        if (insets.length == 0) insets = [0, 0, 0, 0]
+        if (insets.length == 1) insets = new Array(4).fill(insets[0])
+        if (insets.length == 2) insets = [insets[0], insets[1], insets[0], insets[1]]
+        if (insets.length == 3) insets = [insets[0], insets[1], insets[2], insets[1]]
+        if (insets.length != 4) throw new Error('Invalid insets length')
+      } catch (error) {
+        console.warn('Failed to parse insets', error)
+        insets = [0, 0, 0, 0]
+      }
+
       wotstatWidgetOnFeatureFlagsChangeWrapper({
         autoHeight: getMeta('auto-height', false, t => t !== 'false'),
         readyToClearData: getMeta('ready-to-clear-data', false, t => t !== 'false'),
@@ -51,6 +65,7 @@ function wotstatWidgetSetup() {
         hangarOnly: getMeta('hangar-only', false, t => t !== 'false'),
         preferredTopLayer: getMeta('preferred-top-layer', false, t => t !== 'false'),
         unlimitedSize: getMeta('unlimited-size', false, t => t !== 'false'),
+        insets
       })
     }
 

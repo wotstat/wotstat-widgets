@@ -91,6 +91,7 @@ class WidgetInfo(object):
     self.battle = WidgetInfo.PositionBattleState()
     self.order = 0
     self.flags = 0
+    self.insets = (0, 0, 0, 0)
     self.positionMode = POSITION_MODE.NOT_SET
     self.layer = LAYER.NOT_SET
   
@@ -218,7 +219,7 @@ class WidgetStorage(Singleton):
   def updateWidget(self, wid, fromBattle, url=UNDEFINED, positionMode=UNDEFINED, layer=UNDEFINED,
                    width=UNDEFINED, height=UNDEFINED,
                    position=UNDEFINED, sniperPosition=UNDEFINED, artyPosition=UNDEFINED, strategicPosition=UNDEFINED,
-                   isHidden=UNDEFINED, isLocked=UNDEFINED, isControlsAlwaysHidden=UNDEFINED, flags=UNDEFINED):
+                   isHidden=UNDEFINED, isLocked=UNDEFINED, isControlsAlwaysHidden=UNDEFINED, flags=UNDEFINED, insets=UNDEFINED):
     widget = self._widgetsByWid.get(wid, None)
     if widget is None: return
 
@@ -243,6 +244,7 @@ class WidgetStorage(Singleton):
     if widget.positionMode == POSITION_MODE.SAME: update("position", position, False)
     update("url", url, None)
     update("flags", flags, None)
+    update("insets", insets, None)
     update("positionMode", positionMode, None)
     update("layer", layer, None)
     update("width", width)
@@ -280,6 +282,12 @@ class WidgetStorage(Singleton):
     if widget is None: return None
 
     return widget.flags
+
+  def getWidgetInsets(self, wid):
+    widget = self._widgetsByWid.get(wid, None)
+    if widget is None: return None
+
+    return widget.insets
 
   def getPositionMode(self, wid):
     widget = self._widgetsByWid.get(wid, None)
