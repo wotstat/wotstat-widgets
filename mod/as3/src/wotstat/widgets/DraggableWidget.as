@@ -32,6 +32,7 @@ package wotstat.widgets {
 
   public class DraggableWidget extends Sprite {
     public static const REQUEST_RESIZE:String = "REQUEST_RESIZE";
+    public static const REQUEST_RESOLUTION:String = "REQUEST_RESOLUTION";
     public static const MOVE_WIDGET:String = "MOVE_WIDGET";
     public static const LOCK_WIDGET:String = "LOCK_WIDGET";
     public static const UNLOCK_WIDGET:String = "UNLOCK_WIDGET";
@@ -78,8 +79,29 @@ package wotstat.widgets {
     private var contentHeight:Number = 0;
     private var content:Sprite = new Sprite();
     private var loader:Loader = new Loader();
+    private var dragArea:Sprite = new Sprite();
 
     public var isInBattle:Boolean = false;
+
+    private function get insetsWidth():Number {
+      return (100 + insets.left + insets.right) / 100.0;
+    }
+
+    private function get insetsHeight():Number {
+      return (100 + insets.top + insets.bottom) / 100.0;
+    }
+
+    private function get targetContentWidth():Number {
+      if (targetWidth < 0)
+        return Math.round(targetWidth * App.appScale);
+      return Math.round(targetWidth * App.appScale * insetsWidth);
+    }
+
+    private function get targetContentHeight():Number {
+      if (targetHeight < 0)
+        return Math.round(targetHeight * App.appScale);
+      return Math.round(targetHeight * App.appScale * insetsHeight);
+    }
 
     public function get wid():int {
       return _wid;
@@ -111,6 +133,7 @@ package wotstat.widgets {
       _wid = wid;
       this.isInBattle = isInBattle;
 
+      addChild(dragArea);
       addChild(content);
       content.addChild(loader);
 
@@ -123,15 +146,21 @@ package wotstat.widgets {
 
       addChild(controlPanel);
       controlPanel.y = -controlPanel.height - 3;
-      hitArea = controlPanel;
 
-      targetWidth = width / App.appScale;
+      var hitAreaSprite:Sprite = new Sprite();
+      addChild(hitAreaSprite);
+      hitArea = hitAreaSprite;
+
+      content.mouseEnabled = false;
+      content.mouseChildren = false;
+
+      targetWidth = width;
       if (height > 0)
-        targetHeight = height / App.appScale;
+        targetHeight = height;
 
       var localPosition:Point = globalToLocalPosition(x, y);
-      this.x = x >= 0 ? localPosition.x : (App.appWidth - targetWidth) / 2;
-      this.y = y >= 0 ? localPosition.y : (App.appHeight - height / App.appScale - 100) / 2;
+      this.x = x >= 0 ? localPosition.x : (App.appWidth - width) / 2;
+      this.y = y >= 0 ? localPosition.y : (App.appHeight - height - 100) / 2;
       contentWidth = width;
       contentHeight = height;
 
@@ -139,7 +168,7 @@ package wotstat.widgets {
 
       fixPosition();
 
-      content.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+      dragArea.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
       App.instance.addEventListener(MouseEvent.MOUSE_DOWN, onAppMouseDown);
       App.instance.addEventListener(MouseEvent.MOUSE_UP, onAppMouseUp);
       App.instance.addEventListener(MouseEvent.MOUSE_MOVE, onAppMouseMove);
@@ -159,7 +188,7 @@ package wotstat.widgets {
     }
 
     public function dispose():void {
-      content.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+      dragArea.removeEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
       App.instance.removeEventListener(MouseEvent.MOUSE_DOWN, onAppMouseDown);
       App.instance.removeEventListener(MouseEvent.MOUSE_UP, onAppMouseUp);
       App.instance.removeEventListener(MouseEvent.MOUSE_MOVE, onAppMouseMove);
@@ -177,8 +206,8 @@ package wotstat.widgets {
 
     public function setFrame(width:uint, height:uint, data:ByteArray):void {
 
-      if (width != targetWidth * App.appScale && !resizeControl.isResizing) {
-        trace("[DW] Skip frame with width " + width + "!=" + targetWidth * App.appScale);
+      if (width != targetContentWidth && !resizeControl.isResizing) {
+        trace("[DW] Skip frame with width " + width + "!=" + targetContentWidth);
         return;
       }
 
@@ -218,7 +247,8 @@ package wotstat.widgets {
       updateImageScale();
       updateResizeControl();
       fixPosition();
-      dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, targetHeight * App.appScale));
+      dispatchEvent(new ResizeEvent(REQUEST_RESOLUTION, targetContentWidth, targetContentHeight));
+      dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth, targetHeight));
     }
 
     public function setResizing(enabled:Boolean):void {
@@ -237,8 +267,7 @@ package wotstat.widgets {
 
       setResizing(false);
       lockBtn.state = isLocked ? 1 : 0;
-      content.mouseEnabled = !_isLocked;
-      content.mouseChildren = !_isLocked;
+      dragArea.mouseEnabled = !_isLocked;
       updateButtonsVisibility();
     }
 
@@ -254,7 +283,8 @@ package wotstat.widgets {
           'right': right,
           'bottom': bottom
         };
-      updateImagePosition();
+
+      dispatchEvent(new ResizeEvent(REQUEST_RESOLUTION, targetContentWidth, targetContentHeight));
     }
 
     public function setReadyToClearData(value:Boolean):void {
@@ -304,6 +334,7 @@ package wotstat.widgets {
       isContentHidden = value;
       hideShowBtn.isShow = !value;
       content.visible = !value;
+      dragArea.visible = !value;
 
       setResizing(false);
       setControlsAlwaysHidden(false);
@@ -320,8 +351,8 @@ package wotstat.widgets {
 
       var isTopLayer:Boolean = layer == LAYER.TOP;
       var controlOffset:int = controlPanel.height + 2;
-      var right:Number = App.appWidth - content.width;
-      var bottom:Number = App.appHeight - content.height;
+      var right:Number = App.appWidth - dragArea.width;
+      var bottom:Number = App.appHeight - dragArea.height;
       var cRight:Number = App.appWidth - controlPanel.height;
       var cBottom:Number = App.appHeight - controlPanel.height;
 
@@ -394,7 +425,7 @@ package wotstat.widgets {
 
       var stageX:Number = event.stageX / App.appScale;
       var stageY:Number = event.stageY / App.appScale;
-      if (!content.getBounds(App.instance.stage).contains(stageX, stageY))
+      if (!dragArea.getBounds(App.instance.stage).contains(stageX, stageY))
         return;
 
       var clickPoint:Point = new Point(event.stageX, event.stageY);
@@ -502,9 +533,10 @@ package wotstat.widgets {
       updateImageScale();
 
       resizeControl.contentWidth = targetWidth;
-      resizeControl.contentHeight = targetHeight >= 0 ? targetHeight : targetWidth * contentHeight / contentWidth;
+      resizeControl.contentHeight = targetHeight >= 0 ? targetHeight : targetWidth * (contentHeight / contentWidth) * (insetsWidth / insetsHeight);
 
-      dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth * App.appScale, targetHeight * App.appScale));
+      dispatchEvent(new ResizeEvent(REQUEST_RESOLUTION, targetContentWidth, targetContentHeight));
+      dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth, targetHeight));
     }
 
     private function globalPosition():Point {
@@ -553,29 +585,36 @@ package wotstat.widgets {
     }
 
     private function updateImagePosition():void {
-      // loader.x = -insets.left;
-      // loader.y = -insets.top;
+      loader.x = -Math.round(contentWidth / insetsWidth * insets.left / 100.0);
+      loader.y = -Math.round(contentHeight / insetsHeight * insets.top / 100.0);
     }
 
     private function updateImageScale():void {
       if (!resizeControl.fullResize) {
-        var k:Number = targetWidth / contentWidth;
+        var k:Number = targetWidth * insetsWidth / contentWidth;
         content.scaleX = k;
         content.scaleY = k;
+        dragArea.scaleX = k * App.appScale;
+        dragArea.scaleY = k * App.appScale;
+        updateImagePosition();
       }
 
-      if (content.width != contentWidth / App.appScale || content.height != contentHeight / App.appScale) {
-        var graphics:Graphics = content.graphics;
+      var scaledWidth:Number = Math.round(contentWidth / App.appScale / insetsWidth);
+      var scaledHeight:Number = Math.round(contentHeight / App.appScale / insetsHeight);
+
+      if (dragArea.width != scaledWidth || dragArea.height != scaledHeight) {
+        var graphics:Graphics = dragArea.graphics;
         graphics.clear();
-        graphics.beginFill(0x000000, 0);
-        graphics.drawRect(0, 0, contentWidth, contentHeight);
+        graphics.beginFill(0x0000ff, 0);
+        graphics.drawRect(0, 0, scaledWidth, scaledHeight);
         graphics.endFill();
+        trace("[DW] Update drag scale " + scaledWidth + "x" + scaledHeight);
       }
     }
 
     private function updateResizeControl():void {
-      resizeControl.contentWidth = contentWidth * content.scaleX;
-      resizeControl.contentHeight = contentHeight * content.scaleY;
+      resizeControl.contentWidth = contentWidth * content.scaleX / insetsWidth;
+      resizeControl.contentHeight = contentHeight * content.scaleY / insetsHeight;
     }
   }
 }

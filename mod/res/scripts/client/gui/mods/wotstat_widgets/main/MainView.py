@@ -1,5 +1,6 @@
 import BigWorld
 import struct
+from functools import partial
 from Event import Event
 from aih_constants import CTRL_MODE_NAME
 from gui.Scaleform.framework import g_entitiesFactories, ScopeTemplates, ViewSettings
@@ -72,6 +73,8 @@ class MainView(View):
     self.isOnSetupSubscribed = False
     
   def addWidgets(self):
+    interfaceScale = self.settingsCore.interfaceScale.get()
+    
     for widget in storage.getAllWidgets():
       if lastLoadIsBattle and widget.flags & CefServer.Flags.HANGAR_ONLY != 0:
         server.suspenseWidget(widget.wid)
@@ -89,15 +92,21 @@ class MainView(View):
       self._addWidget(widget.uuid, widget.wid, widget.url,
                       positionState.width, positionState.height,
                       x, y,
-                      widget.flags, state.isHidden, state.isLocked, state.isControlsAlwaysHidden,
-                      positionMode, layer)
+                      widget.flags, widget.insets, state.isHidden, state.isLocked,
+                      state.isControlsAlwaysHidden, positionMode, layer)
       if state.isHidden:
         server.suspenseWidget(widget.wid)
       else:
         server.resumeWidget(widget.wid)
         
       server.redrawWidget(widget.wid)
-      server.resizeWidget(widget.wid, positionState.width, positionState.height)
+      
+      targetWidth = positionState.width 
+      targetHeight = positionState.height
+      if targetWidth > 0: targetWidth *= interfaceScale * (100 + widget.insets[1] + widget.insets[3]) / 100
+      if targetHeight > 0: targetHeight *= interfaceScale * (100 + widget.insets[0] + widget.insets[2]) / 100
+  
+      server.resizeWidget(widget.wid, round(targetWidth), round(targetHeight))
     
   def _dispose(self):
     manager.createWidgetEvent -= self._createWidget
@@ -251,8 +260,10 @@ class MainView(View):
       server.redrawWidget(wid)
 
   def py_requestResize(self, wid, width, height):
-    server.resizeWidget(wid, width, height)
     storage.updateWidget(wid, lastLoadIsBattle, width=width, height=height)
+    
+  def py_requestResolution(self, wid, width, height):
+    server.resizeWidget(wid, width, height)
 
   def getNextWidgetId(self):
     global lastWidgetId
@@ -265,7 +276,7 @@ class MainView(View):
 
   def _addWidget(self, uuid, wid, url,
                  width=100, height=100,
-                 x=-1, y=-1, flags=0,
+                 x=-1, y=-1, flags=0, insets=[0, 0, 0, 0],
                  isHidden=False, isLocked=False,
                  isControlsAlwaysHidden=False, positionMode=POSITION_MODE.NOT_SET, layer=LAYER.NOT_SET):
     
@@ -285,6 +296,7 @@ class MainView(View):
     self._as_setReadyToClearData(wid, not (flags & CefServer.Flags.READY_TO_CLEAR_DATA == 0))
     self._as_setHangarOnly(wid, not (flags & CefServer.Flags.HANGAR_ONLY == 0))
     self._as_setUnlimitedSize(wid, not (flags & CefServer.Flags.UNLIMITED_SIZE == 0))
+    self._as_setInsets(wid, insets[0], insets[1], insets[2], insets[3])
     
     if layer == LAYER.NOT_SET:
       self._as_setLayer(wid, LAYER.LAYER_DEFAULT if flags & CefServer.Flags.PREFERRED_TOP_LAYER == 0 else LAYER.LAYER_TOP)
@@ -300,6 +312,9 @@ class MainView(View):
     self._as_createWidget(wid, url, width, height, isInBattle=lastLoadIsBattle)
     self._as_setResizeMode(wid, True)
     self._as_setHangarOnly(wid, False)
+    self._as_setUnlimitedSize(wid, False)
+    self._as_setReadyToClearData(wid, False)
+    self._as_setInsets(wid, 0, 0, 0, 0)
 
   def _changeUrl(self, wid, url):
     storage.updateWidget(wid, lastLoadIsBattle, url=url)
@@ -384,7 +399,8 @@ class MainView(View):
   def setInterfaceScale(self, scale=None):
     if not scale:
       scale = self.settingsCore.interfaceScale.get()
-    self._as_setInterfaceScale(scale)
+    
+    BigWorld.callback(0, partial(self._as_setInterfaceScale, scale))
 
   def _as_onFrame(self, wid, width, height, data, shift):
     self.flashObject.as_onFrame(wid, width, height, data, shift)

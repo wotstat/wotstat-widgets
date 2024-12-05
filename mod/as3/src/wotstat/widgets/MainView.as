@@ -19,6 +19,7 @@ package wotstat.widgets {
 
     public var py_log:Function;
     public var py_requestResize:Function;
+    public var py_requestResolution:Function;
     public var py_moveWidget:Function;
     public var py_lockUnlockWidget:Function;
     public var py_hideShowWidget:Function;
@@ -163,6 +164,7 @@ package wotstat.widgets {
 
       var widget:DraggableWidget = new DraggableWidget(wid, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle, positionMode, layer);
       widget.addEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
+      widget.addEventListener(DraggableWidget.REQUEST_RESOLUTION, onWidgetRequestResolution);
       widget.addEventListener(DraggableWidget.MOVE_WIDGET, onWidgetMove);
       widget.addEventListener(DraggableWidget.LOCK_WIDGET, onWidgetLockUnlock);
       widget.addEventListener(DraggableWidget.UNLOCK_WIDGET, onWidgetLockUnlock);
@@ -261,6 +263,7 @@ package wotstat.widgets {
 
       widget.dispose();
       widget.removeEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
+      widget.removeEventListener(DraggableWidget.REQUEST_RESOLUTION, onWidgetRequestResolution);
       widget.removeEventListener(DraggableWidget.MOVE_WIDGET, onWidgetMove);
       widget.removeEventListener(DraggableWidget.LOCK_WIDGET, onWidgetLockUnlock);
       widget.removeEventListener(DraggableWidget.UNLOCK_WIDGET, onWidgetLockUnlock);
@@ -347,6 +350,13 @@ package wotstat.widgets {
       if (this.py_requestResize != null) {
         var widget:DraggableWidget = event.target as DraggableWidget;
         this.py_requestResize(widget.wid, event.scaleX, event.scaleY);
+      }
+    }
+
+    private function onWidgetRequestResolution(event:ResizeEvent):void {
+      if (this.py_requestResolution != null) {
+        var widget:DraggableWidget = event.target as DraggableWidget;
+        this.py_requestResolution(widget.wid, event.scaleX, event.scaleY);
       }
     }
 
