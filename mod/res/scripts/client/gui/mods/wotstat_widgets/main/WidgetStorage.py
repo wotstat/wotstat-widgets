@@ -241,7 +241,11 @@ class WidgetStorage(Singleton):
           setattr(target, param, value)
           self._isChanged = True
   
-    if widget.positionMode == POSITION_MODE.SAME: update("position", position, False)
+    if widget.positionMode == POSITION_MODE.SAME: 
+      update("position", position, False)
+      update("width", width, not fromBattle)
+      update("height", height, not fromBattle)
+      
     update("url", url, None)
     update("flags", flags, None)
     update("insets", insets, None)
