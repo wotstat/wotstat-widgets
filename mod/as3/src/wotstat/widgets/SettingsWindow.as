@@ -21,6 +21,7 @@ package wotstat.widgets {
     private var demoButton:SoundButton;
     private var collectionButton:SoundButton;
     private var showUnpackErrorButton:SoundButton;
+    private var processErrorButton:SoundButton;
 
     private var normalState:Sprite = new Sprite();
     private var textState:Sprite = new Sprite();

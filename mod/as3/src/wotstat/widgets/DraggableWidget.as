@@ -1,6 +1,6 @@
 class HANGAR_INSETS {
   public static const TOP:int = 53;
-  public static const BOTTOM:int = 37;
+  public static const BOTTOM:int = 35;
   public static const LEFT:int = 0;
   public static const RIGHT:int = 0;
 }
@@ -73,6 +73,7 @@ package wotstat.widgets {
         'left': 0
       };
     private var _isLocked:Boolean = false;
+    private var lastInterfaceScale:Number = 0;
 
     // CONTENT == Browser Image in real PIXELS
     private var contentWidth:Number = 0;
@@ -83,24 +84,24 @@ package wotstat.widgets {
 
     public var isInBattle:Boolean = false;
 
-    private function get insetsWidth():Number {
-      return (100 + insets.left + insets.right) / 100.0;
+    private function get insetHorizontalOffset():Number {
+      return targetWidth / (1 - insets.left / 100 - insets.right / 100) - targetWidth;
     }
 
-    private function get insetsHeight():Number {
-      return (100 + insets.top + insets.bottom) / 100.0;
+    private function get insetVerticalOffset():Number {
+      return (targetWidth + insetHorizontalOffset) * (insets.top + insets.bottom) / 100;
     }
 
     private function get targetContentWidth():Number {
       if (targetWidth < 0)
         return Math.round(targetWidth * App.appScale);
-      return Math.round(targetWidth * App.appScale * insetsWidth);
+      return Math.round((targetWidth + insetHorizontalOffset) * App.appScale);
     }
 
     private function get targetContentHeight():Number {
       if (targetHeight < 0)
         return Math.round(targetHeight * App.appScale);
-      return Math.round(targetHeight * App.appScale * insetsHeight);
+      return Math.round((targetHeight + insetVerticalOffset) * App.appScale);
     }
 
     public function get wid():int {
@@ -161,12 +162,8 @@ package wotstat.widgets {
       var localPosition:Point = globalToLocalPosition(x, y);
       this.x = x >= 0 ? localPosition.x : (App.appWidth - width) / 2;
       this.y = y >= 0 ? localPosition.y : (App.appHeight - height - 100) / 2;
-      contentWidth = width;
-      contentHeight = height;
 
       addChild(resizeControl);
-
-      fixPosition();
 
       dragArea.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
       App.instance.addEventListener(MouseEvent.MOUSE_DOWN, onAppMouseDown);
@@ -177,9 +174,6 @@ package wotstat.widgets {
       resizeControl.addEventListener(ResizeControl.RESIZE_END, onResizeControlEnd);
       loader.contentLoaderInfo.addEventListener(Event.COMPLETE, onLoaderComplete);
       hideShowBtn.addEventListener(MouseEvent.MOUSE_DOWN, onHideShowButtonMouseDown);
-
-      updateImageScale();
-      updateImagePosition();
 
       setHidden(isHidden);
       setLocked(isLocked);
@@ -224,6 +218,10 @@ package wotstat.widgets {
     public function setResizeMode(full:Boolean):void {
       trace("[DW] Set resize mode " + full);
       resizeControl.fullResize = full;
+      if (!full)
+        targetHeight = -1;
+      dispatchEvent(new ResizeEvent(REQUEST_RESOLUTION, targetContentWidth, targetContentHeight));
+      dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth, targetHeight));
     }
 
     public function setHangarOnly(value:Boolean):void {
@@ -243,7 +241,20 @@ package wotstat.widgets {
     }
 
     public function onInterfaceScaleChanged(scale:Number):void {
-      trace("[DW] Interface scale changed " + scale + "x" + App.appScale);
+
+      if (lastInterfaceScale == 0 || lastInterfaceScale == scale) {
+        lastInterfaceScale = scale;
+        return;
+      }
+      lastInterfaceScale = scale;
+
+      if (resizeControl.fullResize) {
+        content.scaleX = 1 / App.appScale;
+        content.scaleY = 1 / App.appScale;
+        updateImagePosition();
+      }
+
+      trace("[DW] Interface scale changed " + App.appScale);
       updateImageScale();
       updateResizeControl();
       fixPosition();
@@ -284,7 +295,10 @@ package wotstat.widgets {
           'bottom': bottom
         };
 
+      trace("[DW] Set insets " + top + "x" + right + "x" + bottom + "x" + left);
       dispatchEvent(new ResizeEvent(REQUEST_RESOLUTION, targetContentWidth, targetContentHeight));
+      updateImageScale();
+      updateImagePosition();
     }
 
     public function setReadyToClearData(value:Boolean):void {
@@ -310,6 +324,7 @@ package wotstat.widgets {
       x = localPosition.x;
       y = localPosition.y;
 
+      trace("[DW] Set layer");
       fixPosition();
     }
 
@@ -324,6 +339,8 @@ package wotstat.widgets {
     public function setPosition(x:int, y:int):void {
       this.x = x;
       this.y = y;
+
+      trace("[DW] Set position");
       fixPosition();
     }
 
@@ -345,41 +362,6 @@ package wotstat.widgets {
     private function onLoaderComplete(event:Event):void {
       (loader.content as Bitmap).pixelSnapping = PixelSnapping.ALWAYS;
       (loader.content as Bitmap).smoothing = false;
-    }
-
-    private function getDraggingRectangle(full:Boolean, battle:Boolean = false):Rectangle {
-
-      var isTopLayer:Boolean = layer == LAYER.TOP;
-      var controlOffset:int = controlPanel.height + 2;
-      var right:Number = App.appWidth - dragArea.width;
-      var bottom:Number = App.appHeight - dragArea.height;
-      var cRight:Number = App.appWidth - controlPanel.height;
-      var cBottom:Number = App.appHeight - controlPanel.height;
-
-      if (full && isTopLayer)
-        return new Rectangle(0, 0, right, bottom);
-
-      if (!full && isTopLayer)
-        return new Rectangle(0, controlOffset, cRight, cBottom);
-
-      if (full && !battle)
-        return new Rectangle(0, 0, right, bottom - HANGAR_INSETS.BOTTOM - HANGAR_INSETS.TOP);
-
-      if (!full && !battle)
-        return new Rectangle(
-            0,
-            HANGAR_HEADER_HEIGHT + controlOffset,
-            cRight,
-            cBottom - HANGAR_HEADER_HEIGHT - HANGAR_INSETS.BOTTOM - HANGAR_INSETS.TOP
-          );
-
-      if (full && battle)
-        return new Rectangle(0, 0, right, bottom);
-
-      if (!full && battle)
-        return new Rectangle(0, controlOffset, cRight, cBottom);
-
-      return new Rectangle(0, 0, App.appWidth, App.appHeight);
     }
 
     private function showContextMenu(event:MouseEvent):void {
@@ -533,7 +515,9 @@ package wotstat.widgets {
       updateImageScale();
 
       resizeControl.contentWidth = targetWidth;
-      resizeControl.contentHeight = targetHeight >= 0 ? targetHeight : targetWidth * (contentHeight / contentWidth) * (insetsWidth / insetsHeight);
+      resizeControl.contentHeight = targetHeight >= 0 ?
+        targetHeight :
+        contentHeight * content.scaleY - insetVerticalOffset;
 
       dispatchEvent(new ResizeEvent(REQUEST_RESOLUTION, targetContentWidth, targetContentHeight));
       dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth, targetHeight));
@@ -561,11 +545,62 @@ package wotstat.widgets {
       return position;
     }
 
-    private function fixPosition():void {
+    private function onAppResize(event:Event):void {
+      if (isDragging) {
+        stopDrag();
+        isDragging = false;
+      }
+
+      trace("[DW] App resize");
+      fixPosition();
+    }
+
+    private function getDraggingRectangle(full:Boolean, battle:Boolean = false):Rectangle {
+
+      var isTopLayer:Boolean = layer == LAYER.TOP;
+      var controlOffset:int = controlPanel.height + 2;
+      var right:Number = App.appWidth - dragArea.width;
+      var bottom:Number = App.appHeight - dragArea.height;
+      var cRight:Number = App.appWidth - controlPanel.height;
+      var cBottom:Number = App.appHeight - controlPanel.height;
+
+      trace("[DW] Get dragging rectangle " + App.appWidth + "x" + App.appHeight + " " + dragArea.width + "x" + dragArea.height);
+
+      if (full && isTopLayer)
+        return new Rectangle(0, 0, right, bottom);
+
+      if (!full && isTopLayer)
+        return new Rectangle(0, controlOffset, cRight, cBottom);
+
+      if (full && !battle)
+        return new Rectangle(0, 0, right, bottom - HANGAR_INSETS.BOTTOM - HANGAR_INSETS.TOP);
+
+      if (!full && !battle)
+        return new Rectangle(
+            0,
+            HANGAR_HEADER_HEIGHT + controlOffset,
+            cRight,
+            cBottom - HANGAR_HEADER_HEIGHT - HANGAR_INSETS.BOTTOM - HANGAR_INSETS.TOP
+          );
+
+      if (full && battle)
+        return new Rectangle(0, 0, right, bottom);
+
+      if (!full && battle)
+        return new Rectangle(0, controlOffset, cRight, cBottom);
+
+      return new Rectangle(0, 0, App.appWidth, App.appHeight);
+    }
+
+    public function fixPosition():void {
       x = Math.round(x);
       y = Math.round(y);
 
+      var oldX:Number = x;
+      var oldY:Number = y;
+
       var rect:Rectangle = getDraggingRectangle(!isHidden, isInBattle);
+      trace("[DW] Fix position " + x + "x" + y + " in " + rect);
       if (x < rect.x)
         x = rect.x;
       if (y < rect.y)
@@ -574,47 +609,52 @@ package wotstat.widgets {
         x = rect.width + rect.x;
       if (y > rect.height + rect.y)
         y = rect.height + rect.y;
+
+      if (x != oldX || y != oldY) {
+        var position:Point = globalPosition();
+        dispatchEvent(new MoveEvent(MOVE_WIDGET, position.x, position.y));
+      }
     }
 
-    private function onAppResize(event:Event):void {
-      if (isDragging) {
-        stopDrag();
-        isDragging = false;
-      }
-      fixPosition();
-    }
 
     private function updateImagePosition():void {
-      loader.x = -Math.round(contentWidth / insetsWidth * insets.left / 100.0);
-      loader.y = -Math.round(contentHeight / insetsHeight * insets.top / 100.0);
+      loader.x = -Math.round(contentWidth * insets.left / 100);
+      loader.y = -Math.round(contentWidth * insets.top / 100);
     }
 
     private function updateImageScale():void {
       if (!resizeControl.fullResize) {
-        var k:Number = targetWidth * insetsWidth / contentWidth;
+        var k:Number = (targetWidth + insetHorizontalOffset) / contentWidth;
         content.scaleX = k;
         content.scaleY = k;
-        dragArea.scaleX = k * App.appScale;
-        dragArea.scaleY = k * App.appScale;
         updateImagePosition();
       }
 
-      var scaledWidth:Number = Math.round(contentWidth / App.appScale / insetsWidth);
-      var scaledHeight:Number = Math.round(contentHeight / App.appScale / insetsHeight);
+      if (contentWidth == 0 || contentHeight == 0)
+        return;
+
+      var scaledWidth:Number = targetWidth;
+      var scaledHeight:Number = targetHeight > 0 ?
+        targetHeight :
+        targetWidth *
+        (contentHeight * content.scaleY - insetVerticalOffset) /
+        (contentWidth * content.scaleX - insetHorizontalOffset);
 
       if (dragArea.width != scaledWidth || dragArea.height != scaledHeight) {
         var graphics:Graphics = dragArea.graphics;
         graphics.clear();
-        graphics.beginFill(0x0000ff, 0);
+        graphics.beginFill(0x00ffff, 0.2);
         graphics.drawRect(0, 0, scaledWidth, scaledHeight);
         graphics.endFill();
-        trace("[DW] Update drag scale " + scaledWidth + "x" + scaledHeight);
       }
+
+      updateImagePosition();
+
     }
 
     private function updateResizeControl():void {
-      resizeControl.contentWidth = contentWidth * content.scaleX / insetsWidth;
-      resizeControl.contentHeight = contentHeight * content.scaleY / insetsHeight;
+      resizeControl.contentWidth = contentWidth * content.scaleX - insetHorizontalOffset;
+      resizeControl.contentHeight = contentHeight * content.scaleY - insetVerticalOffset;
     }
   }
 }

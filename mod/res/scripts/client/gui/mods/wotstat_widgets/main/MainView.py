@@ -39,6 +39,7 @@ class MainView(View):
 
   def __init__(self, *args, **kwargs):
     super(MainView, self).__init__(*args, **kwargs)
+    self.interfaceScale = 0
 
   def _populate(self):
     super(MainView, self)._populate()
@@ -73,8 +74,6 @@ class MainView(View):
     self.isOnSetupSubscribed = False
     
   def addWidgets(self):
-    interfaceScale = self.settingsCore.interfaceScale.get()
-    
     for widget in storage.getAllWidgets():
       if lastLoadIsBattle and widget.flags & CefServer.Flags.HANGAR_ONLY != 0:
         server.suspenseWidget(widget.wid)
@@ -94,19 +93,14 @@ class MainView(View):
                       x, y,
                       widget.flags, widget.insets, state.isHidden, state.isLocked,
                       state.isControlsAlwaysHidden, positionMode, layer)
-      if state.isHidden:
-        server.suspenseWidget(widget.wid)
-      else:
-        server.resumeWidget(widget.wid)
-        
-      server.redrawWidget(widget.wid)
       
-      targetWidth = positionState.width 
-      targetHeight = positionState.height
-      if targetWidth > 0: targetWidth *= interfaceScale * (100 + widget.insets[1] + widget.insets[3]) / 100
-      if targetHeight > 0: targetHeight *= interfaceScale * (100 + widget.insets[0] + widget.insets[2]) / 100
-  
-      server.resizeWidget(widget.wid, round(targetWidth), round(targetHeight))
+      if widget.wid:
+        if state.isHidden:
+          server.suspenseWidget(widget.wid)
+        else:
+          server.resumeWidget(widget.wid)
+          
+        server.redrawWidget(widget.wid)
     
   def _dispose(self):
     manager.createWidgetEvent -= self._createWidget
@@ -282,21 +276,27 @@ class MainView(View):
     
     def create(wid):
       self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, lastLoadIsBattle, positionMode, layer)
-      
-    if wid:
+    
+    isWidgetAlreadyExists = bool(wid)
+    
+    if isWidgetAlreadyExists:
       create(wid)
     else:
       wid = self.getNextWidgetId()
       storage.setWidgetWid(uuid, wid)
 
-      server.createNewWidget(wid, url, width, height)
+      # +1 to set guaranteed wrong size for init, to skip first frame rendering
+      server.createNewWidget(wid, url, width + 1, height)
       create(wid)
 
+    self._as_setInsets(wid, insets[0], insets[1], insets[2], insets[3])
     self._as_setResizeMode(wid, flags & CefServer.Flags.AUTO_HEIGHT == 0)
     self._as_setReadyToClearData(wid, not (flags & CefServer.Flags.READY_TO_CLEAR_DATA == 0))
     self._as_setHangarOnly(wid, not (flags & CefServer.Flags.HANGAR_ONLY == 0))
     self._as_setUnlimitedSize(wid, not (flags & CefServer.Flags.UNLIMITED_SIZE == 0))
-    self._as_setInsets(wid, insets[0], insets[1], insets[2], insets[3])
+    
+    if isWidgetAlreadyExists:
+      self._as_fixPosition(wid)
     
     if layer == LAYER.NOT_SET:
       self._as_setLayer(wid, LAYER.LAYER_DEFAULT if flags & CefServer.Flags.PREFERRED_TOP_LAYER == 0 else LAYER.LAYER_TOP)
@@ -310,11 +310,11 @@ class MainView(View):
     storage.addWidget(wid, url, width, height)
     server.createNewWidget(wid, url, width, height)
     self._as_createWidget(wid, url, width, height, isInBattle=lastLoadIsBattle)
+    self._as_setInsets(wid, 0, 0, 0, 0)
     self._as_setResizeMode(wid, True)
     self._as_setHangarOnly(wid, False)
     self._as_setUnlimitedSize(wid, False)
     self._as_setReadyToClearData(wid, False)
-    self._as_setInsets(wid, 0, 0, 0, 0)
 
   def _changeUrl(self, wid, url):
     storage.updateWidget(wid, lastLoadIsBattle, url=url)
@@ -337,9 +337,6 @@ class MainView(View):
   
   def _onFrame(self, wid, flags, insets, width, height, length, data):
     # type: (int, int, Tuple[float, float, float, float], int, int, int, bytes) -> None
-
-    (shift, int_array) = self.bytesToIntArray(data)
-    self._as_onFrame(wid, width, height, int_array, shift)
 
     oldFlags = storage.getWidgetFlags(wid)
     if oldFlags != flags:
@@ -395,10 +392,16 @@ class MainView(View):
       storage.updateWidget(wid, lastLoadIsBattle, insets=insets)
       top, right, bottom, left = insets
       self._as_setInsets(wid, top, right, bottom, left)
+
+    (shift, int_array) = self.bytesToIntArray(data)
+    self._as_onFrame(wid, width, height, int_array, shift)
       
   def setInterfaceScale(self, scale=None):
     if not scale:
       scale = self.settingsCore.interfaceScale.get()
+      
+    if scale == self.interfaceScale: return
+    self.interfaceScale = scale
     
     BigWorld.callback(0, partial(self._as_setInterfaceScale, scale))
 
@@ -435,6 +438,9 @@ class MainView(View):
   
   def _as_setInsets(self, wid, top, right, bottom, left):
     self.flashObject.as_setInsets(wid, top, right, bottom, left)
+    
+  def _as_fixPosition(self, wid):
+    self.flashObject.as_fixPosition(wid)
   
   def _as_setReadyToClearData(self, wid, ready):
     self.flashObject.as_setReadyToClearData(wid, ready)

@@ -300,6 +300,13 @@ package wotstat.widgets {
       widget.setInsets(top, right, bottom, left);
     }
 
+    public function as_fixPosition(wid:int):void {
+      var widget:DraggableWidget = activeWidgetsByWid[wid];
+      if (widget == null)
+        return;
+      widget.fixPosition();
+    }
+
     public function as_setReadyToClearData(wid:int, enabled:Boolean):void {
       var widget:DraggableWidget = activeWidgetsByWid[wid];
       if (widget == null)
