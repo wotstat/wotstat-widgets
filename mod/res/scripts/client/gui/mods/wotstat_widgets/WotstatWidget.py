@@ -12,6 +12,7 @@ from .main.MainView import setup as mainViewSetup
 from .main.SettingsWindow import setup as settingsWindowSetup, show as showSettingsWindow
 from .main.ChangeUrlWindow import setup as changeUrlWindowSetup
 from .main.CefServer import server
+from .main.WidgetManager import WidgetManager
 from .main.WebSocketInterface import WebSocketInterface
 from .common.Notifier import Notifier
 from .main.WhatsNewNotifier import WhatsNewNotifier
@@ -48,6 +49,9 @@ class WotstatWidget(object):
                           modVersion=version,
                           minLevel="INFO")
     ])
+
+    widgetManager = WidgetManager.instance()
+    widgetManager.setup()
 
     cefArchive.onReady += self.onCefArchiveReady
     cefArchive.setup(CEF_SERVER_CHECKSUM)

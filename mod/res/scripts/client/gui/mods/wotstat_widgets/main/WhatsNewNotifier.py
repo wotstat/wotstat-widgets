@@ -10,10 +10,11 @@ from ..common.PlayerPrefs import PlayerPrefs
 from ..common.ExceptionHandling import withExceptionHandling
 from ..constants import WIDGETS_COLLECTION_URL, ACTIVE_WIDGETS_PATH
 from .SettingsWindow import show as showSettingsWindow
-from .EventsManager import manager
+from .WidgetManager import WidgetManager
 
 logger = Logger.instance()
 notifier = Notifier.instance()
+manager = WidgetManager.instance()
 
 LAST_SHOWED_RELEASE_NOTES_INDEX = 'LAST_SHOWED_RELEASE_NOTES_INDEX'
 LAST_SHOWED_SERVER_NEWS_INDEX = 'LAST_SHOWED_SERVER_NEWS_INDEX'

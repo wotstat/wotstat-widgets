@@ -8,16 +8,17 @@ from skeletons.gui.app_loader import IAppLoader
 from gui.Scaleform.framework.application import AppEntry
 from gui.shared.formatters import text_styles
 
-from .EventsManager import manager
 from .CefServer import server
 from ..CefArchive import cefArchive
 from ..common.Notifier import Notifier
 from ..constants import WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS, WIDGETS_COLLECTION_URL
 from ..common.i18n import t
+from .WidgetManager import WidgetManager
 
 CEF_SETTINGS_WINDOW = "WOTSTAT_CEF_SETTINGS_WINDOW"
 
 notifier = Notifier.instance()
+manager = WidgetManager.instance()
 
 class SettingsWindow(AbstractWindowView):
 

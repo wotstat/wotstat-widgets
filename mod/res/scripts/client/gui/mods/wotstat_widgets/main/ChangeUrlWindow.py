@@ -10,12 +10,12 @@ from gui.shared.formatters import text_styles
 
 from ..common.i18n import t
 from ..common.Logger import Logger
-
-from .EventsManager import manager
+from .WidgetManager import WidgetManager
 
 CEF_CHANGE_URL_WINDOW = "WOTSTAT_CEF_CHANGE_URL_WINDOW"
 
 logger = Logger.instance()
+manager = WidgetManager.instance()
 
 class ChangeUrlWindow(AbstractWindowView):
   
@@ -30,7 +30,7 @@ class ChangeUrlWindow(AbstractWindowView):
     logger.info('ChangeUrlWindow.py: py_changeUrl: url: %s' % url)
     wid = self.ctx.get('wid', None)
     if wid is not None:
-      manager.changeUrlEvent(wid, url)
+      manager.changeUrl(wid, url)
     self.destroy()
     
   def py_cancel(self):

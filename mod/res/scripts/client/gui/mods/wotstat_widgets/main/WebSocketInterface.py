@@ -6,10 +6,12 @@ from threading import Thread
 from ..common.simple_websocket_server import WebSocket, WebSocketServer
 from ..common.ExceptionHandling import withExceptionHandling
 from ..common.Logger import Logger
-from .EventsManager import manager
+from .WidgetManager import WidgetManager
+
+logger = Logger.instance()
+manager = WidgetManager.instance()
 
 enabled = True
-logger = Logger.instance()
 lastAddTime = 0
 
 class WSClient(WebSocket):
@@ -29,7 +31,7 @@ class WSClient(WebSocket):
       if len(parts) != 2: return
       
       url = parts[1]
-      manager.createWidgetEvent(url, 300, -1)
+      manager.createWidget(url, 300, -1)
     
   @withExceptionHandling()
   def connected(self):
