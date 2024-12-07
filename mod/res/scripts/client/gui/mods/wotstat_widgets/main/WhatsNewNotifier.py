@@ -81,7 +81,7 @@ class WhatsNewNotifier(Singleton):
     elif event.startswith(EventKeys.ADD_WIDGET):
       target = event.split(EventKeys.ADD_WIDGET)[1]
       logger.info('Opening widget from server news %s' % target)
-      manager.createWidget(target, 300, -1)
+      manager.createWidget(target, 170, -1)
       
   
   def showModNews(self, version):

@@ -29,7 +29,7 @@ class WSClient(WebSocket):
       if len(parts) != 2: return
       
       url = parts[1]
-      manager.createWidgetEvent(url, 300, -1)
+      manager.createWidgetEvent(url, 170, -1)
     
   @withExceptionHandling()
   def connected(self):

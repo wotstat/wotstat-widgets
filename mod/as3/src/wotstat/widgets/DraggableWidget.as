@@ -322,7 +322,7 @@ package wotstat.widgets {
       x = localPosition.x;
       y = localPosition.y;
 
-      trace("[DW] Set layer");
+      trace("[DW] Set layer " + layer);
       fixPosition();
     }
 
@@ -524,6 +524,7 @@ package wotstat.widgets {
     private function globalPosition():Point {
       var position:Point = new Point(x, y);
 
+      trace("[DW] Global position " + position.x + "x" + position.y + " in " + layer + " " + isInBattle);
       if (layer == LAYER.DEFAULT && !isInBattle) {
         position.x += HANGAR_INSETS.LEFT;
         position.y += HANGAR_INSETS.TOP;
@@ -614,7 +615,6 @@ package wotstat.widgets {
         dispatchEvent(new MoveEvent(MOVE_WIDGET, position.x, position.y));
       }
     }
-
 
     private function updateImagePosition():void {
       loader.x = -Math.round(contentWidth * insets.left / 100);

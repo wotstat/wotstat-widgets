@@ -47,7 +47,7 @@ function wotstatWidgetSetup() {
 
       let insets = [0, 0, 0, 0]
       try {
-        insets = getMeta('insets', [0, 0, 0, 0], t => t.split(',').map(e => parseFloat(e)))
+        insets = getMeta('insets', [0, 0, 0, 0], t => t.split(/\s\s*/).map(e => parseFloat(e)))
         if (insets.length == 0) insets = [0, 0, 0, 0]
         if (insets.length == 1) insets = new Array(4).fill(insets[0])
         if (insets.length == 2) insets = [insets[0], insets[1], insets[0], insets[1]]

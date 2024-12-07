@@ -275,7 +275,10 @@ class MainView(View):
                  isControlsAlwaysHidden=False, positionMode=POSITION_MODE.NOT_SET, layer=LAYER.NOT_SET):
     
     def create(wid):
-      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, lastLoadIsBattle, positionMode, layer)
+      targetLayer = layer
+      if targetLayer is LAYER.NOT_SET:
+        targetLayer = LAYER.LAYER_DEFAULT if flags & CefServer.Flags.PREFERRED_TOP_LAYER == 0 else LAYER.LAYER_TOP
+      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, lastLoadIsBattle, positionMode, targetLayer)
     
     isWidgetAlreadyExists = bool(wid)
     
@@ -297,9 +300,6 @@ class MainView(View):
     
     if isWidgetAlreadyExists:
       self._as_fixPosition(wid)
-    
-    if layer == LAYER.NOT_SET:
-      self._as_setLayer(wid, LAYER.LAYER_DEFAULT if flags & CefServer.Flags.PREFERRED_TOP_LAYER == 0 else LAYER.LAYER_TOP)
 
   def _createWidget(self, url, width, height=-1):
     if not server.isReady:
@@ -309,7 +309,7 @@ class MainView(View):
     wid = self.getNextWidgetId()
     storage.addWidget(wid, url, width, height)
     server.createNewWidget(wid, url, width, height)
-    self._as_createWidget(wid, url, width, height, isInBattle=lastLoadIsBattle)
+    self._as_createWidget(wid, url, width, height, isInBattle=lastLoadIsBattle, layer=LAYER.LAYER_DEFAULT)
     self._as_setInsets(wid, 0, 0, 0, 0)
     self._as_setResizeMode(wid, True)
     self._as_setHangarOnly(wid, False)
