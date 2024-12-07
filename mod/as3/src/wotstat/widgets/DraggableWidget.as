@@ -241,25 +241,23 @@ package wotstat.widgets {
     }
 
     public function onInterfaceScaleChanged(scale:Number):void {
-
-      if (lastInterfaceScale == 0 || lastInterfaceScale == scale) {
-        lastInterfaceScale = scale;
-        return;
-      }
-      lastInterfaceScale = scale;
-
       if (resizeControl.fullResize) {
         content.scaleX = 1 / App.appScale;
         content.scaleY = 1 / App.appScale;
         updateImagePosition();
       }
 
-      trace("[DW] Interface scale changed " + App.appScale);
       updateImageScale();
       updateResizeControl();
-      fixPosition();
+
       dispatchEvent(new ResizeEvent(REQUEST_RESOLUTION, targetContentWidth, targetContentHeight));
       dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth, targetHeight));
+
+      if (lastInterfaceScale != 0)
+        fixPosition();
+
+      lastInterfaceScale = scale;
+
     }
 
     public function setResizing(enabled:Boolean):void {
@@ -600,7 +598,7 @@ package wotstat.widgets {
       var oldY:Number = y;
 
       var rect:Rectangle = getDraggingRectangle(!isHidden, isInBattle);
-      trace("[DW] Fix position " + x + "x" + y + " in " + rect);
+
       if (x < rect.x)
         x = rect.x;
       if (y < rect.y)
@@ -611,6 +609,7 @@ package wotstat.widgets {
         y = rect.height + rect.y;
 
       if (x != oldX || y != oldY) {
+        trace("[DW] Fix position to " + x + "x" + y + " from " + oldX + "x" + oldY + " in " + rect);
         var position:Point = globalPosition();
         dispatchEvent(new MoveEvent(MOVE_WIDGET, position.x, position.y));
       }
@@ -643,7 +642,7 @@ package wotstat.widgets {
       if (dragArea.width != scaledWidth || dragArea.height != scaledHeight) {
         var graphics:Graphics = dragArea.graphics;
         graphics.clear();
-        graphics.beginFill(0x00ffff, 0.2);
+        graphics.beginFill(0x00ffff, 0);
         graphics.drawRect(0, 0, scaledWidth, scaledHeight);
         graphics.endFill();
       }
