@@ -76,8 +76,8 @@ package wotstat.widgets {
     private var lastInterfaceScale:Number = 0;
 
     // CONTENT == Browser Image in real PIXELS
-    private var contentWidth:Number = 0;
-    private var contentHeight:Number = 0;
+    private var contentWidth:uint = 0;
+    private var contentHeight:uint = 0;
     private var content:Sprite = new Sprite();
     private var loader:Loader = new Loader();
     private var dragArea:Sprite = new Sprite();
@@ -92,13 +92,13 @@ package wotstat.widgets {
       return (targetWidth + insetHorizontalOffset) * (insets.top + insets.bottom) / 100;
     }
 
-    private function get targetContentWidth():Number {
+    private function get targetContentWidth():int {
       if (targetWidth < 0)
         return Math.round(targetWidth * App.appScale);
       return Math.round((targetWidth + insetHorizontalOffset) * App.appScale);
     }
 
-    private function get targetContentHeight():Number {
+    private function get targetContentHeight():int {
       if (targetHeight < 0)
         return Math.round(targetHeight * App.appScale);
       return Math.round((targetHeight + insetVerticalOffset) * App.appScale);
@@ -241,14 +241,9 @@ package wotstat.widgets {
     }
 
     public function onInterfaceScaleChanged(scale:Number):void {
-      if (resizeControl.fullResize) {
-        content.scaleX = 1 / App.appScale;
-        content.scaleY = 1 / App.appScale;
-        updateImagePosition();
-      }
-
       updateImageScale();
       updateResizeControl();
+      updateImagePosition();
 
       dispatchEvent(new ResizeEvent(REQUEST_RESOLUTION, targetContentWidth, targetContentHeight));
       dispatchEvent(new ResizeEvent(REQUEST_RESIZE, targetWidth, targetHeight));
@@ -295,8 +290,6 @@ package wotstat.widgets {
 
       trace("[DW] Set insets " + top + "x" + right + "x" + bottom + "x" + left);
       dispatchEvent(new ResizeEvent(REQUEST_RESOLUTION, targetContentWidth, targetContentHeight));
-      updateImageScale();
-      updateImagePosition();
     }
 
     public function setReadyToClearData(value:Boolean):void {
@@ -622,11 +615,15 @@ package wotstat.widgets {
     }
 
     private function updateImageScale():void {
-      if (!resizeControl.fullResize) {
+      if (!resizeControl.fullResize && contentWidth != targetContentWidth) {
         var k:Number = (targetWidth + insetHorizontalOffset) / contentWidth;
         content.scaleX = k;
         content.scaleY = k;
         updateImagePosition();
+      }
+      else {
+        content.scaleX = 1 / App.appScale;
+        content.scaleY = 1 / App.appScale;
       }
 
       if (contentWidth == 0 || contentHeight == 0)

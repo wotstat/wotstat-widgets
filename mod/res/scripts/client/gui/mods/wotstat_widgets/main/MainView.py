@@ -83,8 +83,8 @@ class MainView(View):
       oppositeState = widget.hangar if lastLoadIsBattle else widget.battle
       positionState = oppositeState if oppositeState.isTouched and not state.isTouched else state
       
-      positionMode = widget.positionMode
-      layer = widget.layer
+      positionMode = widget.getPreferredPositionMode()
+      layer = widget.getPreferredLayer()
       
       x, y = widget.getPreferredPosition(lastLoadIsBattle, self.ctrlModeName)
       
@@ -233,7 +233,7 @@ class MainView(View):
     widget = storage.getWidgetByWid(wid)
     if widget is None: return
     
-    if widget.positionMode == POSITION_MODE.HANGAR_SNIPER_ARCADE:
+    if widget.getPreferredPositionMode() == POSITION_MODE.HANGAR_SNIPER_ARCADE:
       if self.ctrlModeName == CTRL_MODE_NAME.SNIPER: storage.updateWidget(wid, lastLoadIsBattle, sniperPosition=(x, y))
       elif self.ctrlModeName == CTRL_MODE_NAME.STRATEGIC: storage.updateWidget(wid, lastLoadIsBattle, strategicPosition=(x, y))
       elif self.ctrlModeName == CTRL_MODE_NAME.ARTY: storage.updateWidget(wid, lastLoadIsBattle, artyPosition=(x, y))
@@ -275,10 +275,7 @@ class MainView(View):
                  isControlsAlwaysHidden=False, positionMode=POSITION_MODE.NOT_SET, layer=LAYER.NOT_SET):
     
     def create(wid):
-      targetLayer = layer
-      if targetLayer is LAYER.NOT_SET:
-        targetLayer = LAYER.LAYER_DEFAULT if flags & CefServer.Flags.PREFERRED_TOP_LAYER == 0 else LAYER.LAYER_TOP
-      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, lastLoadIsBattle, positionMode, targetLayer)
+      self._as_createWidget(wid, url, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, lastLoadIsBattle, positionMode, layer)
     
     isWidgetAlreadyExists = bool(wid)
     
@@ -361,7 +358,6 @@ class MainView(View):
         widget = storage.getWidgetByWid(wid)
         if widget and widget.positionMode == POSITION_MODE.NOT_SET:
           positionMode = POSITION_MODE.HANGAR_SNIPER_ARCADE if flag else POSITION_MODE.HANGAR_BATTLE
-          storage.updateWidget(wid, lastLoadIsBattle, positionMode=positionMode)
           self._as_setPositionMode(wid, positionMode)
         
         logger.info("Use sniper mode changed: %s" % flag)
@@ -377,7 +373,6 @@ class MainView(View):
         widget = storage.getWidgetByWid(wid)
         if widget and widget.layer == LAYER.NOT_SET:
           layer = LAYER.LAYER_TOP if flag else LAYER.LAYER_DEFAULT
-          storage.updateWidget(wid, lastLoadIsBattle, layer=layer)
           self._as_setLayer(wid, layer)
           
         logger.info("Preferred top layer changed: %s" % flag)

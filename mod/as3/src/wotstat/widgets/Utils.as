@@ -49,10 +49,10 @@ package wotstat.widgets {
 
     // https://rtmp.veriskope.com/pdf/amf3-file-format-spec.pdf
     public static function decodeIntArrayAMF(array:Array, shift:int = 0):ByteArray {
-      var testVector:Vector.<uint> = Vector.<uint>(array);
+      var uintVector:Vector.<uint> = Vector.<uint>(array);
 
       var tempBytes:ByteArray = new ByteArray();
-      tempBytes.writeObject(testVector);
+      tempBytes.writeObject(uintVector);
       tempBytes.position = 0;
 
       tempBytes.readUnsignedByte(); // marker

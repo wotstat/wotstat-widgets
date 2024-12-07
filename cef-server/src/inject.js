@@ -32,7 +32,7 @@ function wotstatWidgetSetup() {
     window.isFromWotstatWidgetMod = true
 
     function onResize() {
-      const realHeight = Math.ceil(document.body.clientHeight * devicePixelRatio);
+      const realHeight = Math.ceil(document.body.getBoundingClientRect().height * devicePixelRatio);
       wotstatWidgetOnBodyResizeWrapper(realHeight)
     }
 

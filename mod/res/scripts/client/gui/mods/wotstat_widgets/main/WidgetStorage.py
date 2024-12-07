@@ -11,6 +11,7 @@ from aih_constants import CTRL_MODE_NAME  # noqa: F401
 
 from ..common.Logger import Logger
 from ..constants import ACTIVE_WIDGETS_PATH
+from .CefServer import CefServer
 
 def setup():
   dir = os.path.dirname(ACTIVE_WIDGETS_PATH)
@@ -95,6 +96,14 @@ class WidgetInfo(object):
     self.positionMode = POSITION_MODE.NOT_SET
     self.layer = LAYER.NOT_SET
   
+  def getPreferredLayer(self):
+    if self.layer != LAYER.NOT_SET: return self.layer
+    return LAYER.LAYER_DEFAULT if self.flags & CefServer.Flags.PREFERRED_TOP_LAYER == 0 else LAYER.LAYER_TOP
+  
+  def getPreferredPositionMode(self):
+    if self.positionMode != POSITION_MODE.NOT_SET: return self.positionMode
+    return POSITION_MODE.HANGAR_BATTLE if self.flags & CefServer.Flags.USE_SNIPER_MODE == 0 else POSITION_MODE.HANGAR_SNIPER_ARCADE
+  
   def getPreferredPosition(self, battle, mode=None):
   # type: (bool, str) -> List[int]
     
@@ -106,10 +115,10 @@ class WidgetInfo(object):
     if not state.isTouched:
       return self.hangar.position
     
-    if self.positionMode == POSITION_MODE.SAME:
+    if self.getPreferredPositionMode() == POSITION_MODE.SAME:
       return hangarState.position
     
-    if self.positionMode == POSITION_MODE.HANGAR_BATTLE:
+    if self.getPreferredPositionMode() == POSITION_MODE.HANGAR_BATTLE:
       return state.position
     
     if mode == CTRL_MODE_NAME.SNIPER:
@@ -241,7 +250,7 @@ class WidgetStorage(Singleton):
           setattr(target, param, value)
           self._isChanged = True
   
-    if widget.positionMode == POSITION_MODE.SAME: 
+    if widget.getPreferredPositionMode() == POSITION_MODE.SAME: 
       update("position", position, False)
       update("width", width, not fromBattle)
       update("height", height, not fromBattle)

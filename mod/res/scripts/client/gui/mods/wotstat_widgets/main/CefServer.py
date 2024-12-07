@@ -145,7 +145,7 @@ class CefServer(object):
 
     logger.info("Waiting for a connection on port: %s..." % str(port))
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.socket.connect(('127.0.0.1', port))
+    self.socket.connect(('localhost', port))
     logger.info("Connected")
 
     self.receiverThread = threading.Thread(target=self._socketReceiverLoop, args=(self.socket, self.queue))
