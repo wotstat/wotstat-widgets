@@ -74,6 +74,7 @@ class CefServer(object):
   isReady = False
   onSetupComplete = Event()
   hasProcessError = False
+  lastProcessError = None
   onProcessError = Event()
   settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
 
@@ -108,6 +109,7 @@ class CefServer(object):
           self.process.terminate()
         self.killNow.set()
         self.hasProcessError = True
+        self.lastProcessError = "Error starting CEF server: %s" % str(e)
         self.onProcessError(str(e))
         
     BigWorld.callback(0.1, start)
@@ -281,11 +283,13 @@ class CefServer(object):
       self.process.stdin.write(str(inputData) + '\n')
       self.process.stdin.flush()
     except Exception as e:
-      logger.error("Error writing input: %s" % e)
+      error = "Error writing input: %s" % str(e)
+      logger.error(error)
       if not self.killNow.is_set():
         self.isReady = False
         self.killNow.set()
         self.hasProcessError = True
+        self.lastProcessError = error
         self.onProcessError(str(e))
 
   @withExceptionHandling()
@@ -347,7 +351,10 @@ class CefServer(object):
         
         queue.put(frame)
       except Exception as e:
-        if not self.killNow.is_set(): logger.error("Error reading frame: %s" % e)
+        if not self.killNow.is_set():
+          error = "Error reading frame: %s" % str(e)
+          logger.error(error)
+          self.lastProcessError = error
         break
 
   def _checkQueueLoop(self):

@@ -14,14 +14,15 @@ package wotstat.widgets {
     public var py_openWidget:Function;
     public var py_openDemoWidget:Function;
     public var py_openUnpackError:Function;
+    public var py_openRuntimeError:Function;
     public var py_t:Function;
 
     private var urlInput:TextInput;
     private var addButton:SoundButton;
     private var demoButton:SoundButton;
     private var collectionButton:SoundButton;
-    private var showUnpackErrorButton:SoundButton;
-    private var processErrorButton:SoundButton;
+    private var unpackErrorButton:SoundButton;
+    private var runtimeErrorButton:SoundButton;
 
     private var normalState:Sprite = new Sprite();
     private var textState:Sprite = new Sprite();
@@ -124,7 +125,7 @@ package wotstat.widgets {
 
         textState.addChild(textStateText);
 
-        showUnpackErrorButton = textState.addChild(App.utils.classFactory.getComponent("ButtonNormal", SoundButton, {
+        unpackErrorButton = textState.addChild(App.utils.classFactory.getComponent("ButtonNormal", SoundButton, {
                 width: 187.5,
                 height: 25,
                 x: 106,
@@ -132,8 +133,20 @@ package wotstat.widgets {
                 label: py_t('settings.showUnpackError')
               })) as SoundButton;
 
-        showUnpackErrorButton.addEventListener(MouseEvent.CLICK, onShowUnpackErrorButtonClick);
-        showUnpackErrorButton.visible = false;
+        unpackErrorButton.addEventListener(MouseEvent.CLICK, onUnpackErrorButtonClick);
+        unpackErrorButton.visible = false;
+
+
+        runtimeErrorButton = textState.addChild(App.utils.classFactory.getComponent("ButtonNormal", SoundButton, {
+                width: 207.5,
+                height: 25,
+                x: 96,
+                y: 165,
+                label: py_t('settings.runtimeErrorButton')
+              })) as SoundButton;
+
+        runtimeErrorButton.addEventListener(MouseEvent.CLICK, onRuntimeErrorButtonClick);
+        runtimeErrorButton.visible = false;
       }
     }
 
@@ -151,7 +164,11 @@ package wotstat.widgets {
     }
 
     public function as_showUnpackErrorButton():void {
-      showUnpackErrorButton.visible = true;
+      unpackErrorButton.visible = true;
+    }
+
+    public function as_showRuntimeErrorButton():void {
+      runtimeErrorButton.visible = true;
     }
 
     private function onAddButtonClick(event:MouseEvent):void {
@@ -166,8 +183,12 @@ package wotstat.widgets {
       py_openWidgetsCollection();
     }
 
-    private function onShowUnpackErrorButtonClick(event:MouseEvent):void {
+    private function onUnpackErrorButtonClick(event:MouseEvent):void {
       py_openUnpackError();
+    }
+
+    private function onRuntimeErrorButtonClick(event:MouseEvent):void {
+      py_openRuntimeError();
     }
 
     private function onInputInputHandler(event:InputEvent):void {

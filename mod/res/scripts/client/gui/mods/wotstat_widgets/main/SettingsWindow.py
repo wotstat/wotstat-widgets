@@ -38,6 +38,9 @@ class SettingsWindow(AbstractWindowView):
   def py_openUnpackError(self):
     BigWorld.wg_openWebBrowser(WIDGETS_COLLECTION_URL + '/manual-install')
     
+  def py_openRuntimeError(self):
+    BigWorld.wg_openWebBrowser(WIDGETS_COLLECTION_URL + '/common-issues')
+    
   def py_t(self, key):
     return t(key)
   
@@ -83,7 +86,15 @@ class SettingsWindow(AbstractWindowView):
   
   def _updateState(self):
     if server.hasProcessError:
-      self._as_setTextState(text_styles.main(t('settings.runtimeError')))
+      self._as_setTextState(str().join((
+        text_styles.main(t('settings.runtimeError')),
+        '\n\n',
+        text_styles.main(t('settings.error')),
+        text_styles.error(str(server.lastProcessError)),
+        '\n\n',
+        text_styles.main(t('settings.runtimeErrorContact')),
+      )))
+      self._as_showRuntimeErrorButton()
       return
     
     if cefArchive.isReady:
@@ -134,6 +145,9 @@ class SettingsWindow(AbstractWindowView):
     
   def _as_showUnpackErrorButton(self):
     self.flashObject.as_showUnpackErrorButton()
+    
+  def _as_showRuntimeErrorButton(self):
+    self.flashObject.as_showRuntimeErrorButton()
 
 def setup():
   settingsViewSettings = ViewSettings(
