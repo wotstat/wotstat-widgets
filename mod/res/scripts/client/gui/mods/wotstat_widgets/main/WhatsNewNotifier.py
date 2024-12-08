@@ -2,6 +2,7 @@ import os
 import BigWorld
 import json
 from Singleton import Singleton
+from gui import SystemMessages
 
 from ..common.i18n import getPreferredLanguage, t, light
 from ..common.Logger import Logger
@@ -57,6 +58,20 @@ MOD_RELEASE_NOTES = [
   {
     'ru': '• Исправлена ошибка определения взводов. Теперь взводные виджеты работают корректно',
     'en': '• Fixed platoon detection bug. Now platoon widgets work correctly'
+  },
+  {
+    'ru': 
+      '• Теперь мод корректно работает если по пути до игры присутствует кириллица\n' +
+      '• Сохранение порядка виджетов\n'+
+      '• Смена слоёв: ПКМ->Слой->Поверх всего\n' +
+      '• Поддержка отступов: будет использовано в новых виджетах\n\n' +
+      'А ещё добавлены улучшения для разработчиков виджетов и исправлено много ошибок',
+    'en':
+      '• Now the mod works correctly if there is Cyrillic in the path to the game\n' +
+      '• Saving the order of widgets\n' +
+      '• Change layers: RMB->Layer->Top layer\n' +
+      '• Support for indents: will be used in new widgets\n\n' +
+      'And also added improvements for widget developers and fixed many bugs'
   }
 ]
 
@@ -85,7 +100,6 @@ class WhatsNewNotifier(Singleton):
       
   
   def showModNews(self, version):
-    msg = t('whatsNew.title') % version
     
     lastVisible = PlayerPrefs.getInt(LAST_SHOWED_RELEASE_NOTES_INDEX, -1)
     PlayerPrefs.set(LAST_SHOWED_RELEASE_NOTES_INDEX, len(MOD_RELEASE_NOTES) - 1)
@@ -97,10 +111,14 @@ class WhatsNewNotifier(Singleton):
       if not os.path.exists(ACTIVE_WIDGETS_PATH):
         return
     
+    msg = ''
     for i in range(lastVisible + 1, len(MOD_RELEASE_NOTES)):
       msg += '\n' + MOD_RELEASE_NOTES[i].get(getPreferredLanguage(MOD_RELEASE_NOTES[i].keys()), '')
       
-    notifier.showNotification(msg, priority='high')
+    if len(msg) == 0:
+      return
+    
+    notifier.showNotification(msg, SystemMessages.SM_TYPE.InformationHeader, messageData={'header': t('whatsNew.title') % version}, priority='high')
   
   def showServerNews(self):
     def collectNews(notes):
@@ -136,9 +154,8 @@ class WhatsNewNotifier(Singleton):
         logger.info('No new server news to show')
         return
         
-      msg = t('whatsNew.serverTitle') + '\n'
-      msg += '\n'.join(lines)
-      notifier.showNotification(msg, priority='high')
+      msg = '\n' + '\n'.join(lines)
+      notifier.showNotification(msg, SystemMessages.SM_TYPE.InformationHeader, messageData={'header': t('whatsNew.serverTitle')}, priority='high')
     
     @withExceptionHandling(logger)
     def onResponse(response):
