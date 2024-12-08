@@ -41,7 +41,7 @@ class ModUpdater(object):
   
   def copyToNextVersions(self): 
     gameVersion = _numericVersion()
-    currentMod = os.path.join(os.path.abspath('./mods/'), gameVersion, self.getFullModName())
+    currentMod = os.path.join('./mods/', gameVersion, self.getFullModName())
 
     def increaseVersion(version, index):
       return '.'.join(
@@ -49,9 +49,8 @@ class ModUpdater(object):
 
     v = [increaseVersion(gameVersion, i) for i in range(1, len(gameVersion.split('.')))]
 
-    absPath = os.path.abspath('./mods/')
     for i in range(len(v)):
-      p = os.path.join(absPath, v[i])
+      p = os.path.join('./mods/', v[i])
       if not os.path.exists(p):
         os.mkdir(p)
       filePath = os.path.join(p, self.getFullModName())
@@ -74,7 +73,7 @@ class ModUpdater(object):
         
     
       gameVersion = _numericVersion()
-      newModPath = os.path.join(os.path.abspath('./mods/'), gameVersion, self.getFullModName(latestVersion))
+      newModPath = os.path.join('./mods/', gameVersion, self.getFullModName(latestVersion))
       if not os.path.exists(newModPath):
         with open(newModPath, "wb") as f:
           f.write(data.body)
