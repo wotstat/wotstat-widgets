@@ -75,7 +75,9 @@ class MainView(View):
     
   def addWidgets(self):
     for widget in storage.getAllWidgets():
-      if lastLoadIsBattle and widget.flags & CefServer.Flags.HANGAR_ONLY != 0:
+      isWidgetAlreadyExists = bool(widget.wid)
+      
+      if isWidgetAlreadyExists and lastLoadIsBattle and widget.flags & CefServer.Flags.HANGAR_ONLY != 0:
         server.suspenseWidget(widget.wid)
         continue
       
@@ -94,7 +96,7 @@ class MainView(View):
                       widget.flags, widget.insets, state.isHidden, state.isLocked,
                       state.isControlsAlwaysHidden, positionMode, layer)
       
-      if widget.wid:
+      if isWidgetAlreadyExists:
         if state.isHidden:
           server.suspenseWidget(widget.wid)
         else:
@@ -288,6 +290,8 @@ class MainView(View):
       # +1 to set guaranteed wrong size for init, to skip first frame rendering
       server.createNewWidget(wid, url, width + 1, height)
       create(wid)
+      if isHidden: 
+        server.suspenseWidget(wid)
 
     self._as_setInsets(wid, insets[0], insets[1], insets[2], insets[3])
     self._as_setResizeMode(wid, flags & CefServer.Flags.AUTO_HEIGHT == 0)
@@ -366,6 +370,9 @@ class MainView(View):
         flag = flags & CefServer.Flags.HANGAR_ONLY != 0
         logger.info("Hangar only changed: %s" % flag)
         self._as_setHangarOnly(wid, flag)
+        if(flag and lastLoadIsBattle): 
+          server.suspenseWidget(wid)
+          self._as_closeWidget(wid)
         
       if isChanged(CefServer.Flags.PREFERRED_TOP_LAYER):
         flag = flags & CefServer.Flags.PREFERRED_TOP_LAYER != 0

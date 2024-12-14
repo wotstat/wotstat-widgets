@@ -72,6 +72,10 @@ MOD_RELEASE_NOTES = [
       '• Change layers: RMB->Layer->Top layer\n' +
       '• Support for indents: will be used in new widgets\n\n' +
       'And also added improvements for widget developers and fixed many bugs'
+  },
+  {
+    'ru': 'Исправлена ошибка, из-за которой свёрнутые ангарные виджеты отображались в бою',
+    'en': 'Fixed a bug where collapsed hangar widgets were displayed in battle'
   }
 ]
 
