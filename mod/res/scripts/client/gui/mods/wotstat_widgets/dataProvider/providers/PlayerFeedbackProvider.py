@@ -60,6 +60,27 @@ class PlayerFeedbackProvider(object):
     try: self.battleEventProcessors[BATTLE_EVENT_TYPE.VEHICLE_HEALTH_ADDED] = self.processExtraAsValue('vehicleHealthAdded', 'health')
     except: pass
     
+    # COSMIC
+    try:
+      from cosmic_event_common.cosmic_constants import BATTLE_EVENT_TYPE as CBE
+      
+      self.battleEventProcessors.update({
+        CBE.COSMIC_KILL:                  self.processExtraAsValue('cosmicKill', 'extra'),
+        CBE.COSMIC_ARTIFACT_SCAN:         self.processExtraAsValue('cosmicArtifactScan', 'extra'),
+        CBE.COSMIC_RAMMING:               self.processExtraAsValue('cosmicRamming', 'extra'),
+        CBE.COSMIC_PICKUP_ABILITY:        self.processExtraAsValue('cosmicPickupAbility', 'extra'),
+        CBE.COSMIC_ABILITY_HIT:           self.processExtraAsValue('cosmicAbilityHit', 'extra'),
+        CBE.COSMIC_SHOT:                  self.processExtraAsValue('cosmicShot', 'extra'),
+        CBE.COSMIC_ASSIST:                self.processExtraAsValue('cosmicAssist', 'extra'),
+        CBE.COSMIC_FIRST_BLOOD:           self.processExtraAsValue('cosmicFirstBlood', 'extra'),
+        CBE.COSMIC_KILL_STREAK:           self.processExtraAsValue('cosmicKillStreak', 'extra'),
+        CBE.COSMIC_PICKUP_MASTER:         self.processExtraAsValue('cosmicPickupMaster', 'extra'),
+        CBE.COSMIC_REVENGE:               self.processExtraAsValue('cosmicRevenge', 'extra'),
+        CBE.COSMIC_BOOST_ME:              self.processExtraAsValue('cosmicBoostMe', 'extra'),
+        CBE.MAX_KILL_SERIES:              self.processExtraAsValue('cosmicKillSeries', 'extra'),
+      })
+    except: pass
+    
   @withExceptionHandling(logger)
   def __onBattleSessionStart(self):
     self.sessionProvider.shared.feedback.onPlayerFeedbackReceived += self.__onPlayerFeedbackReceived
@@ -92,7 +113,7 @@ class PlayerFeedbackProvider(object):
     
     eventType = event.getBattleEventType()
     if eventType not in self.battleEventProcessors:
-      logger.error('Unknown battle event type: %s' % str(eventType))
+      logger.warn('Unknown battle event type: %s' % str(eventType))
       
       try:
         processed = self.processByExtraType(event)

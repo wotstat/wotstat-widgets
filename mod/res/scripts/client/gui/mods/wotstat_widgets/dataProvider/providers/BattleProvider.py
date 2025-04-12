@@ -50,6 +50,8 @@ class BattleProvider(TriggersManager.ITriggerListener):
     self.turretYaw = sdk.createState(['battle', 'turretYaw'], 0.0)
     self.gunPitch = sdk.createState(['battle', 'gunPitch'], 0.0)
     self.turretRotationSpeed = sdk.createState(['battle', 'turretRotationSpeed'], 0.0)
+
+    # TODO: _DamagePanel_updateDeviceState
     
     TriggersManager.g_manager.addListener(self)
     

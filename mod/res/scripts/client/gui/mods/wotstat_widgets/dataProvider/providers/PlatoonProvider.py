@@ -18,6 +18,14 @@ def formattedToInt(numberStr):
   try: return int(cleanedStr)
   except: return 0
 
+# TODO:
+# def _DynSquadFunctional_updateVehiclesInfo(self, updated, arenaDP):
+#         # is dynamic squad created
+#   if avatar_getter.getArena().guiType == constants.ARENA_GUI_TYPE.RANDOM:
+#     for flags, vo in updated:
+#       if flags & INVALIDATE_OP.PREBATTLE_CHANGED and vo.squadIndex > 0:
+#         g_battle.updatePlayerState(vo.vehicleID, INV.SQUAD_INDEX) # | INV.PLAYER_STATUS
+
 class PlatoonProvider(object):
   
   platoon = dependency.descriptor(IPlatoonController) # type: IPlatoonController
