@@ -1,4 +1,5 @@
 import BigWorld
+import GUI
 import struct
 from functools import partial
 from Event import Event
@@ -136,6 +137,7 @@ class MainView(View):
     
   def _onStartGUI(self, *a, **k):
     self._as_setGlobalVisible(True, 'ALL')
+    self._as_setControlsVisible(GUI.mcursor().visible)
 
   def _onControlModeChanged(self, *a, **k):
     player = BigWorld.player()
@@ -456,8 +458,9 @@ class MainView(View):
   def _as_setInterfaceScale(self, scale):
     self.flashObject.as_setInterfaceScale(scale)
 
-  def _as_setControlsVisible(self, pressed):
-    self.flashObject.as_setControlsVisible(pressed)
+  def _as_setControlsVisible(self, visible):
+    logger.info("Set controls visible: %s" % visible)
+    self.flashObject.as_setControlsVisible(visible)
     
   def _as_setGlobalVisible(self, visible, layer):
     self.flashObject.as_setGlobalVisible(visible, layer)

@@ -224,12 +224,12 @@ package wotstat.widgets {
       widget.setPosition(x, y);
     }
 
-    public function as_setControlsVisible(isPress:Boolean):void {
+    public function as_setControlsVisible(visible:Boolean):void {
       if (!isInBattle)
         return;
 
       for each (var widget:DraggableWidget in activeWidgets) {
-        widget.setBattleInteractiveMode(isPress);
+        widget.setBattleInteractiveMode(visible);
       }
     }
 
