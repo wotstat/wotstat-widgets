@@ -76,6 +76,10 @@ MOD_RELEASE_NOTES = [
   {
     'ru': 'Исправлена ошибка, из-за которой свёрнутые ангарные виджеты отображались в бою',
     'en': 'Fixed a bug where collapsed hangar widgets were displayed in battle'
+  },
+  {
+    'ru': 'Исправлена ошибка, из-за которой элементы управления могли отображаться в начале боя без нажатия клавиши CTRL',
+    'en': 'Fixed a bug where controls could be displayed at the start of battle without pressing CTRL'
   }
 ]
 
