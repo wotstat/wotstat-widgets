@@ -24,6 +24,15 @@ def readClientServerVersion():
     
     if AUTH_REALM == 'CT' and prefix == '': prefix = 'ct_'
     return (req, prefix + ver)
+  
+class PUBLISHER():
+  LESTA = 'LESTA'
+  WARGAMING = 'WARGAMING'
+
+def gamePublisher():
+  from realm import CURRENT_REALM
+  return PUBLISHER.LESTA if CURRENT_REALM == 'RU' else PUBLISHER.WARGAMING
+
 
 def getBattleLogShellTypesNames():
   from constants import BATTLE_LOG_SHELL_TYPES

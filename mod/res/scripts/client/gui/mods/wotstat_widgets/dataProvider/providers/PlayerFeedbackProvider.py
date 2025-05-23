@@ -8,7 +8,7 @@ from helpers import dependency
 from skeletons.gui.battle_session import IBattleSessionProvider, IArenaDataProvider
 from gui.battle_control.controllers.feedback_events import _CritsExtra, _DamageExtra, _MultiStunExtra, _VisibilityExtra, PlayerFeedbackEvent
 from typing import List
-from ..crossGameUtils import getBattleLogShellTypesNames
+from ..CrossGameUtils import getBattleLogShellTypesNames
 
 from ..ExceptionHandling import logCurrentException, withExceptionHandling
 from . import logger

@@ -4,7 +4,7 @@ from skeletons.connection_mgr import IConnectionManager
 from skeletons.gui.battle_session import IBattleSessionProvider
 from skeletons.gui.shared.utils import IHangarSpace
 from ..DataProviderSDK import DataProviderSDK
-from ..crossGameUtils import readClientServerVersion
+from ..CrossGameUtils import readClientServerVersion
 from helpers import dependency, getClientLanguage
 from constants import AUTH_REALM, SERVER_TICK_LENGTH
 from gui.Scaleform.daapi.view.login.LoginView import LoginView

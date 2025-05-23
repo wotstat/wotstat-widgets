@@ -9,7 +9,7 @@ from debug_utils import LOG_CURRENT_EXCEPTION
 from constants import AUTH_REALM
 
 from .Logger import ILoggerBackend, getLevelOrder, LEVELS_ORDER
-from .crossGameUtils import readClientServerVersion
+from .CrossGameUtils import readClientServerVersion
 
 LEVELS_NAMES = list(LEVELS_ORDER.keys())
 

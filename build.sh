@@ -1,5 +1,6 @@
 #!/bin/bash
 
+MOD_NAME="wotstat.widgets"
 debug=False
 
 as3Only=False
@@ -27,7 +28,7 @@ echo ""
 
 cef_shasum=$(find ./cef-server/src/ -type f -exec cat {} + | shasum -a 256 | awk '{print $1}')
 echo "CEF shasum: $cef_shasum"
-folder="wotstat.widgets_$v.wotmod"
+folder=$MOD_NAME"_$v.wotmod"
 rm -rf $folder
 
 
@@ -111,3 +112,5 @@ cp wotstat.widgets.cef.$cef_shasum.zip ../wotstat.widgets.cef.$cef_shasum.zip
 cd ../
 cp ./build/$folder $folder
 rm -rf ./build
+
+cp $folder $MOD_NAME"_$v.mtmod"
