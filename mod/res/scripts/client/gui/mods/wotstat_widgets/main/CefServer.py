@@ -21,7 +21,8 @@ from ..constants import CEF_EXE_PATH
 
 logger = Logger.instance()
 
-_preferences_path = unicode_from_utf8(BigWorld.wg_getPreferencesFilePath())[1]
+getPreferencesFilePath = BigWorld.wg_getPreferencesFilePath if hasattr(BigWorld, 'wg_getPreferencesFilePath') else BigWorld.getPreferencesFilePath
+_preferences_path = unicode_from_utf8(getPreferencesFilePath())[1]
 CACHE_PATH = os.path.normpath(os.path.join(os.path.dirname(_preferences_path), 'mods', 'wotstat.widgets', 'webcache'))
 CACHE_PATH_BASE64 = base64.b64encode(CACHE_PATH.encode('utf-8')).decode('ascii')
 

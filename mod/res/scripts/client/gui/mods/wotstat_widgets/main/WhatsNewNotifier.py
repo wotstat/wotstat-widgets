@@ -13,6 +13,7 @@ from ..constants import WIDGETS_COLLECTION_URL, ACTIVE_WIDGETS_PATH
 from .SettingsWindow import show as showSettingsWindow
 from .EventsManager import manager
 
+openWebBrowser = BigWorld.wg_openWebBrowser if hasattr(BigWorld, 'wg_openWebBrowser') else BigWorld.openWebBrowser
 logger = Logger.instance()
 notifier = Notifier.instance()
 
@@ -100,7 +101,7 @@ class WhatsNewNotifier(Singleton):
     elif event.startswith(EventKeys.OPEN_URL):
       target = event.split(EventKeys.OPEN_URL)[1]
       logger.info('Opening browser from server news %s' % target)
-      BigWorld.wg_openWebBrowser(target)
+      openWebBrowser(target)
     elif event.startswith(EventKeys.ADD_WIDGET):
       target = event.split(EventKeys.ADD_WIDGET)[1]
       logger.info('Opening widget from server news %s' % target)

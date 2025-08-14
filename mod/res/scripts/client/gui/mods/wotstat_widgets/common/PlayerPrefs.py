@@ -7,7 +7,8 @@ from external_strings_utils import unicode_from_utf8
 from .ExceptionHandling import withExceptionHandling, logCurrentException
 from .Logger import Logger
 
-_preferences_path = unicode_from_utf8(BigWorld.wg_getPreferencesFilePath())[1]
+getPreferencesFilePath = BigWorld.wg_getPreferencesFilePath if hasattr(BigWorld, 'wg_getPreferencesFilePath') else BigWorld.getPreferencesFilePath
+_preferences_path = unicode_from_utf8(getPreferencesFilePath())[1]
 PREFERENCES_PATH = os.path.normpath(os.path.join(os.path.dirname(_preferences_path), 'mods', 'wotstat.widgets'))
 
 logger = Logger.instance()

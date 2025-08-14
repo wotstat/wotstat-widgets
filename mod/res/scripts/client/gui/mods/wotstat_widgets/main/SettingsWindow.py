@@ -17,6 +17,7 @@ from ..common.i18n import t
 
 CEF_SETTINGS_WINDOW = "WOTSTAT_CEF_SETTINGS_WINDOW"
 
+openWebBrowser = BigWorld.wg_openWebBrowser if hasattr(BigWorld, 'wg_openWebBrowser') else BigWorld.openWebBrowser
 notifier = Notifier.instance()
 
 class SettingsWindow(AbstractWindowView):
@@ -25,7 +26,7 @@ class SettingsWindow(AbstractWindowView):
     self.destroy()
     
   def py_openWidgetsCollection(self):
-    BigWorld.wg_openWebBrowser('https://wotstat.info/widgets')
+    openWebBrowser('https://wotstat.info/widgets')
 
   def py_openWidget(self, url):
     manager.createWidget(url, 300, -1)
@@ -36,10 +37,10 @@ class SettingsWindow(AbstractWindowView):
     self.destroy()
     
   def py_openUnpackError(self):
-    BigWorld.wg_openWebBrowser(WIDGETS_COLLECTION_URL + '/manual-install')
+    openWebBrowser(WIDGETS_COLLECTION_URL + '/manual-install')
     
   def py_openRuntimeError(self):
-    BigWorld.wg_openWebBrowser(WIDGETS_COLLECTION_URL + '/common-issues')
+    openWebBrowser(WIDGETS_COLLECTION_URL + '/common-issues')
     
   def py_t(self, key):
     return t(key)

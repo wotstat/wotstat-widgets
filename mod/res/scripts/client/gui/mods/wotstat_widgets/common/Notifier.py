@@ -10,6 +10,7 @@ from skeletons.gui.shared.utils import IHangarSpace
 from .Logger import Logger
 from .ExceptionHandling import withExceptionHandling, SendExceptionEvent
 
+openWebBrowser = BigWorld.wg_openWebBrowser if hasattr(BigWorld, 'wg_openWebBrowser') else BigWorld.openWebBrowser
 logger = Logger.instance()
 
 WOTSTAT_WIDGETS_EVENT_PREFIX = 'WOTSTAT_WIDGETS_EVENT'
@@ -47,7 +48,7 @@ class Notifier(Singleton):
       if actionName.startswith(WOTSTAT_WIDGETS_EVENT_OPEN_URL):
         target = actionName.split(WOTSTAT_WIDGETS_EVENT_OPEN_URL)[1]
         logger.info('Opening personal wotstat for %s' % target)
-        BigWorld.wg_openWebBrowser(target)
+        openWebBrowser(target)
       elif actionName.startswith(WOTSTAT_WIDGETS_EVENT_PREFIX):
         self.onEvent(actionName)
         logger.info('Event %s' % actionName)
