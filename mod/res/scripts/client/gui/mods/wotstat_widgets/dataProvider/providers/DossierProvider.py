@@ -93,6 +93,7 @@ class DossierProvider(object):
         self.current.setValue(None)
         
     else:
+      if not BigWorld.player() or not hasattr(BigWorld.player(), 'playerVehicleID'): return
       vehicle = BigWorld.entity(BigWorld.player().playerVehicleID) # type: Vehicle
       if not vehicle: return
       intCd = vehicle.typeDescriptor.type.compactDescr
