@@ -4,7 +4,7 @@ import json
 from Singleton import Singleton
 from gui import SystemMessages
 
-from ..common.i18n import getPreferredLanguage, t, light
+from ..common.i18n import getPreferredLanguage, t, light, semilight
 from ..common.Logger import Logger
 from ..common.Notifier import Notifier
 from ..common.PlayerPrefs import PlayerPrefs
@@ -81,6 +81,16 @@ MOD_RELEASE_NOTES = [
   {
     'ru': 'Исправлена ошибка, из-за которой элементы управления могли отображаться в начале боя без нажатия клавиши CTRL',
     'en': 'Fixed a bug where controls could be displayed at the start of battle without pressing CTRL'
+  },
+  {
+    'ru':
+      '• Адаптация для версии %s\n' % semilight('Lesta 1.37') +
+      '• Исправлены некоторые ошибки запуска\n' +
+      '• Улучшена система автообновления',
+    'en':
+      '• Adaptation for version %s\n' % semilight('Lesta 1.37') +
+      '• Fixed some launch errors\n' +
+      '• Improved auto-update system'
   }
 ]
 

@@ -6,6 +6,9 @@ from typing import List
 def light(text):
   return '<font color="#e6e1c1">%s</font>' % text
 
+def semilight(text):
+  return '<font color="#c5c5b4">%s</font>' % text
+
 RU = {
   'modslist.title': 'Добавить виджет',
   'modslist.description': 'Открыть меню добавления виджетов для мода WotStat',
@@ -33,8 +36,8 @@ RU = {
   'changeUrl.urlPlaceholder': 'Введите URL',
   'changeUrl.apply': 'Применить',
   'changeUrl.cancel': 'Отмена',
-  'whatsNew.title': 'Мод WotStat Widgets успешно обновлён до версии %s',
-  'whatsNew.serverTitle': 'Новости мода WotStat Widgets',
+  'whatsNew.title': 'Мод «WotStat Widgets» успешно обновлён до версии %s',
+  'whatsNew.serverTitle': 'Новости мода «WotStat Widgets»',
   'context.lock': 'Заблокировать перемещение',
   'context.unlock': 'Разблокировать перемещение',
   'context.resize': 'Изменить размер',
@@ -83,8 +86,8 @@ EN = {
   'changeUrl.urlPlaceholder': 'Enter URL',
   'changeUrl.apply': 'Apply',
   'changeUrl.cancel': 'Cancel',
-  'whatsNew.title': light('The <b>WotStat Widgets</b> mod has been successfully updated to version <b>%s</b>') + '\n\nChanges:',
-  'whatsNew.serverTitle': light('<b>WotStat Widgets</b> mod news') + '\n\nWhat\'s new:',
+  'whatsNew.title': 'The \'WotStat Widgets\' mod has been successfully updated to version %s',
+  'whatsNew.serverTitle': '\'WotStat Widgets\' mod news',
   'context.lock': 'Lock movement',
   'context.unlock': 'Unlock movement',
   'context.resize': 'Resize',
