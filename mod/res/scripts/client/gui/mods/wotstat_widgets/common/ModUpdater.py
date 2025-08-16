@@ -4,6 +4,7 @@ import json
 import re
 import random
 from datetime import datetime
+from urlparse import urlparse
 
 import BigWorld
 from helpers import getShortClientVersion
@@ -64,27 +65,96 @@ class ModUpdater(object):
         shutil.copyfile(currentMod, filePath)
   
   @withExceptionHandling(logger)
+  def onEndDownload(self, latestVersion, data, onCompleteInvoke):
+    # type: (Self, str, BigWorld.WGUrlResponse) -> None
+    if data.responseCode != 200:
+      logger.error('GH Update. Download response status is not 200: %s' % data.responseCode)
+      return onCompleteInvoke(UpdateStatus.NOT_OK_RESPONSE)
+      
+  
+    gameVersion = _numericVersion()
+    newModPath = os.path.join(os.path.abspath('./mods/'), gameVersion, self.getFullModName(latestVersion))
+    if not os.path.exists(newModPath):
+      with open(newModPath, "wb") as f:
+        f.write(data.body)
+
+    onCompleteInvoke(UpdateStatus.UPDATED)
+
+  @withExceptionHandling()
+  def updateToLatestVersion(self, url, onComplete=None):
+
+    def onCompleteInvoke(status):
+      if onComplete: onComplete(status)
+
+    def processResponse(data):
+      # type: (BigWorld.WGUrlResponse) -> None
+      
+      if data.responseCode != 200:
+        logger.error('Latest update. Response status is not 200: %s' % data.responseCode)
+        return onCompleteInvoke(UpdateStatus.NOT_OK_RESPONSE)
+      
+      parsed = json.loads(data.body)
+      info = parsed.get(modExtension[1:], None)  # type: dict
+      if not info:
+        logger.error('Latest update. Can not find mod info in response')
+        return onCompleteInvoke(UpdateStatus.BAD_INFO)
+
+      latestVersion = info.get('version', None)
+      if not latestVersion:
+        logger.error('Latest update. Can not find version in response')
+        return onCompleteInvoke(UpdateStatus.BAD_INFO)
+      
+      logger.info('Latest update. Latest version: %s' % latestVersion)
+
+      if latestVersion == self.currentVersion:
+        logger.debug('Latest update. Already up to date')
+        return onCompleteInvoke(UpdateStatus.ALREADY_UP_TO_DATE)
+      
+      canary = info.get('canary', None)
+      if canary is not None:
+        numCanaryUpgrade = canary['percent']
+        publishedAt = canary['publish']
+        parsed_date = datetime.strptime(publishedAt, "%Y-%m-%dT%H:%M:%S.%fZ")
+        now = datetime.now()
+        delta = now - parsed_date
+        day_since_release = max(delta.days + 1, 1)
+
+        update_fraction_today = 1 - (1 - numCanaryUpgrade) ** day_since_release
+        rnd = random.random()
+
+        logger.info('Latest update. Update canary fraction today: %s; RND=%s' % (update_fraction_today, rnd))
+
+        if rnd > update_fraction_today:
+          return onCompleteInvoke(UpdateStatus.SKIP_BY_CANARY)
+
+      modUrl = info.get('url', None)
+
+      if not modUrl:
+        logger.error('Latest update. Can not find download url in response')
+        return onCompleteInvoke(UpdateStatus.BAD_INFO)
+      
+      logger.info('Latest update. Download url: %s' % modUrl)
+
+      parsedUrl = urlparse(url)
+      downloadUrl = "{}://{}/{}".format(parsedUrl.scheme, parsedUrl.netloc, modUrl)
+      BigWorld.fetchURL(downloadUrl, lambda data: self.onEndDownload(latestVersion, data, onCompleteInvoke))      
+
+    def onResponse(data):
+      # type: (BigWorld.WGUrlResponse) -> None
+
+      try: processResponse(data)
+      except Exception as e: 
+        logger.error('Latest update. Error processing response: %s' % str(e))
+        onCompleteInvoke(UpdateStatus.BAD_INFO)
+
+    BigWorld.fetchURL(url, onResponse, GH_HEADERS)
+
+  @withExceptionHandling(logger)
   def updateToGitHubReleases(self, onComplete=None):
 
     def onCompleteInvoke(status):
       if onComplete:
         onComplete(status)
-    
-    @withExceptionHandling(logger)
-    def onEndDownload(latestVersion, data):
-      # type: (str, BigWorld.WGUrlResponse) -> None
-      if data.responseCode != 200:
-        logger.error('GH Update. Download response status is not 200: %s' % data.responseCode)
-        return onCompleteInvoke(UpdateStatus.NOT_OK_RESPONSE)
-        
-    
-      gameVersion = _numericVersion()
-      newModPath = os.path.join(os.path.abspath('./mods/'), gameVersion, self.getFullModName(latestVersion))
-      if not os.path.exists(newModPath):
-        with open(newModPath, "wb") as f:
-          f.write(data.body)
-
-      onCompleteInvoke(UpdateStatus.UPDATED)
 
     @withExceptionHandling(logger)
     def onResponse(data):
@@ -138,6 +208,6 @@ class ModUpdater(object):
       downloadUrl = firstAsset['browser_download_url']
       logger.info('GH Update. Download url: %s' % downloadUrl)
 
-      BigWorld.fetchURL(downloadUrl, lambda data: onEndDownload(latestVersion, data))
+      BigWorld.fetchURL(downloadUrl, lambda data: self.onEndDownload(latestVersion, data, onCompleteInvoke))
     
     BigWorld.fetchURL(self.ghUrl, onResponse, GH_HEADERS)

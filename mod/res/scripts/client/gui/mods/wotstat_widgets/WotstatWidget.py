@@ -16,7 +16,7 @@ from .main.WebSocketInterface import WebSocketInterface
 from .common.Notifier import Notifier
 from .main.WhatsNewNotifier import WhatsNewNotifier
 from .common.i18n import t
-from .common.ModUpdater import ModUpdater
+from .common.ModUpdater import ModUpdater, UpdateStatus
 from .dataProvider import setup as setupDataProvider
 
 
@@ -131,7 +131,16 @@ class WotstatWidget(object):
       return False
 
   def checkAndUpdate(self, currentVersion):
-    updater = ModUpdater(modName="wotstat.widgets",
-                      currentVersion=currentVersion,
-                      ghUrl=GITHUB_URL)
-    updater.updateToGitHubReleases(lambda status: logger.info("Update status: %s" % status))
+    updater = ModUpdater(modName="wotstat.widgets", currentVersion=currentVersion, ghUrl=GITHUB_URL)
+    
+    def onRuServerComplete(status):
+      logger.info("Ru server update status: %s" % status)
+      if status in (UpdateStatus.BAD_INFO, UpdateStatus.NOT_OK_RESPONSE):
+        updater.updateToGitHubReleases(lambda status: logger.info("Update status: %s" % status))
+
+    def onMainServerComplete(status):
+      logger.info("Main server update status: %s" % status)
+      if status in (UpdateStatus.BAD_INFO, UpdateStatus.NOT_OK_RESPONSE):
+        updater.updateToLatestVersion('https://ru.install.wotstat.info/api/mod/wotstat.widgets/latest', onRuServerComplete)
+
+    updater.updateToLatestVersion('https://install.wotstat.info/api/mod/wotstat.widgets/latest', onMainServerComplete)
