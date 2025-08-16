@@ -15,6 +15,7 @@ TEMP_CEF_ZIP_PATH = os.path.join(tempfile.gettempdir(), 'wotstat.widgets.cef.zip
 TARGET_CEF_PATH = 'mods/wotstat.widgets.cef'
 TARGET_CEF_PATH_CHECKSUM = TARGET_CEF_PATH + '/checksum'
 CDN_URL= 'https://cef-storage.wotstat.info/wotstat.widgets.cef.%s.zip'
+RU_CDN_URL= 'https://ru.cef-storage.wotstat.info/wotstat.widgets.cef.%s.zip'
 DIRECT_URL = 'https://storage.yandexcloud.net/cef-storage.wotstat.info/wotstat.widgets.cef.%s.zip'
 MAX_RETRY_ATTEMPTS = 4
 
@@ -82,13 +83,21 @@ class CefArchive():
       with zipfile.ZipFile(target, 'r') as zip:
         zip.extractall('mods') 
     
-    def downloadFile(chunk_size=1024):
+    def downloadFile(chunk_size=1024, timeout=10):
       
       while self.retryCount < MAX_RETRY_ATTEMPTS and self.enabled:
         try:
-          url = (DIRECT_URL if self.retryCount == MAX_RETRY_ATTEMPTS - 1 else CDN_URL) % checksum
+          url = DIRECT_URL
+
+          if self.retryCount < MAX_RETRY_ATTEMPTS - 1:
+            url = RU_CDN_URL
+
+          if self.retryCount < MAX_RETRY_ATTEMPTS - 2:
+            url = CDN_URL
+
+          url = url % checksum
           logger.info('Download attempt %d starting from %s' % (self.retryCount, url))
-          response = urllib2.urlopen(url)
+          response = urllib2.urlopen(url, timeout=timeout)
           totalSize = int(response.info().getheader('Content-Length').strip())
           
           if totalSize == 0:
