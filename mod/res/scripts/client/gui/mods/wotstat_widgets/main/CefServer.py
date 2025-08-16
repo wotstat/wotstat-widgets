@@ -48,6 +48,7 @@ class Commands:
   CHANGE_URL = 'CHANGE_URL'
   TERMINATE = 'TERMINATE'
   WIDGET_COMMAND = 'WIDGET_COMMAND'
+  READY_TO_CONNECT = 'READY_TO_CONNECT'
 
 
 def prepareString(obj):
@@ -76,6 +77,7 @@ class CefServer(object):
   onSetupComplete = Event()
   hasProcessError = False
   lastProcessError = None
+  port = None
   onProcessError = Event()
   settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
 
@@ -113,7 +115,7 @@ class CefServer(object):
         self.lastProcessError = "Error starting CEF server: %s" % str(e)
         self.onProcessError(str(e))
         
-    BigWorld.callback(0.1, start)
+    BigWorld.callback(1, start)
       
   def _startServer(self, devtools, port):
     startupInfo = subprocess.STARTUPINFO()
@@ -126,6 +128,8 @@ class CefServer(object):
     env['PYTHONUTF8'] = '1'
     env['PYTHONLEGACYWINDOWSSTDIO'] = '1'
     
+    self.port = port
+
     self.process = subprocess.Popen([
         CEF_EXE_PATH,
         '--port=' + str(port),
@@ -146,9 +150,10 @@ class CefServer(object):
 
     logger.info("CEF server started")
 
-    logger.info("Waiting for a connection on port: %s..." % str(port))
+  def connect(self):
+    logger.info("Waiting for a connection on port: %s..." % str(self.port))
     self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.socket.connect(('localhost', port))
+    self.socket.connect(('localhost', self.port))
     logger.info("Connected")
 
     self.receiverThread = threading.Thread(target=self._socketReceiverLoop, args=(self.socket, self.queue))
@@ -255,6 +260,15 @@ class CefServer(object):
       line = output.decode('utf-8', errors='replace').strip()
       if not line: continue
       if 'Third-party cookie will be blocked.' in line: continue
+
+      if line.startswith('command:'):
+        command = line[8:]
+        if command == Commands.READY_TO_CONNECT and not self.isReady:
+          self.connect()
+        else:
+          logger.warning("Received unexpected command: %s" % command)
+          
+        continue
 
       if line.startswith('[LOG]'):
         line = line[5:]

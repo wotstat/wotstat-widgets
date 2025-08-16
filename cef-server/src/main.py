@@ -34,6 +34,11 @@ def consoleLog(url, level, msg):
     sys.stdout.write("[CONSOLE][%s][%s]: %s\n" % (url, namedLevel, msg.encode("utf-8")))
     sys.stdout.flush()
 
+def sendCommand(command):
+  with logLock:
+    sys.stdout.write("command:%s\n" % command)
+    sys.stdout.flush()
+
 with open(os.path.join(sys._MEIPASS, 'inject.js'), 'r') as f:
   injectJs = f.read()
 
@@ -411,6 +416,7 @@ class Commands:
   CHANGE_URL = 'CHANGE_URL'
   TERMINATE = 'TERMINATE'
   WIDGET_COMMAND = 'WIDGET_COMMAND'
+  READY_TO_CONNECT = 'READY_TO_CONNECT'
 
 class Main(object):
   killNow = threading.Event()
@@ -425,6 +431,7 @@ class Main(object):
 
     self.server = CEFServer(port=port, cachePath=cachePath, debug=debug)
     self.server.startServer()
+    sendCommand(Commands.READY_TO_CONNECT)
 
   def start(self):
     while self.inputThread.is_alive() and not self.killNow.is_set():
