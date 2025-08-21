@@ -403,11 +403,19 @@ class MainView(View):
   def setInterfaceScale(self, scale=None):
     if not scale:
       scale = self.settingsCore.interfaceScale.get()
-      
-    if scale == self.interfaceScale: return
-    self.interfaceScale = scale
     
-    BigWorld.callback(0, partial(self._as_setInterfaceScale, scale))
+    if scale == self.interfaceScale: return
+
+    def retry(count = 0):
+      if self._isDAAPIInited():
+        if scale == self.interfaceScale: return
+        self.interfaceScale = scale
+        BigWorld.callback(0, partial(self._as_setInterfaceScale, scale))
+      else:
+        if count > 5: return
+        BigWorld.callback(0.1, partial(retry, count + 1))
+          
+    retry()
 
   def _as_onFrame(self, wid, width, height, data, shift):
     self.flashObject.as_onFrame(wid, width, height, data, shift)
