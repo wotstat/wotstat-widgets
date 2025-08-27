@@ -201,7 +201,6 @@ package wotstat.widgets {
     public function setFrame(width:uint, height:uint, data:ByteArray):void {
 
       if (width != targetContentWidth && !resizeControl.isResizing) {
-        trace("[DW] Skip frame with width " + width + "!=" + targetContentWidth);
         return;
       }
 
@@ -216,7 +215,6 @@ package wotstat.widgets {
     }
 
     public function setResizeMode(full:Boolean):void {
-      trace("[DW] Set resize mode " + full);
       resizeControl.fullResize = full;
       if (!full)
         targetHeight = -1;
@@ -288,7 +286,6 @@ package wotstat.widgets {
           'bottom': bottom
         };
 
-      trace("[DW] Set insets " + top + "x" + right + "x" + bottom + "x" + left);
       dispatchEvent(new ResizeEvent(REQUEST_RESOLUTION, targetContentWidth, targetContentHeight));
     }
 
@@ -315,7 +312,6 @@ package wotstat.widgets {
       x = localPosition.x;
       y = localPosition.y;
 
-      trace("[DW] Set layer " + layer);
       fixPosition();
     }
 
@@ -331,7 +327,6 @@ package wotstat.widgets {
       this.x = x;
       this.y = y;
 
-      trace("[DW] Set position");
       fixPosition();
     }
 
@@ -492,7 +487,6 @@ package wotstat.widgets {
     }
 
     private function onResizeControlChange(event:ResizeEvent):void {
-      trace("[DW] Resize control changed " + event.scaleX + "x" + event.scaleY);
       targetWidth = event.scaleX;
       targetHeight = event.scaleY;
       updateImageScale();
@@ -517,7 +511,6 @@ package wotstat.widgets {
     private function globalPosition():Point {
       var position:Point = new Point(x, y);
 
-      trace("[DW] Global position " + position.x + "x" + position.y + " in " + layer + " " + isInBattle);
       if (layer == LAYER.DEFAULT && !isInBattle) {
         position.x += HANGAR_INSETS.LEFT;
         position.y += HANGAR_INSETS.TOP;
@@ -543,7 +536,6 @@ package wotstat.widgets {
         isDragging = false;
       }
 
-      trace("[DW] App resize");
       fixPosition();
     }
 
@@ -555,8 +547,6 @@ package wotstat.widgets {
       var bottom:Number = App.appHeight - dragArea.height;
       var cRight:Number = App.appWidth - controlPanel.height;
       var cBottom:Number = App.appHeight - controlPanel.height;
-
-      trace("[DW] Get dragging rectangle " + App.appWidth + "x" + App.appHeight + " " + dragArea.width + "x" + dragArea.height);
 
       if (full && isTopLayer)
         return new Rectangle(0, 0, right, bottom);
@@ -603,7 +593,6 @@ package wotstat.widgets {
         y = rect.height + rect.y;
 
       if (x != oldX || y != oldY) {
-        trace("[DW] Fix position to " + x + "x" + y + " from " + oldX + "x" + oldY + " in " + rect);
         var position:Point = globalPosition();
         dispatchEvent(new MoveEvent(MOVE_WIDGET, position.x, position.y));
       }
