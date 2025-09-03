@@ -15,6 +15,8 @@ from ..hook import registerEvent
 from ..ExceptionHandling import withExceptionHandling
 from . import logger
 
+IS_HET_GUN_MARKER_EXIST = hasattr(VehicleGunRotator, '_VehicleGunRotator__getGunMarkerPosition')
+
 class AimingProvider(object):
 
   gameSession = dependency.descriptor(IGameSessionController) # type: IGameSessionController
@@ -72,8 +74,14 @@ class AimingProvider(object):
     if vehicle.id != BigWorld.player().playerVehicleID: return
     
     shotPos, shotVec = obj.getCurShotPosition()
-    self.markerClientPosition = obj._VehicleGunRotator__getGunMarkerPosition(
-      shotPos, shotVec, obj._VehicleGunRotator__dispersionAngles)[0]
+    
+    if IS_HET_GUN_MARKER_EXIST:
+      self.markerClientPosition = obj._VehicleGunRotator__getGunMarkerPosition(
+        shotPos, shotVec, obj._VehicleGunRotator__dispersionAngles)[0]
+    else:
+      self.markerClientPosition = obj._VehicleGunRotator__getGunMarkerInfo(
+        shotPos, shotVec, obj._VehicleGunRotator__dispersionAngles,
+        obj._VehicleGunRotator__gunIndex).position
 
     self.markerClientDispersion = obj._VehicleGunRotator__dispersionAngles[0]
     self.clientDispersion.setValue(self.markerClientDispersion)
@@ -81,8 +89,14 @@ class AimingProvider(object):
   # set server
   @withExceptionHandling(logger)
   def __onSetShotPosition(self, obj, vehicleID, shotPos, shotVec, dispersionAngle, *args, **kwargs):
-    self.markerServerPosition = obj._VehicleGunRotator__getGunMarkerPosition(
-      shotPos, shotVec, [dispersionAngle, dispersionAngle, dispersionAngle, dispersionAngle])[0]
+    
+    if IS_HET_GUN_MARKER_EXIST:
+      self.markerServerPosition = obj._VehicleGunRotator__getGunMarkerPosition(
+        shotPos, shotVec, [dispersionAngle, dispersionAngle, dispersionAngle, dispersionAngle])[0]
+    else:
+      self.markerServerPosition = obj._VehicleGunRotator__getGunMarkerInfo(
+        shotPos, shotVec, [dispersionAngle, dispersionAngle, dispersionAngle, dispersionAngle],
+      obj._VehicleGunRotator__gunIndex).position
 
     self.markerServerDispersion = dispersionAngle
     self.serverDispersion.setValue(dispersionAngle)

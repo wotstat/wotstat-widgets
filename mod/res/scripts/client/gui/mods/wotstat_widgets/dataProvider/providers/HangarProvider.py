@@ -8,7 +8,6 @@ from CurrentVehicle import g_currentVehicle
 from shared_utils import first
 from items import vehicles
 from gui.prb_control.dispatcher import _PreBattleDispatcher, g_prbLoader
-from gui.Scaleform.daapi.view.lobby.battle_queue import BattleQueue
 from Event import Event
 from . import logger
 
@@ -59,6 +58,7 @@ class HangarProvider(object):
   @withExceptionHandling(logger)
   def __onAccountBecomeNonPlayer(self):
     g_currentVehicle.onChanged -= self.__onCurrentVehicleChanged
+    self.isInQueue.setValue(False)
     self.isInHangar.setValue(False)
   
   @withExceptionHandling(logger)
@@ -162,8 +162,12 @@ onEnqueue = Event()
 @registerEvent(_PreBattleDispatcher, '_PreBattleDispatcher__setEntity')
 def setEntity(self, *a, **k):
   onBattleModeChange()
-  
-@registerEvent(BattleQueue, '_populate')
-def queuePopulate(self, *a, **k):
-  onEnqueue()
-  
+
+try:
+  from gui.Scaleform.daapi.view.lobby.battle_queue import BattleQueue
+  @registerEvent(BattleQueue, '_populate')
+  def queuePopulate(self, *a, **k): onEnqueue()
+except Exception:
+  from gui.Scaleform.daapi.view.lobby.battle_queue.battle_queue import BattleQueue
+  @registerEvent(BattleQueue, '_populate')
+  def queuePopulate(self, *a, **k): onEnqueue()
