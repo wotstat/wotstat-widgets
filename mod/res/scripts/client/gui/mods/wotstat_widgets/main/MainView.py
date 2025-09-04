@@ -25,6 +25,7 @@ from .EventsManager import manager
 from .ChangeUrlWindow import show as showChangeUrlWindow
 from .WidgetStorage import LAYER, WidgetStorage, POSITION_MODE
 from .WidgetContextMenu import WidgetContextMenuHandler, BUTTONS as CE
+from realm import CURRENT_REALM
 
 CEF_MAIN_VIEW = "WOTSTAT_CEF_MAIN_VIEW"
 
@@ -48,6 +49,8 @@ class MainView(View):
     manager.changeUrlEvent += self._changeUrl
     server.onFrame += self._onFrame
     server.onProcessError += self._onServerError
+
+    self._as_setVendor('LESTA' if CURRENT_REALM == 'RU' else 'WARGAMING')
 
     WidgetContextMenuHandler.onEvent += self._onWidgetContextEvent
     g_eventBus.addListener(events.GameEvent.FULL_STATS, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
@@ -416,6 +419,9 @@ class MainView(View):
         BigWorld.callback(0.1, partial(retry, count + 1))
           
     retry()
+
+  def _as_setVendor(self, vendor):
+    self.flashObject.as_setVendor(vendor)
 
   def _as_onFrame(self, wid, width, height, data, shift):
     self.flashObject.as_onFrame(wid, width, height, data, shift)

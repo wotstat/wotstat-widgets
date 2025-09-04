@@ -33,6 +33,8 @@ package wotstat.widgets {
 
     private var isInBattle:Boolean = false;
 
+    private var targetAlias:String = Aliases.LOBBY_HANGAR;
+
     public function MainView() {
       super();
     }
@@ -86,7 +88,7 @@ package wotstat.widgets {
       if (view == null)
         return;
 
-      if (view.as_config.alias == Aliases.LOBBY_HANGAR) {
+      if (view.as_config.alias == targetAlias) {
         isInBattle = false;
 
         if (defaultLayerView == null) {
@@ -104,7 +106,7 @@ package wotstat.widgets {
 
     private function setupWidgets():void {
       for each (var widget:DraggableWidget in activeWidgets) {
-        if (widget.getLayer() == LAYER.TOP)
+        if (widget.getLayer() == LAYER.TOP || (targetAlias == Aliases.LOBBY && !isInBattle))
           topLayerView.addChild(widget);
         else
           defaultLayerView.addChild(widget);
@@ -128,7 +130,7 @@ package wotstat.widgets {
       if (!defaultLayerView || !topLayerView)
         return;
 
-      if (layer == LAYER.TOP) {
+      if (layer == LAYER.TOP || (targetAlias == Aliases.LOBBY && !isInBattle)) {
         if (defaultLayerView.contains(widget))
           defaultLayerView.removeChild(widget);
         if (!topLayerView.contains(widget))
@@ -149,6 +151,10 @@ package wotstat.widgets {
       else {
         DebugUtils.LOG_WARNING("[MainView][" + level + "]" + msg);
       }
+    }
+
+    public function as_setVendor(vendor:String):void {
+      targetAlias = vendor == 'LESTA' ? Aliases.LOBBY_HANGAR : Aliases.LOBBY;
     }
 
     public function as_createWidget(wid:int, url:String, width:int, height:int, x:int, y:int,
