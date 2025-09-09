@@ -119,7 +119,7 @@ class WotstatWidget(object):
         id="wotstat_widgets",
         name=t('modslist.title'),
         description=t('modslist.description'),
-        icon='gui/maps/wotstat.widgets/modsListApi.png',
+        icon='scripts/client/gui/mods/wotstat_widgets/maps/modsListApi.png',
         enabled=True,
         login=False,
         lobby=True,
