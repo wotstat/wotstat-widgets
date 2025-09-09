@@ -7,6 +7,7 @@ from helpers import dependency
 from skeletons.gui.app_loader import IAppLoader
 from gui.Scaleform.framework.application import AppEntry
 from gui.shared.formatters import text_styles
+from constants import CURRENT_REALM
 
 from .EventsManager import manager
 from .CefServer import server
@@ -17,51 +18,34 @@ from ..constants import WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS, WIDGETS_COLLECTION_
 from ..common.i18n import t
 
 CEF_SETTINGS_WINDOW = "WOTSTAT_CEF_SETTINGS_WINDOW"
+COLLECTION_URL = WIDGETS_COLLECTION_URL_RU if CURRENT_REALM == 'RU' else WIDGETS_COLLECTION_URL
 
 openWebBrowser = BigWorld.wg_openWebBrowser if hasattr(BigWorld, 'wg_openWebBrowser') else BigWorld.openWebBrowser
 notifier = Notifier.instance()
 logger = Logger.instance()
 
-preferredRuBackend = False
-
-def checkBackendAvailability():
-  def onResponse(response):
-    global preferredRuBackend
-    if response is None or response.responseCode != 200:
-      preferredRuBackend = True
-      logger.info('Cannot reach global backend, using RU backend')
-    else:
-      preferredRuBackend = False
-      logger.info('Global backend is reachable, using it')
-
-  logger.info('Checking global backend availability...')
-  BigWorld.fetchURL(WIDGETS_COLLECTION_URL, onResponse, timeout=5)
-  
 
 class SettingsWindow(AbstractWindowView):
 
   def onWindowClose(self):
     self.destroy()
 
-  def collectionUrl(self):
-    return WIDGETS_COLLECTION_URL_RU if preferredRuBackend else WIDGETS_COLLECTION_URL
-    
   def py_openWidgetsCollection(self):
-    openWebBrowser(self.collectionUrl())
+    openWebBrowser(COLLECTION_URL)
 
   def py_openWidget(self, url):
     manager.createWidget(url, 300, -1)
     self.destroy()
 
   def py_openDemoWidget(self):
-    manager.createWidget(self.collectionUrl() + '/demo-widget', 300, -1)
+    manager.createWidget(COLLECTION_URL + '/demo-widget', 300, -1)
     self.destroy()
     
   def py_openUnpackError(self):
-    openWebBrowser(self.collectionUrl() + '/manual-install')
+    openWebBrowser(COLLECTION_URL + '/manual-install')
 
   def py_openRuntimeError(self):
-    openWebBrowser(self.collectionUrl() + '/common-issues')
+    openWebBrowser(COLLECTION_URL + '/common-issues')
     
   def py_t(self, key):
     return t(key)
@@ -172,8 +156,6 @@ class SettingsWindow(AbstractWindowView):
     self.flashObject.as_showRuntimeErrorButton()
 
 def setup():
-  checkBackendAvailability()
-
   settingsViewSettings = ViewSettings(
     CEF_SETTINGS_WINDOW,
     SettingsWindow,
