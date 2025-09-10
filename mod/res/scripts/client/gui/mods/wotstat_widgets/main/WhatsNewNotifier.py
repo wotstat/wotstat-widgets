@@ -91,6 +91,13 @@ MOD_RELEASE_NOTES = [
       '• Adaptation for version %s\n' % semilight('Lesta 1.37') +
       '• Fixed some launch errors\n' +
       '• Improved auto-update system'
+  },
+  {
+    'ru':
+      '• По кнопке %s теперь открывается RU версия сайта\n' % semilight('Коллекция виджетов') +
+      '• Добавлена поддержка виджета на отметки (сам виджет будет доступен позже)',
+    'en':
+      '• Fix default layer positioning which broke in 2.0'
   }
 ]
 
