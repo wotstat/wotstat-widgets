@@ -14,6 +14,7 @@ package wotstat.widgets {
   import flash.display.Sprite;
   import wotstat.widgets.common.MoveEvent;
   import wotstat.widgets.common.LAYER;
+  import wotstat.widgets.common.VENDOR;
 
   public class MainView extends AbstractView {
 
@@ -33,7 +34,7 @@ package wotstat.widgets {
 
     private var isInBattle:Boolean = false;
 
-    private var targetAlias:String = Aliases.LOBBY_HANGAR;
+    private var vendor:String = VENDOR.LESTA;
 
     public function MainView() {
       super();
@@ -88,25 +89,33 @@ package wotstat.widgets {
       if (view == null)
         return;
 
-      if (view.as_config.alias == targetAlias) {
-        isInBattle = false;
+      if (view.as_config.alias != (this.vendor == VENDOR.LESTA ? Aliases.LOBBY_HANGAR : Aliases.LOBBY))
+        return;
 
-        if (defaultLayerView == null) {
-          defaultLayerView = new Sprite();
-          view.addChild(defaultLayerView);
-          setupWidgets();
-        }
-        else {
-          if (defaultLayerView.parent)
-            defaultLayerView.parent.removeChild(defaultLayerView);
-          view.addChild(defaultLayerView);
-        }
+      this.isInBattle = false;
+
+      if (defaultLayerView == null) {
+        defaultLayerView = new Sprite();
+        setupWidgets();
+      }
+      else {
+        if (defaultLayerView.parent)
+          defaultLayerView.parent.removeChild(defaultLayerView);
+      }
+
+      if (this.vendor == VENDOR.LESTA || this.isInBattle) {
+        view.addChild(defaultLayerView);
+      }
+      else {
+        var lobbyPage:* = view; // net.wg.gui.lobby.LobbyPage
+        var waitingIndex:int = lobbyPage.getChildIndex(lobbyPage.waiting);
+        lobbyPage.addChildAt(defaultLayerView, waitingIndex + 1);
       }
     }
 
     private function setupWidgets():void {
       for each (var widget:DraggableWidget in activeWidgets) {
-        if (widget.getLayer() == LAYER.TOP || (targetAlias == Aliases.LOBBY && !isInBattle))
+        if (widget.getLayer() == LAYER.TOP)
           topLayerView.addChild(widget);
         else
           defaultLayerView.addChild(widget);
@@ -130,7 +139,7 @@ package wotstat.widgets {
       if (!defaultLayerView || !topLayerView)
         return;
 
-      if (layer == LAYER.TOP || (targetAlias == Aliases.LOBBY && !isInBattle)) {
+      if (layer == LAYER.TOP) {
         if (defaultLayerView.contains(widget))
           defaultLayerView.removeChild(widget);
         if (!topLayerView.contains(widget))
@@ -154,7 +163,11 @@ package wotstat.widgets {
     }
 
     public function as_setVendor(vendor:String):void {
-      targetAlias = vendor == 'LESTA' ? Aliases.LOBBY_HANGAR : Aliases.LOBBY;
+      this.vendor = vendor == 'LESTA' ? VENDOR.LESTA : VENDOR.WG;
+    }
+
+    public function as_setHangarIsRoot(isRoot:Boolean):void {
+      this.defaultLayerView.visible = isRoot || this.isInBattle;
     }
 
     public function as_createWidget(wid:int, url:String, width:int, height:int, x:int, y:int,
@@ -168,7 +181,7 @@ package wotstat.widgets {
           " hidden: " + isHidden + " locked: " + isLocked + " controls: " + isControlsAlwaysHidden + " battle: " +
           isInBattle + " positionMode: " + positionMode + " layer: " + layer);
 
-      var widget:DraggableWidget = new DraggableWidget(wid, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle, positionMode, layer);
+      var widget:DraggableWidget = new DraggableWidget(wid, width, height, x, y, isHidden, isLocked, isControlsAlwaysHidden, isInBattle, positionMode, layer, vendor);
       widget.addEventListener(DraggableWidget.REQUEST_RESIZE, onWidgetRequestResize);
       widget.addEventListener(DraggableWidget.REQUEST_RESOLUTION, onWidgetRequestResolution);
       widget.addEventListener(DraggableWidget.MOVE_WIDGET, onWidgetMove);

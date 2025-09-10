@@ -28,6 +28,7 @@ package wotstat.widgets {
   import wotstat.widgets.common.POSITION_MODE;
   import wotstat.widgets.common.LAYER;
   import wotstat.widgets.controls.Points;
+  import wotstat.widgets.common.VENDOR;
 
 
   public class DraggableWidget extends Sprite {
@@ -39,7 +40,9 @@ package wotstat.widgets {
     public static const HIDE_WIDGET:String = "HIDE_WIDGET";
     public static const SHOW_WIDGET:String = "SHOW_WIDGET";
 
-    private const HANGAR_HEADER_HEIGHT:int = 35;
+    private const LESTA_HANGAR_HEADER_HEIGHT:int = 35;
+    private const WG_HANGAR_HEADER_HEIGHT:int = 51;
+    private const WG_HANGAR_FOOTER_HEIGHT:int = 50;
 
     private var _wid:int = 0;
 
@@ -64,6 +67,7 @@ package wotstat.widgets {
     private var isTopPlan:Boolean = false;
     private var hangarOnly:Boolean = false;
     private var layer:String = LAYER.DEFAULT;
+    private var vendor:String = VENDOR.WG;
     private var positionMode:String = POSITION_MODE.SAME;
     private var unlimitedSize:Boolean = false;
     private var insets:Object = {
@@ -122,7 +126,8 @@ package wotstat.widgets {
         isControlsAlwaysHidden:Boolean,
         isInBattle:Boolean,
         positionMode:String,
-        layer:String):void {
+        layer:String,
+        vendor:String):void {
       super();
       name = "DraggableWidget_" + wid;
       content.name = "Content_" + wid;
@@ -130,6 +135,7 @@ package wotstat.widgets {
       loader.name = "WidgetContentLoader_" + wid;
       this.positionMode = positionMode;
       this.layer = layer;
+      this.vendor = vendor;
 
       _wid = wid;
       this.isInBattle = isInBattle;
@@ -511,7 +517,7 @@ package wotstat.widgets {
     private function globalPosition():Point {
       var position:Point = new Point(x, y);
 
-      if (layer == LAYER.DEFAULT && !isInBattle) {
+      if (layer == LAYER.DEFAULT && !isInBattle && vendor == VENDOR.LESTA) {
         position.x += HANGAR_INSETS.LEFT;
         position.y += HANGAR_INSETS.TOP;
       }
@@ -522,7 +528,7 @@ package wotstat.widgets {
     private function globalToLocalPosition(x:Number, y:Number):Point {
       var position:Point = new Point(x, y);
 
-      if (layer == LAYER.DEFAULT && !isInBattle) {
+      if (layer == LAYER.DEFAULT && !isInBattle && vendor == VENDOR.LESTA) {
         position.x -= HANGAR_INSETS.LEFT;
         position.y -= HANGAR_INSETS.TOP;
       }
@@ -554,16 +560,22 @@ package wotstat.widgets {
       if (!full && isTopLayer)
         return new Rectangle(0, controlOffset, cRight, cBottom);
 
-      if (full && !battle)
+      if (full && !battle && vendor == VENDOR.LESTA)
         return new Rectangle(0, 0, right, bottom - HANGAR_INSETS.BOTTOM - HANGAR_INSETS.TOP);
 
-      if (!full && !battle)
+      if (full && !battle && vendor == VENDOR.WG)
+        return new Rectangle(0, WG_HANGAR_HEADER_HEIGHT, right, bottom - WG_HANGAR_FOOTER_HEIGHT - WG_HANGAR_HEADER_HEIGHT);
+
+      if (!full && !battle && vendor == VENDOR.LESTA)
         return new Rectangle(
             0,
-            HANGAR_HEADER_HEIGHT + controlOffset,
+            LESTA_HANGAR_HEADER_HEIGHT + controlOffset,
             cRight,
-            cBottom - HANGAR_HEADER_HEIGHT - HANGAR_INSETS.BOTTOM - HANGAR_INSETS.TOP
+            cBottom - LESTA_HANGAR_HEADER_HEIGHT - HANGAR_INSETS.BOTTOM - HANGAR_INSETS.TOP
           );
+
+      if (!full && !battle && vendor == VENDOR.WG)
+        return new Rectangle(0, WG_HANGAR_HEADER_HEIGHT + controlOffset, cRight, cBottom - WG_HANGAR_FOOTER_HEIGHT - WG_HANGAR_HEADER_HEIGHT);
 
       if (full && battle)
         return new Rectangle(0, 0, right, bottom);

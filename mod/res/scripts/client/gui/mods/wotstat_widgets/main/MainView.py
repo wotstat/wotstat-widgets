@@ -8,16 +8,18 @@ from gui.Scaleform.framework import g_entitiesFactories, ScopeTemplates, ViewSet
 from gui.Scaleform.framework.entities.View import View
 from gui.Scaleform.framework.application import AppEntry
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
+from gui.Scaleform.lobby_entry import LobbyEntry
 from gui.shared import events, EVENT_BUS_SCOPE, g_eventBus
 from gui.shared.personality import ServicesLocator
 from gui.app_loader.settings import APP_NAME_SPACE
 from frameworks.wulf import WindowLayer
 from helpers import dependency
+from skeletons.gui.app_loader import IAppLoader
 from skeletons.gui.impl import IGuiLoader
 from skeletons.account_helpers.settings_core import ISettingsCore
 from Avatar import PlayerAvatar
 from AvatarInputHandler import AvatarInputHandler
-from typing import Tuple
+from typing import Tuple, TYPE_CHECKING
 
 from ..common.Logger import Logger
 from .CefServer import CefServer, server
@@ -26,6 +28,10 @@ from .ChangeUrlWindow import show as showChangeUrlWindow
 from .WidgetStorage import LAYER, WidgetStorage, POSITION_MODE
 from .WidgetContextMenu import WidgetContextMenuHandler, BUTTONS as CE
 from realm import CURRENT_REALM
+
+if TYPE_CHECKING:
+  from gui.lobby_state_machine.lobby_state_machine import LobbyStateMachine
+  from gui.lobby_state_machine.lobby_state_machine import VisibleRouteInfo
 
 CEF_MAIN_VIEW = "WOTSTAT_CEF_MAIN_VIEW"
 
@@ -42,6 +48,15 @@ class MainView(View):
   def __init__(self, *args, **kwargs):
     super(MainView, self).__init__(*args, **kwargs)
     self.interfaceScale = 0
+    self.lobbyStateMachine = None # type: LobbyStateMachine | None
+    
+    app = dependency.instance(IAppLoader).getApp()
+    if isinstance(app, LobbyEntry) and hasattr(app, 'stateMachine'):
+      try:
+        from gui.Scaleform.lobby_entry import getLobbyStateMachine
+        self.lobbyStateMachine = getLobbyStateMachine()
+      except:
+        self.lobbyStateMachine = None
 
   def _populate(self):
     super(MainView, self)._populate()
@@ -58,7 +73,9 @@ class MainView(View):
     g_eventBus.addListener(events.GameEvent.FULL_STATS_PERSONAL_RESERVES, self._handleToggleFullStats, scope=EVENT_BUS_SCOPE.BATTLE)
     g_eventBus.addListener(events.GameEvent.SHOW_CURSOR, self._handleCursorShow, scope=EVENT_BUS_SCOPE.GLOBAL)
     g_eventBus.addListener(events.GameEvent.HIDE_CURSOR, self._handleCursorHide, scope=EVENT_BUS_SCOPE.GLOBAL)
-    
+
+    if self.lobbyStateMachine: self.lobbyStateMachine.onVisibleRouteChanged += self._onVisibleRouteChanged
+
     global onStartGUI, onControlModeChanged
     onStartGUI += self._onStartGUI
     onControlModeChanged += self._onControlModeChanged
@@ -120,6 +137,8 @@ class MainView(View):
     g_eventBus.removeListener(events.GameEvent.SHOW_CURSOR, self._handleCursorShow, scope=EVENT_BUS_SCOPE.GLOBAL)
     g_eventBus.removeListener(events.GameEvent.HIDE_CURSOR, self._handleCursorHide, scope=EVENT_BUS_SCOPE.GLOBAL)
     
+    if self.lobbyStateMachine: self.lobbyStateMachine.onVisibleRouteChanged -= self._onVisibleRouteChanged
+    
     if self.isOnSetupSubscribed:
       server.onSetupComplete -= self.onSetupComplete
 
@@ -128,6 +147,17 @@ class MainView(View):
     onControlModeChanged -= self._onControlModeChanged
 
     super(MainView, self)._dispose()
+
+  def _onVisibleRouteChanged(self, routeInfo): # type: (VisibleRouteInfo) -> None
+
+    try:
+      from gui.impl.lobby.hangar.states import DefaultHangarState
+      from comp7_light.gui.impl.lobby.hangar.states import Comp7LightRootHangarState
+      isRoot = isinstance(routeInfo.state, DefaultHangarState) or isinstance(routeInfo.state, Comp7LightRootHangarState)
+    except:
+      isRoot = True
+
+    self._as_setHangarIsRoot(isRoot)
 
   def _handleCursorHide(self, event):
     self._as_setControlsVisible(False)
@@ -422,6 +452,9 @@ class MainView(View):
 
   def _as_setVendor(self, vendor):
     self.flashObject.as_setVendor(vendor)
+
+  def _as_setHangarIsRoot(self, isRoot):
+    self.flashObject.as_setHangarIsRoot(isRoot)
 
   def _as_onFrame(self, wid, width, height, data, shift):
     self.flashObject.as_onFrame(wid, width, height, data, shift)
