@@ -21,6 +21,7 @@ def setup(dataProviderSDK, loggerInstance):
   from PlayerFeedbackProvider import PlayerFeedbackProvider
   from BattleResultProvider import BattleResultProvider
   from DossierProvider import DossierProvider
+  from MoeInfoProvider import MoeInfoProvider
   
   KeyboardProvider(dataProviderSDK)
   PlayerProvider(dataProviderSDK)
@@ -34,3 +35,4 @@ def setup(dataProviderSDK, loggerInstance):
   PlayerFeedbackProvider(dataProviderSDK)
   BattleResultProvider(dataProviderSDK)
   DossierProvider(dataProviderSDK)
+  MoeInfoProvider(dataProviderSDK)

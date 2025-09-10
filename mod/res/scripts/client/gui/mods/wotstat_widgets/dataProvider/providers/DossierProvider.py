@@ -8,6 +8,7 @@ from skeletons.gui.shared import IItemsCache
 from helpers import dependency
 
 from PlayerEvents import g_playerEvents
+from items import vehicles
 from gui.shared.gui_items.dossier import VehicleDossier
 from gui.shared.gui_items.dossier.achievements.mark_on_gun import MarkOnGunAchievement
 
@@ -104,6 +105,7 @@ class DossierProvider(object):
   def __dossierToDict(self, dossier):
     # type: (VehicleDossier) -> None
     return {
+      'vehicleTag': vehicles.getItemByCompactDescr(dossier.getCompactDescriptor()).name,
       'movingAvgDamage': dossier.getRecordValue(ACHIEVEMENT_BLOCK.TOTAL, 'movingAvgDamage'),
       'damageRating': dossier.getRecordValue(ACHIEVEMENT_BLOCK.TOTAL, 'damageRating') / 100.0,
       'battlesCount': dossier.getRandomStats().getBattlesCount(),
