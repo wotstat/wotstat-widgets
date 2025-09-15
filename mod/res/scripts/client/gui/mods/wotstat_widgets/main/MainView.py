@@ -40,6 +40,8 @@ storage = WidgetStorage.instance()
 lastWidgetId = 0
 lastLoadIsBattle = False
 
+HANGAR_STATE_CLASS = () # type: Tuple[type, ...]
+
 class MainView(View):
   settingsCore = dependency.descriptor(ISettingsCore) # type: ISettingsCore
   isOnSetupSubscribed = False
@@ -49,6 +51,7 @@ class MainView(View):
     super(MainView, self).__init__(*args, **kwargs)
     self.interfaceScale = 0
     self.lobbyStateMachine = None # type: LobbyStateMachine | None
+    self.isRoot = False
     
     app = dependency.instance(IAppLoader).getApp()
     if isinstance(app, LobbyEntry) and hasattr(app, 'stateMachine'):
@@ -57,6 +60,15 @@ class MainView(View):
         self.lobbyStateMachine = getLobbyStateMachine()
       except:
         self.lobbyStateMachine = None
+    
+    global HANGAR_STATE_CLASS
+    try:
+      from gui.impl.lobby.hangar.states import DefaultHangarState
+      from comp7_light.gui.impl.lobby.hangar.states import Comp7LightRootHangarState
+    except:
+      HANGAR_STATE_CLASS = ()
+    else:
+      HANGAR_STATE_CLASS = (DefaultHangarState, Comp7LightRootHangarState)
 
   def _populate(self):
     super(MainView, self)._populate()
@@ -74,7 +86,9 @@ class MainView(View):
     g_eventBus.addListener(events.GameEvent.SHOW_CURSOR, self._handleCursorShow, scope=EVENT_BUS_SCOPE.GLOBAL)
     g_eventBus.addListener(events.GameEvent.HIDE_CURSOR, self._handleCursorHide, scope=EVENT_BUS_SCOPE.GLOBAL)
 
-    if self.lobbyStateMachine: self.lobbyStateMachine.onVisibleRouteChanged += self._onVisibleRouteChanged
+    if self.lobbyStateMachine: 
+      self.lobbyStateMachine.onVisibleRouteChanged += self._onVisibleRouteChanged
+      self._onVisibleRouteChanged(self.lobbyStateMachine.visibleRouteInfo)
 
     global onStartGUI, onControlModeChanged
     onStartGUI += self._onStartGUI
@@ -150,12 +164,11 @@ class MainView(View):
 
   def _onVisibleRouteChanged(self, routeInfo): # type: (VisibleRouteInfo) -> None
 
-    try:
-      from gui.impl.lobby.hangar.states import DefaultHangarState
-      from comp7_light.gui.impl.lobby.hangar.states import Comp7LightRootHangarState
-      isRoot = isinstance(routeInfo.state, DefaultHangarState) or isinstance(routeInfo.state, Comp7LightRootHangarState)
-    except:
-      isRoot = True
+    # isRoot = routeInfo.state.getFlags() & LobbyStateFlags.HANGAR
+    isRoot = isinstance(routeInfo.state, HANGAR_STATE_CLASS)
+  
+    if(self.isRoot == isRoot): return
+    self.isRoot = isRoot
 
     self._as_setHangarIsRoot(isRoot)
 
