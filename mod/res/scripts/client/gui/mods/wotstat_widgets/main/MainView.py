@@ -98,13 +98,13 @@ class MainView(View):
     self.setInterfaceScale()
     
     if server.isReady:
-      self.addWidgets()
+      BigWorld.callback(0, self.addWidgets)
     else:
       server.onSetupComplete += self.onSetupComplete
       self.isOnSetupSubscribed = True
 
   def onSetupComplete(self):
-    self.addWidgets()
+    BigWorld.callback(0, self.addWidgets)
     server.onSetupComplete -= self.onSetupComplete
     self.isOnSetupSubscribed = False
     
