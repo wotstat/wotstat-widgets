@@ -77,11 +77,14 @@ class DossierProvider(object):
   @withExceptionHandling(logger)
   def __onAccountBecomeNonPlayer(self):
     g_currentVehicle.onChanged -= self.__updateDossierOnVehicleChanged
-    
+  
+  @withExceptionHandling(logger)
   def __onMarkOnGunAchievementInit(self, obj, dossier, *a, **k):
     # type: (MarkOnGunAchievement, VehicleDossier) -> None
+    if dossier is None: return
     self.dossierCache.set(dossier.getCompactDescriptor(), self.__dossierToDict(dossier))
-    
+  
+  @withExceptionHandling(logger)
   def __updateDossierOnVehicleChanged(self, *a, **k):
     if g_currentVehicle and g_currentVehicle.item:
       cd = g_currentVehicle.item.intCD

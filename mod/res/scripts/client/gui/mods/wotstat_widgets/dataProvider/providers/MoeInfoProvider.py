@@ -21,6 +21,7 @@ class MoeInfoProvider(object):
     self.moeCache = {}
     self.currentDescriptor = None
     self.lastResponseTime = 0.0
+    self.moeErrorRetries = {}
     
     self.current = sdk.createState(['moeInfo', 'current'], False)
     self.isAvailable = sdk.createState(['moeInfo', 'isAvailable'])
@@ -42,12 +43,14 @@ class MoeInfoProvider(object):
   @withExceptionHandling(logger)
   def __onAccountBecomeNonPlayer(self):
     g_currentVehicle.onChanged -= self.__updateMoeInfo
-    
+  
+  @withExceptionHandling(logger)
   def __updateMoeInfo(self, *a, **k):
     if g_currentVehicle and g_currentVehicle.item:
       self.currentDescriptor = g_currentVehicle.item.intCD
       self.__updateCurrentInfo()
 
+  @withExceptionHandling(logger)
   def __setValue(self, value):
     if value is None: 
       self.current.setValue(None)
@@ -66,6 +69,15 @@ class MoeInfoProvider(object):
   def __updateCurrentInfo(self):
     def callback(descriptor, requestID, responseID, errorStr, ext=None):
       self.lastResponseTime = BigWorld.time()
+      
+      if errorStr:
+        retry = self.moeErrorRetries.get(descriptor, 0)
+        if retry < 3:
+          self.moeErrorRetries[descriptor] = retry + 1
+          self.__updateCurrentInfo()
+          return
+      
+      self.moeErrorRetries[descriptor] = 0
       
       if ext is None:
         self.moeCache[descriptor] = {

@@ -7,7 +7,7 @@ from DataProviderSDK import DataProviderSDK, DPExtension
 from providers import setup as setupProviders
 
 class PublicDataProviderSDK(object):
-  version = 15
+  version = 16
   
   def __init__(self, registerExtension, dispose):
     # type: (Callable[[str], DPExtension], Callable[[]]) -> None
