@@ -4,7 +4,7 @@ import struct
 from functools import partial
 from Event import Event
 from aih_constants import CTRL_MODE_NAME
-from gui.Scaleform.framework import g_entitiesFactories, ScopeTemplates, ViewSettings
+from gui.Scaleform.framework import ScopeTemplates, ViewSettings
 from gui.Scaleform.framework.entities.View import View
 from gui.Scaleform.framework.application import AppEntry
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
@@ -22,6 +22,7 @@ from AvatarInputHandler import AvatarInputHandler
 from typing import Tuple, TYPE_CHECKING
 
 from ..common.Logger import Logger
+from ..common.CrossGameUtils import getEntitiesFactories
 from .CefServer import CefServer, server
 from .EventsManager import manager
 from .ChangeUrlWindow import show as showChangeUrlWindow
@@ -566,7 +567,7 @@ def setup():
     None,
     ScopeTemplates.GLOBAL_SCOPE,
   )
-  g_entitiesFactories.addSettings(mainViewSettings)
+  getEntitiesFactories().addSettings(mainViewSettings)
 
 
   def onAppInitialized(event):

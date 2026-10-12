@@ -1,6 +1,6 @@
 import BigWorld
 from frameworks.wulf.gui_constants import WindowLayer
-from gui.Scaleform.framework import g_entitiesFactories, ScopeTemplates, ViewSettings
+from gui.Scaleform.framework import ScopeTemplates, ViewSettings
 from gui.Scaleform.framework.entities.abstract.AbstractWindowView import AbstractWindowView
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from helpers import dependency
@@ -14,6 +14,7 @@ from .CefServer import server
 from ..CefArchive import cefArchive
 from ..common.Notifier import Notifier
 from ..common.Logger import Logger
+from ..common.CrossGameUtils import getEntitiesFactories
 from ..constants import WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS, WIDGETS_COLLECTION_URL, WIDGETS_COLLECTION_URL_RU
 from ..common.i18n import t
 
@@ -164,7 +165,7 @@ def setup():
     None,
     ScopeTemplates.VIEW_SCOPE,
   )
-  g_entitiesFactories.addSettings(settingsViewSettings)
+  getEntitiesFactories().addSettings(settingsViewSettings)
   
   def onEvent(event):
     if event == WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS:

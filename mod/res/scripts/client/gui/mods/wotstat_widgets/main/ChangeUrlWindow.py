@@ -1,6 +1,6 @@
 import BigWorld
 from frameworks.wulf.gui_constants import WindowLayer
-from gui.Scaleform.framework import g_entitiesFactories, ScopeTemplates, ViewSettings
+from gui.Scaleform.framework import ScopeTemplates, ViewSettings
 from gui.Scaleform.framework.entities.abstract.AbstractWindowView import AbstractWindowView
 from gui.Scaleform.framework.managers.loaders import SFViewLoadParams
 from helpers import dependency
@@ -10,6 +10,7 @@ from gui.shared.formatters import text_styles
 
 from ..common.i18n import t
 from ..common.Logger import Logger
+from ..common.CrossGameUtils import getEntitiesFactories
 
 from .EventsManager import manager
 
@@ -58,7 +59,7 @@ def setup():
     None,
     ScopeTemplates.VIEW_SCOPE,
   )
-  g_entitiesFactories.addSettings(settingsViewSettings)
+  getEntitiesFactories().addSettings(settingsViewSettings)
   
 
 def show(wid, url):

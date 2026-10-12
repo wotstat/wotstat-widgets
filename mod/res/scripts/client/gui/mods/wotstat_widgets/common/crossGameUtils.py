@@ -1,4 +1,13 @@
 
+def getEntitiesFactories():
+  try:
+    from gui.Scaleform.framework import g_entitiesFactories
+    return g_entitiesFactories
+  except ImportError:
+    from helpers import dependency
+    from skeletons.gui.impl import IGuiLoader
+    return dependency.instance(IGuiLoader).entitiesFactory
+
 
 def readClientServerVersion():
   try: 
