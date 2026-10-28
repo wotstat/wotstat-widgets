@@ -16,6 +16,7 @@ from .main.WebSocketInterface import WebSocketInterface
 from .common.Notifier import Notifier
 from .main.WhatsNewNotifier import WhatsNewNotifier
 from .common.i18n import t
+from .common.CrossGameUtils import gamePublisher, PUBLISHER
 from .common.ModUpdater import ModUpdater, UpdateStatus
 from .dataProvider import setup as setupDataProvider
 
@@ -143,4 +144,12 @@ class WotstatWidget(object):
       if status in (UpdateStatus.BAD_INFO, UpdateStatus.NOT_OK_RESPONSE):
         updater.updateToLatestVersion('https://ru.install.wotstat.info/api/mod/wotstat.widgets/latest', onRuServerComplete)
 
-    updater.updateToLatestVersion('https://install.wotstat.info/api/mod/wotstat.widgets/latest', onMainServerComplete)
+    def onMtstatServerComplete(status):
+      logger.info("Mtstat server update status: %s" % status)
+      if status in (UpdateStatus.BAD_INFO, UpdateStatus.NOT_OK_RESPONSE):
+        updater.updateToLatestVersion('https://install.wotstat.info/api/mod/wotstat.widgets/latest', onMainServerComplete)
+
+    if gamePublisher() == PUBLISHER.LESTA:
+      updater.updateToLatestVersion('https://install.mtstat.info/api/mod/wotstat.widgets/latest', onMtstatServerComplete)
+    else:
+      updater.updateToLatestVersion('https://install.wotstat.info/api/mod/wotstat.widgets/latest', onMainServerComplete)

@@ -1,5 +1,7 @@
 import os
 
+from .common.CrossGameUtils import gamePublisher, PUBLISHER
+
 CEF_PATH = os.path.join('mods', 'wotstat.widgets.cef')
 CEF_EXE_NAME = 'wotstat.widgets.cef.exe'
 CEF_EXE_PATH = os.path.join(CEF_PATH, CEF_EXE_NAME)
@@ -10,6 +12,6 @@ ACTIVE_WIDGETS_PATH = './mods/configs/wotstat.widgets/activeWidgets.json'
 
 WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS = 'WOTSTAT_WIDGETS_EVENT_OPEN_SETTINGS'
 GITHUB_URL = 'https://api.github.com/repos/WOT-STAT/wotstat-widgets/releases/latest'
-WIDGETS_COLLECTION_URL = 'https://widgets.wotstat.info'
-WIDGETS_COLLECTION_URL_RU = 'https://ru.widgets.wotstat.info'
+WIDGETS_COLLECTION_URL_RU = 'https://widgets.mtstat.info'
+WIDGETS_COLLECTION_URL = WIDGETS_COLLECTION_URL_RU if gamePublisher() == PUBLISHER.LESTA else 'https://widgets.wotstat.info'
 # WIDGETS_COLLECTION_URL = 'http://192.168.0.4:5174'

@@ -2,6 +2,7 @@ import json
 import os
 
 from .Logger import Logger
+from .CrossGameUtils import gamePublisher, PUBLISHER
 
 VERSION = '{{VERSION}}'
 
@@ -10,7 +11,7 @@ logger = Logger.instance()
 class Config:
   config = {}
   defaultParams = {
-    'lokiURL': 'https://loki.wotstat.info/loki/api/v1/push',
+    'lokiURL': 'https://loki.mtstat.info/loki/api/v1/push' if gamePublisher() == PUBLISHER.LESTA else 'https://loki.wotstat.info/loki/api/v1/push',
     'cefServerPort': None,
     'devtools': False,
   }

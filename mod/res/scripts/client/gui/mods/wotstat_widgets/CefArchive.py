@@ -10,14 +10,18 @@ import time
 import tempfile
 
 from .common.Logger import Logger
+from .common.CrossGameUtils import gamePublisher, PUBLISHER
 
 TEMP_CEF_ZIP_PATH = os.path.join(tempfile.gettempdir(), 'wotstat.widgets.cef.zip')
 TARGET_CEF_PATH = 'mods/wotstat.widgets.cef'
 TARGET_CEF_PATH_CHECKSUM = TARGET_CEF_PATH + '/checksum'
 CDN_URL= 'https://cef-storage.wotstat.info/wotstat.widgets.cef.%s.zip'
-RU_CDN_URL= 'https://ru.cef-storage.wotstat.info/wotstat.widgets.cef.%s.zip'
+RU_CDN_URL= 'https://cef-storage.mtstat.info/wotstat.widgets.cef.%s.zip'
 DIRECT_URL = 'https://storage.yandexcloud.net/cef-storage.wotstat.info/wotstat.widgets.cef.%s.zip'
-MAX_RETRY_ATTEMPTS = 4
+DOWNLOAD_URLS = [CDN_URL, CDN_URL, RU_CDN_URL, DIRECT_URL]
+if gamePublisher() == PUBLISHER.LESTA:
+  DOWNLOAD_URLS = [RU_CDN_URL, RU_CDN_URL, CDN_URL, DIRECT_URL]
+MAX_RETRY_ATTEMPTS = len(DOWNLOAD_URLS)
 
 logger = Logger.instance()
 
@@ -87,15 +91,7 @@ class CefArchive():
       
       while self.retryCount < MAX_RETRY_ATTEMPTS and self.enabled:
         try:
-          url = DIRECT_URL
-
-          if self.retryCount < MAX_RETRY_ATTEMPTS - 1:
-            url = RU_CDN_URL
-
-          if self.retryCount < MAX_RETRY_ATTEMPTS - 2:
-            url = CDN_URL
-
-          url = url % checksum
+          url = DOWNLOAD_URLS[self.retryCount] % checksum
           logger.info('Download attempt %d starting from %s' % (self.retryCount, url))
           response = urllib2.urlopen(url, timeout=timeout)
           totalSize = int(response.info().getheader('Content-Length').strip())
